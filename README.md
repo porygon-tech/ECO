@@ -14,3 +14,4 @@ One of them is on sexual preference, which in this case should make similar phen
 The other one is the resource extinction, which should depend in some way on the phenotype density. E.g. fish size determines its prey, so if there are too many of similar sizes, they will have to strive harder to survive.
 
 ![A](gallery/disrupt_fail.png "A")
+![B](gallery/disrupt_succ.png "B")
