@@ -1,6 +1,9 @@
 # ECO
 Ecological and evolutionary simulations
 
+## Disclaimer
+The project is still in development, use code at your own risk!
+
 ## History
 In order to simulate disruptive selection, a multi-peaked environmental fitness landscape function was designed. Individuals have hermaphroditic sexual reproduction and chromosomes subject to crossover. A minimal mutation rate is also present. The chances of reproduction are determined by their individual relative fitness, given by the fitness landscape on the phenotypic value of the individuals.
 
