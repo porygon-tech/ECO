@@ -16,7 +16,7 @@ We note that disruptive selection cannot occur by the action of a multi-peaked e
 1. Trait-dependent sexual preference, which for this case should make similar phenotypes mutually attractive. 
 2. Trait-dependent intraspecific competition, which depends on the phenotype probability density function (PDF). E.g. resource extinction: fish size determines its prey, so if there are too many of similar sizes, they will have to strive harder to survive
 
-As a stochastic process, population may converge to different attractors given by the environmental fitness function. Disruptive-selection bound forces make it possible to converge to multiple attractors as seen in the pictures (as shown in the first one, this is still not always possible).
+As a stochastic and dynamical process, population may converge to different attractors that are determined by the environmental fitness function. 'Disrupting' forces make it possible to converge to multiple attractors as seen in the pictures (as shown in the first one, this is still not always possible).
 
 ![A](gallery/disrupt_fail.png "A")
 ![B](gallery/disrupt_succ.png "B")
