@@ -117,16 +117,23 @@ class population(object):
 			for j2 in range(self.m):
 				self.a[self.m+j , j+j2*self.n] = 1
 		# indepTerms: the vector of independent terms in the system of eqs
-
 		self.indepTerms = np.append(self.mtx.sum(axis=1),self.mtx.sum(axis=0))[:,np.newaxis]
 		# amp: extended matrix
 		self.amp = np.concatenate((self.a,self.indepTerms),axis=1)
 	def show(self):
 		showdata(self.mtx)
-	def solutionSpace(self):
+	def solutionSpace(self, silent=False):
 		#explores alternative matrices with same column and row sums
 		k=self.mtx.sum()
 		nvar = self.m*self.n
+		if not silent:
+			if nvar > 20:
+				print('ALERT: system has {0} variables, which gives {1} possible combinations.'.format(nvar, 2**nvar))
+				cont = input('This can take a while to compute. Continue? (y/n): ')
+				if cont == 'y':
+					pass
+				else:
+					return
 		solutions = np.zeros((1,nvar))
 		for i in range(2**k-1, 2**nvar-2**(nvar-k)+1):
 			code = format(i,'b')
@@ -144,18 +151,89 @@ class population(object):
 
 
 
+#================================================================
 
+nindivs = 5
+nloci = 3
 
-nindivs = 3
-nloci = 4
 pop = population(nindivs,nloci);pop.show()
 
 s = pop.solutionSpace()
 
-showdata((s.sum(axis=0)/s.shape[0]).reshape(nindivs,nloci),symmetry=True)
+probs = (s.sum(axis=0)/s.shape[0]).reshape(nindivs,nloci)
+k = pop.mtx.sum()
+c=probs.sum(axis=0)/k
+r=probs.sum(axis=1)[:,np.newaxis]/k
+
+x = np.repeat(r, nloci).flatten()
+y = np.tile(  c, nindivs).flatten()
+z = probs.flatten()
+
+fig = plt.figure(); ax = fig.add_subplot(projection='3d')
+ax.scatter3D(x,y, probs.flatten())
+surf = ax.plot_trisurf(x,y,z, cmap=plt.cm.jet, linewidth=0)
+fig.colorbar(surf)
+plt.show()
+
+#================================================================
+
+
+
+runs = 100
+nindivs = 4
+nloci = 4
+x = []
+y = []
+z = []
+for _ in range(runs):
+	pop = population(nindivs,nloci)
+	k = pop.mtx.sum()
+	s = pop.solutionSpace(silent=True)
+	probs = (s.sum(axis=0)/s.shape[0]).reshape(nindivs,nloci)
+	c=probs.sum(axis=0)/k
+	r=probs.sum(axis=1)[:,np.newaxis]/k
+	x = np.append(x, np.repeat(r, nloci).flatten())
+	y = np.append(y, np.tile(  c, nindivs).flatten())
+	z = np.append(z, probs.flatten())
+
+
+
+
+showdata(probs,symmetry=True)
+showdata(pop.mtx + probs -1,symmetry=True)
 
 showdata((s[2:4,:].sum(axis=0)).reshape(nindivs,nloci))
 
 
 # check if any row or col is all zero
 #((pop.mtx.sum(axis=0)==0).sum() + (pop.mtx.sum(axis=1)==0).sum()).sum() !=0
+
+
+
+
+
+
+
+fig = plt.figure(); ax = fig.add_subplot(projection='3d')
+ax.scatter3D(x,y,z, c=z, cmap=plt.cm.jet)
+#surf = ax.plot_trisurf(x,y,z, cmap=plt.cm.jet, linewidth=0)
+#fig.colorbar(surf)
+plt.show()
+
+
+
+x = np.linspace(0,5,20)
+y = np.linspace(0,5,20)
+gx,gy = np.meshgrid(x,y)
+x, y = gx.flatten(), gy.flatten()
+z = np.sin(x) + np.cos(y)
+
+fig = plt.figure(); ax = fig.add_subplot(projection='3d')
+ax.scatter3D(x,y,z, c=z, cmap=plt.cm.jet)
+plt.show()
+
+fig = plt.figure(); ax = fig.add_subplot(projection='3d')
+surf = ax.plot_trisurf(x,y,z, cmap=plt.cm.jet, linewidth=0)
+fig.colorbar(surf)
+plt.show()
+
