@@ -20,6 +20,8 @@ def pois(x,l=1):
 def norm(x, mu, sigma):
 	return 1 / (sigma * np.sqrt(2*np.pi)) * np.exp(-0.5 * ((x - mu) / sigma)**2)
 
+
+
 class population(object):
 	"""docstring for population"""
 	def __init__(self, nindivs, nloci, skew=0.5, phenoSpace = [1, 3]):
@@ -80,7 +82,8 @@ class population(object):
 		plt.grid(True)
 		plt.show()
 	def fitness(self, x): #fitness landscape function (1 trait)
-		return (norm(x, self.phenoSpace[0]*1.2, np.diff(self.phenoSpace)*0.2) + norm(x, self.phenoSpace[1], np.diff(self.phenoSpace)*0.1))/2
+		o = np.diff(self.phenoSpace)*0.25
+		return (norm(x, self.phenoSpace[0]+o, np.diff(self.phenoSpace)*0.1) + norm(x, self.phenoSpace[1]-o, np.diff(self.phenoSpace)*0.1))/2
 	def showfitness(self):
 		fig = plt.figure(); ax = fig.add_subplot(111)
 		x=np.linspace(self.phenoSpace[0], self.phenoSpace[1], self.nloci)
@@ -92,9 +95,14 @@ class population(object):
 		ax.set_ylabel('relative fitness', labelpad=10)
 		ax.set_xlim(self.phenoSpace)
 		plt.show()
-	def setFitnessLandscape(self, func):
+	def set_fitnessLandscape(self, func):
 		self.fitness = func
 		self.relativeFitnessValues = self.fitness(self.phenotypes)/self.fitness(self.phenotypes).sum()
+	def sexualPreference(self,x,y,k=1):
+		return 1/(1+(x-y)**2/k) #preferring similar phenotypes
+	def set_sexualPreference(self, func):
+		self.sexualPreference = func
+
 
 
 	
