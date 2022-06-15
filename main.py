@@ -9,6 +9,24 @@ nloci = 100
 ps = (500,500+nloci)
 pop = evo.population(nindivs,nloci, skew= 0.5,phenoSpace=ps);#pop.show()
 #pop.hist()
+
+
+pop.mtx 
+pop.phenotypes
+
+childpop = pop.makeChildren(10)
+childpop = childpop.makeChildren(1)
+
+
+pop.mtx = np.ones((nindivs,nloci))
+
+pop.mtx 
+pop.phenotypes
+
+
+
+
+
 pop.showfitness()
 pop.set_fitnessLandscape(np.cos)
 pop.showfitness()
