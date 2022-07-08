@@ -1,74 +1,71 @@
 import evo
 import numpy as np
 import matplotlib.pyplot as plt
+import threading
+import os
+from pathlib import Path
+import pickle5
+import bz2
+
+'''  
+def task1():
+    print("Task 1 assigned to thread: {}".format(threading.current_thread().name))
+    print("ID of process running task 1: {}".format(os.getpid()))
+  
+def task2():
+    print("Task 2 assigned to thread: {}".format(threading.current_thread().name))
+    print("ID of process running task 2: {}".format(os.getpid()))
+'''
+def task_pophistory(nindivs,nloci,skew,ps, f, duration, slot_object, index):
+	pop = evo.population(nindivs,nloci, skew= skew,phenoSpace=ps);
+	pop.set_fitnessLandscape(f)
+	c = pop.makeChildren(k=1, mutRate=0)
+	#print("Task 1 assigned to thread: {}".format(threading.current_thread().name))
+	print("ID of process running task {0}: {1}".format(index, os.getpid()))
+	for t in range(duration):
+		print('\ttime {0}'.format(t))
+		c = c.makeChildren(k=1)
+		slot_object[index,t] = c.avgPhenotype()
+
+
+if __name__ == "__main__":
+
+	root = Path(".")
+	my_path = root / 'data/obj'
+
+	ntrials = 50
+	duration = 200
+	avg=np.zeros((ntrials,duration))
+	nindivs = 100
+	nloci = 20
+	ps = (500,500+nloci)
+
+
+	def f(x):
+		return (x-ps[0]) / (ps[1]-ps[0]) # linear 
+
+	#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	skews=np.linspace(0.01,0.99,ntrials)
+	avg=np.zeros((ntrials,duration))
+
+	threads = []
+	for i in range(ntrials):
+		skew = skews[i]
+		threads.append(threading.Thread(target=task_pophistory, name='t'+str(i), args=(nindivs,nloci,skew,ps, f, duration, avg, i,)   ))
+
+	for i in range(ntrials):
+		threads[i].start()
+
+	for i in range(ntrials):
+		threads[i].join()
+
+
+	with bz2.BZ2File(my_path / 'avg.obj', 'wb') as f:
+	    pickle5.dump(avg, f)
 
 
 
-nindivs = 2000
-nloci = 100
-ps = (500,500+nloci)
-pop = evo.population(nindivs,nloci, skew= 0.5,phenoSpace=ps);#pop.show()
-#pop.hist()
-
-
-pop.mtx 
-pop.phenotypes
-
-childpop = pop.makeChildren(10)
-childpop = childpop.makeChildren(1)
-
-
-pop.mtx = np.ones((nindivs,nloci))
-
-pop.mtx 
-pop.phenotypes
 
 
 
-
-
-pop.showfitness()
-pop.set_fitnessLandscape(np.cos)
-pop.showfitness()
-
-pop.hist()
-
-
-
-
-
-
-nindivs = 2000
-nloci = 100
-pop = evo.population(nindivs,nloci, skew= 0.5,phenoSpace=(0,1));#pop.show()
-pop.hist()
-pop.hist('reduced')
-
-
-
-
-def show3D(func, rangeX=[0,10],rangeY=[0,10],color=plt.cm.jet, resolution=50):
-	resX=resY=resolution
-	x = np.linspace(rangeX[0],rangeX[1],resX)
-	y = np.linspace(rangeY[0],rangeY[1],resY)
-	gx,gy = np.meshgrid(x,y)
-	x, y = gx.flatten(), gy.flatten()
-	z = func(x,y)
-	fig = plt.figure(); ax = fig.add_subplot(projection='3d')
-	surf = ax.plot_trisurf(x,y,z, cmap=color, linewidth=0)
-	fig.colorbar(surf)
-	plt.show()
-
-
-
-
-def sexualPreference(x,y,k=1):
-	return 1-1/(1+(x-y)**2/k) # the more different, the more attractive
-
-
-show3D(sexualPreference)
-
-def f(x,y):
-	return sexualPreference(x,y, k=5)
-
-show3D(f)

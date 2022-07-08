@@ -1,5 +1,6 @@
 import numpy as np 
 import matplotlib.pyplot as plt
+from copy import deepcopy
 
 #https://www.geeksforgeeks.org/decorators-in-python/
 #https://www.geeksforgeeks.org/passing-function-as-an-argument-in-python/
@@ -28,13 +29,11 @@ class population(object):
 	def __init__(self, nindivs, nloci, skew=0.5, phenoSpace = [1, 3], matrix = 'None'):
 		#super(population, self).__init__()
 		self._nindivs = nindivs
-		self._m = nindivs
 		self._nloci = nloci
-		self._n = nloci
 		self.phenoSpace = phenoSpace
 		self.skew = skew
 		if matrix == 'None':
-			self.mtx = np.random.choice((0,1),(nindivs,nloci), p=(skew, 1-skew))
+			self.mtx = np.random.choice((0,1),(nindivs,nloci), p=(1-skew, skew))
 		else:
 			self.mtx = matrix
 
@@ -51,26 +50,9 @@ class population(object):
 		self.amp = np.concatenate((self.a,self.indepTerms),axis=1)
 		
 
-	'''
-			@property
-			def list(self):
-				return self._list
-			@list.setter
-			def list(self, val):
-				self._list = val
-				self._listsquare = [x**2 for x in self._list ]
-
-			@property
-			def listsquare(self):
-				return self._listsquare
-			@listsquare.setter
-			def listsquare(self, val):
-				self.list = [int(pow(x, 0.5)) for x in val]
-	'''
 	# a property is special attribute that can have two features:
 	#   1: being read-only
-	#   2: when its value is set, modifying other properties
-
+	#   2: when a new value is set, modifying other properties
 
 	@property #property that modifies other attributes through its setter
 	def mtx(self):
@@ -79,6 +61,7 @@ class population(object):
 	@mtx.setter
 	def mtx(self, mtx):
 		self._mtx = mtx
+		self._nindivs, self._nloci = self.mtx.shape
 		self._phenotypes = mtx.sum(axis=1)/self.nloci * np.diff(self.phenoSpace)[0] + self.phenoSpace[0]
 		self._relativeFitnessValues = self.fitness(self.phenotypes)/self.fitness(self.phenotypes).sum()
 		#setters dont need to have a return
@@ -90,7 +73,7 @@ class population(object):
 
 	@property #read-only property
 	def m(self):
-		return self._m
+		return self._nindivs
 
 	@property #read-only property
 	def nloci(self):
@@ -98,7 +81,7 @@ class population(object):
 
 	@property #read-only property
 	def n(self):
-		return self._n
+		return self._nloci
 
 	@property #read-only property
 	def phenotypes(self):
@@ -107,9 +90,6 @@ class population(object):
 	@property #read-only property
 	def relativeFitnessValues(self):
 		return self._relativeFitnessValues
-
-
-
 
 	def show(self):
 		showdata(self.mtx)
@@ -148,38 +128,65 @@ class population(object):
 		plt.xlim(self.phenoSpace)
 		plt.grid(True)
 		plt.show()
+		return((n, bins, patches))
 
 	def fitness(self, x): #fitness landscape function (1 trait)
 		o = np.diff(self.phenoSpace)*0.25
 		return (norm(x, self.phenoSpace[0]+o, np.diff(self.phenoSpace)*0.1) + norm(x, self.phenoSpace[1]-o, np.diff(self.phenoSpace)*0.1))/2
 
-	def showfitness(self):
-		fig = plt.figure(); ax = fig.add_subplot(111)
-		x=np.linspace(self.phenoSpace[0], self.phenoSpace[1], self.nloci)
-		#y=norm(x,0,1)
-		y=self.fitness(x)
-		ax.plot(x,y)
-		#ax.legend(loc='center right')
-		ax.set_xlabel('phenotype value', labelpad=10)
-		ax.set_ylabel('relative fitness', labelpad=10)
-		ax.set_xlim(self.phenoSpace)
-		plt.show()
-
 	def set_fitnessLandscape(self, func):
-		self.fitness = func
-		self.relativeFitnessValues = self.fitness(self.phenotypes)/self.fitness(self.phenotypes).sum()
+		if func == 'flat':
+			def f(x):
+				return 1.
+			self.fitness = f
+		else:
+			self.fitness = func
+		self._relativeFitnessValues = self.fitness(self.phenotypes)/self.fitness(self.phenotypes).sum()
+		print('The fitness landscape has changed')
+
+	def showfitness(self, distbins=False):
+		
+			fig = plt.figure(); ax = fig.add_subplot(111)
+			n=100
+			x=np.linspace(self.phenoSpace[0], self.phenoSpace[1], self.nloci)
+			#y=norm(x,0,1)
+			y=self.fitness(x)
+			ax.plot(x,y)
+			if distbins:		
+				ax.hist(self.phenotypes, distbins, density=True, facecolor='r', alpha=0.5)
+
+			ax.set_xlabel('phenotype value', labelpad=10)
+			ax.set_ylabel('relative fitness', labelpad=10)
+			ax.set_xlim(self.phenoSpace)
+			plt.show()
 
 	def sexualPreference(self,x,y,k=1):
-		return 1/(1+(x-y)**2/k) #preferring similar phenotypes
+		return x*y*0.+1.
 
 	def set_sexualPreference(self, func):
-		self.sexualPreference = func
+		if func == 'panmictic':
+			def f(x,y,k):
+				return 1. #panmictic population
+			self.sexualPreference = f
+		elif func == 'similar':
+			return 1/(1+(x-y)**2/k) #preferring similar phenotypes
+		else:
+			self.sexualPreference = func
 
 	def intraCompetition(self,x,y,k=1):
-		return 1/(1+(x-y)**2/k) #similar phenotypes compete strongly
+		return 1/(1+(x-y)**2/k) #similar phenotypes have higher competition
 
 	def set_intraCompetition(self, func):
-		self.intraCompetition = func
+		if func == 'flat':
+			def f(x,y,k):
+				return 1.
+			self.intraCompetition = f
+		else:
+			self.intraCompetition = func
+
+	def mutate(self, m=0.001):
+		mutations = np.random.choice((0,1),(self.nindivs,self.nloci), p=(1-m, m))
+		self.mtx = np.logical_xor(mutations, self.mtx)
 
 	def makeChildren(self,k, mutRate=0):
 		children = np.zeros((self.nindivs,self.nloci))
@@ -196,11 +203,13 @@ class population(object):
 		rc=rc.reshape((self.nindivs,self.nindivs))
 		np.fill_diagonal(rc,0)
 		sat = np.sum(rc,axis=0)/np.sum(rc) #saturation
-		P = ((pref * self.relativeFitnessValues*sat**2).T * self.relativeFitnessValues*sat**2).T
+		#
+		#P = ((pref * self.relativeFitnessValues*sat**2).T * self.relativeFitnessValues*sat**2).T
+		#P = P/np.sum(P)
+		#
+		P = ((pref*self.relativeFitnessValues).T * self.relativeFitnessValues).T
 		P = P/np.sum(P)
 		#
-		#P = ((pref*relativeFitnessValues).T * relativeFitnessValues).T
-		#P = P/np.sum(P)
 		Pf = P.flatten()[:] 
 		parents = np.random.choice(self.nindivs**2, self.nindivs, p=Pf)
 		parents = np.array(np.unravel_index(parents, (self.nindivs,self.nindivs)))
@@ -219,8 +228,16 @@ class population(object):
 					parentSwitch = 1
 				else:
 					parentSwitch = 0
-		offspring = population(self.nindivs,self.nloci, phenoSpace=self.phenoSpace, matrix=children);
+		#offspring = population(self.nindivs,self.nloci, phenoSpace=self.phenoSpace, matrix=children);
+		offspring = deepcopy(self)
+		offspring.mtx = children
+		offspring.mutate(mutRate)
 		return(offspring)
+
+	def avgPhenotype(self):
+		return self.phenotypes.sum()/self.nindivs
+
+
 
 
 
@@ -256,3 +273,6 @@ except NameError as e:
 	# Do whatever you want if the variable is not defined yet in the program.
 	print('ERROOOOR: ' + str(e))
 '''
+
+
+
