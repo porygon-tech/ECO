@@ -105,3 +105,11 @@ if __name__ == "__main__":
 
 	with bz2.BZ2File(my_path / 'params.obj', 'wb') as f:
 	    pickle5.dump(params, f)
+
+
+
+m=np.array([[ 1,  2,  2],
+            [-2,  1, -2],
+            [ 0,  0,  2]])
+np.real(sparse.linalg.eigs(m,k=1,which='SM', return_eigenvectors=False))[-1]
+np.real(np.linalg.eigvals(m))

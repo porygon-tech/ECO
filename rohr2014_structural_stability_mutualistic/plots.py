@@ -21,10 +21,14 @@ with bz2.BZ2File(my_path / 'params.obj', 'rb') as f:
 #figsize=(8,6)
 
 fig = plt.figure(); ax = fig.add_subplot(projection='3d')
-ax.scatter3D(params[:,0],params[:,1],params[:,2], c=eigs.mean(1), cmap=plt.cm.jet)
+temp = ax.scatter3D(params[:,0],params[:,1],params[:,2], c=eigs.mean(1), cmap=plt.cm.jet)
 
+ax.xaxis.set_rotate_label(False) 
+ax.yaxis.set_rotate_label(False) 
 ax.zaxis.set_rotate_label(False) 
-ax.set_xlabel('$\\rho$', fontsize=20)
-ax.set_ylabel('$\\delta$', fontsize=20)
-ax.set_zlabel('$\\gamma$', fontsize=30, rotation = 0)
+ax.set_xlabel('$\\rho$', fontsize=12)
+ax.set_ylabel('$\\delta$', fontsize=12)
+ax.set_zlabel('$\\gamma_0$', fontsize=20, rotation = 0)
+fig.colorbar(temp,label="real part lowest eigenvalue", orientation="horizontal")
 plt.show()
+#sudo ddcutil setvcp d6 04
