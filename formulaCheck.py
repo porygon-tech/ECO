@@ -279,7 +279,7 @@ ax.plot(np.arange(n+1),child, label='children frequency')
 ax.legend()
 plt.show()
 
-#=======================================
+#======================================= MULTI GEN
 
 ngenerations = 20
 n=50
@@ -329,3 +329,124 @@ for g in range(ngenerations):
 plt.show()
 
 showdata(genData, color='jet')
+
+
+#======================================= STATISTICAL DATA COMPARISON
+
+ngenerations = 40
+n=15
+m=1000
+
+skw=0.6
+def f(i):
+    #return 1+n-i
+    #return 2**(-i/2)
+    return n**2-i**2
+
+def f2(i):
+    return 1+i
+    #return 2**(-i/2)
+
+parent = []
+for i in range(n+1):
+    parent.append(bindist(n,i,skw))
+    #parent.append(1/(n+1))
+
+#------
+
+mtx = np.random.choice((0,1),(m,n), p=(1-skw, skw))
+
+v_genData=np.zeros((ngenerations, n+1))
+v_phen = mtx.sum(axis=1)
+unique, counts = np.unique(v_phen, return_counts=True)
+np.asarray((unique, counts/m)).T
+v_genData[0,(unique).astype(int)] = counts/m
+
+for g in range(1,ngenerations):
+    print('generation {0}'.format(g))
+    v_phen = mtx.sum(axis=1)
+    v_fitn = (f(v_phen)/f(v_phen).sum())[:,np.newaxis]
+    #
+    #if g>40:
+    #    v_fitn = (f2(v_phen)/f2(v_phen).sum())[:,np.newaxis]
+    #
+    v_pmatch = (v_fitn*v_fitn.T).flatten()[:]
+    v_couples = np.random.choice(m**2, m, p=v_pmatch)
+    v_couples = np.array(np.unravel_index(v_couples, (m,m)))
+    mtx_child = np.zeros((m,n))
+    for i in range(m):
+        recomb = np.random.choice((0,1),n)
+        pA = mtx[v_couples[0,i],:]
+        pB = mtx[v_couples[1,i],:]
+        mtx_child[i,:] = np.logical_or(np.logical_and(recomb,pA),np.logical_and(np.logical_not(recomb),pB))+0
+    #
+    v_phen_child = mtx_child.sum(axis=1)
+    unique, counts = np.unique(v_phen_child, return_counts=True)
+    #np.asarray((unique, counts/m)).T
+    v_genData[g,(unique).astype(int)] = counts/m
+    mtx = mtx_child.copy()
+
+showdata(v_genData, color='jet')
+
+
+#------
+
+genData=np.zeros((ngenerations, n+1))
+genData[0,:] = parent.copy()
+
+fitness=np.zeros(n+1)
+for i in range(0,n+1):
+    fitness[i] = f(i)
+
+fitness /= fitness.sum()
+
+
+for g in range(1,ngenerations):
+    print('generation {0}'.format(g))
+    w=parent*fitness
+    w /= w.sum()
+    child = np.zeros((n+1))
+    for v in range(0,n+1):
+        for i in range(0,n+1):
+            for j in range(0,n+1):
+                for x in range(0,i+1):
+                    child[v] += pOverlaps(n,i,j-i,x) * bindist(i - 2*x + j, v - x) * w[i] * w[j]
+    genData[g,:] = child.copy()
+    parent = child.copy()
+
+showdata(genData, color='jet')
+showdata(v_genData, color='jet')
+
+
+clist   = samplecolors(ngenerations)
+clist_v = samplecolors(ngenerations,palette=plt.cm.viridis)
+
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
+for g in range(ngenerations):
+    ax.plot(np.arange(n+1),v_genData[g,:],label='generation {0}, stochastic'.format(g),color=clist_v[g])
+
+plt.show()
+
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
+for g in range(ngenerations):
+    ax.plot(np.arange(n+1),  genData[g,:],label='generation {0}'.format(g),color=clist[g])
+
+plt.show()
+
+
+showlist((genData*np.arange(n+1)).sum(1))
+showlist(genData.var(0))
+
+
+avg = (np.arange(n+1)*np.ones((ngenerations,1))*genData).sum(1)
+
+
+
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
+ax.plot(avg[:-1], np.diff(avg))
+ax.set_xlabel('mean trait value') 
+ax.set_ylabel('derivative') 
+plt.show()
+
+showlist(avg)
+showlist(fitness)
