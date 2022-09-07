@@ -47,15 +47,13 @@ def table_to_graph(s_table, binary=False):
 		return(G)
     
 def array_to_graph(nparray):
-		full = to_square(nparray)
-		sparse_full = sparse.csr_matrix(full)
-		G = nx.from_scipy_sparse_matrix(sparse_full, parallel_edges=False)
-		return(G)
+    G = nx.from_numpy_array(nparray, parallel_edges=False)
+    return(G)
     
 def remove_unconnected(npArray):
-    ac = npArray.copy()
-    ac = np.delete(ac, np.where(np.any(a,0)), axis=0)
-    ac = np.delete(ac, np.where(np.any(a,1)), axis=1)
+    ac = npArray.copy()    
+    ac = np.delete(ac, np.where(np.all(ac==0,0)), axis=1)
+    ac = np.delete(ac, np.where(np.all(ac==0,1)), axis=0)
     return(ac)
 
 def renormalize(vlist):
@@ -127,13 +125,62 @@ weights = [g[u][v]['weight'] for u,v in edges]
 degrees = np.array(g.degree)[:,1]
 
 
-palette1=plt.cm.jet
-palette2=plt.cm.afmhot
-edgecolors=list(map(plt.cm.colors.rgb2hex,list(map(palette1, renormalize(weights)))))
+palette1=plt.cm.jet #binary jet 
+palette2=plt.cm.jet
+edgecolors=list(map(plt.cm.colors.rgb2hex,list(map(palette1, renormalize(weights))))) # 1-renormalize(weights)
 nodecolors=list(map(plt.cm.colors.rgb2hex,list(map(palette2, renormalize(degrees)))))
 
 nx.draw(g, width=weights*10, pos=pos, edge_color=edgecolors, node_size=0.7*degrees, node_color=nodecolors)
+nx.draw(g, width=0.1+0.8*renormalize(weights), pos=pos, edge_color=edgecolors, node_size=0.7*degrees, node_color=nodecolors)
 
-    
+st=nx.maximum_spanning_tree(g)
+nx.draw(st, pos=pos,node_size=0)
+nx.draw(st, width=0.2, pos=pos, node_size=0.7*degrees, node_color=nodecolors)
+#nx.draw(st, width=0.2, node_size=0.7*degrees, node_color=nodecolors)
+
+pos = nx.spring_layout(st,scale=0.5)
+nx.draw(st, pos=pos,node_size=0)
+nx.draw(st, pos=pos,width=0.2, node_size=0.7*degrees, node_color=nodecolors)
+nx.draw(g, width=weights*10, pos=pos, edge_color=edgecolors, node_size=0.7*degrees, node_color=nodecolors)
+nx.draw(g, width=0.1+0.8*renormalize(weights), pos=pos, edge_color=edgecolors, node_size=0.7*degrees, node_color=nodecolors)
+
+
+edges = st.edges()
+weights = [st[u][v]['weight'] for u,v in edges]
+edgecolors=list(map(plt.cm.colors.rgb2hex,list(map(palette1, renormalize(weights))))) # 1-renormalize(weights)
+nx.draw(st, pos=pos,node_size=0,width=0.1+2*renormalize(weights), edge_color=edgecolors)
+
+#%%
+
+#%% BIPARTITE
+
+df = pd.read_csv(dataPath / 'M_PL_058.csv', index_col=0)
+nA,nB = df.shape
+
+a=npfrompd(df)
+#a=np.random.choice((0,1),(nA,nB))
+ac=to_square(a)
+ac=remove_unconnected(ac)
+
+showdata(a)
+showdata(ac)
+
+g=array_to_graph(ac)
+
+edges = g.edges()
+weights = [g[u][v]['weight'] for u,v in edges]
+degrees = np.array(g.degree)[:,1]
+
+palette1=plt.cm.jet #binary jet 
+palette2=plt.cm.jet
+edgecolors=list(map(plt.cm.colors.rgb2hex,list(map(palette1, renormalize(weights))))) # 1-renormalize(weights)
+nodecolors=list(map(plt.cm.colors.rgb2hex,list(map(palette2, renormalize(degrees)))))
+
+top = np.array(g.nodes)[:nA]
+pos = nx.bipartite_layout(g,top, align='vertical')
+nx.draw(g,pos, width=0.1, node_size=1)
+nx.draw(g,pos=pos, width=0.05+0.8*renormalize(weights), edge_color=edgecolors, node_size=0.7*degrees, node_color=nodecolors)
+
+
 
 
