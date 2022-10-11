@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 #from itertools import product  
 
+#%%
+
 def showdata(mat, color=plt.cm.gnuplot, symmetry=False):
     mat = np.copy(mat)
     if symmetry:
@@ -49,7 +51,7 @@ def pOverlaps(n,i,k,x):
     return comb(i,x) * comb(n - i, i + k - x) / comb(n,i+k)
 
 
-
+#%%
 #==================================================
 
 
@@ -74,7 +76,7 @@ for j in range(n+1):
 sum(parent) 
 sum(child) 
 
-#==================================================0
+#%%==================================================0
 
 
 n=10
@@ -104,7 +106,7 @@ comb(n,i) * comb(n,i+k)
 
 comb(i,x) * comb(n - i, i + k - x) / comb(n,i+k)
 
-#==================================================1
+#%%==================================================1
 
 varsites=np.zeros((sPi.shape[0],sPik.shape[0]))
 check = varsites.copy()
@@ -118,7 +120,7 @@ for a in range(sPi.shape[0]):
 
 #showdata(varsites)
 
-#==================================================2
+#%%==================================================2
 
 #np.unique(varsites[np.where(nOverlaps == x)])  
 
@@ -149,7 +151,7 @@ for j in range(varsites[a,b]+1):
 parent
 
 counts/ntries-parent
-#==================================================3
+#%%==================================================3
 
 
 
@@ -234,7 +236,7 @@ for v in range(0,n+1):
 np.round(sumvar,4)
 
 
-#=========================================================================
+#%%=========================================================================
 
 
 n=20
@@ -279,7 +281,7 @@ ax.plot(np.arange(n+1),child, label='children frequency')
 ax.legend()
 plt.show()
 
-#======================================= MULTI GEN
+#%%======================================= MULTI GEN
 
 ngenerations = 20
 n=50
@@ -331,7 +333,29 @@ plt.show()
 showdata(genData, color='jet')
 
 
-#======================================= STATISTICAL DATA COMPARISON
+
+height, width = genData.shape
+xi = np.linspace(1, width, width)
+yi = np.linspace(1, height, height)
+axx, axy = np.meshgrid(xi, yi)
+
+fig = plt.figure(figsize =(14, 9)); ax = fig.add_subplot(projection='3d')
+surf = ax.plot_trisurf(axx.flatten(),axy.flatten(),genData.flatten(), cmap=plt.cm.jet, linewidth=0)
+ax.set_zlim3d(0,0.5)
+ax.set_xlim3d(0,20)
+ax.set_xlabel('phenotypic value')
+ax.set_ylabel('time')
+ax.set_zlabel('frequency')
+fig.colorbar(surf)
+plt.show()
+
+fig = plt.figure(figsize =(14, 9)); ax = plt.axes(projection ='3d') 
+surf = ax.plot_surface(axx,axy,genData, cmap=plt.cm.jet, edgecolor ='none')
+ax.set_zlim3d(0,0.5)
+fig.colorbar(surf, ax = ax, shrink = 0.7, aspect = 7) 
+plt.show() 
+
+#%%======================================= STATISTICAL DATA COMPARISON
 
 ngenerations = 40
 n=15
