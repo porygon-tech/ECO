@@ -111,8 +111,8 @@ def is_pos_def(m, maxiter=1000, z0='rand', fullresult=False):
 #%% randomised model
 
 
-n_A = 1
-n_P = 1
+n_A = 3
+n_P = 4
 h=0 # if h=0, the model becomes linear
 
 #alpha is the growth rate vector
@@ -137,12 +137,14 @@ ip = np.random.choice(np.arange(10,100), n_P)[:,np.newaxis]
 a = ia
 p = ip
 
-r=0.01 #resolution
-duration = 2000
-data=np.zeros((n_A + n_P,duration))
-for t in range(duration):
-	dp = p*(alpha_P - np.dot(beta_P,p) + np.dot(gamma_P,alpha_A)/(1+h*np.dot(gamma_P,alpha_A)))
-	da = a*(alpha_A - np.dot(beta_A,a) + np.dot(gamma_A,alpha_P)/(1+h*np.dot(gamma_A,alpha_P)))
+delta=0.0001
+duration=10
+ntimesteps=int(duration/delta)
+data=np.zeros((n_A + n_P,ntimesteps))
+for t in range(ntimesteps):
+
+	dp = p*(alpha_P - np.dot(beta_P,p) + np.dot(gamma_P,a)/(1+h*np.dot(gamma_P,a)))
+	da = a*(alpha_A - np.dot(beta_A,a) + np.dot(gamma_A,p)/(1+h*np.dot(gamma_A,p)))
 	a = a + r*da 
 	p = p + r*dp 
 	data[:,t]=np.append(a,p)

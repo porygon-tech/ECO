@@ -334,23 +334,24 @@ showdata(genData, color='jet')
 
 
 
-height, width = genData.shape
+
+mat=genData[:,:30]
+height, width = mat.shape
 xi = np.linspace(1, width, width)
 yi = np.linspace(1, height, height)
 axx, axy = np.meshgrid(xi, yi)
 
 fig = plt.figure(figsize =(14, 9)); ax = fig.add_subplot(projection='3d')
-surf = ax.plot_trisurf(axx.flatten(),axy.flatten(),genData.flatten(), cmap=plt.cm.jet, linewidth=0)
-ax.set_zlim3d(0,0.5)
-ax.set_xlim3d(0,20)
-ax.set_xlabel('phenotypic value')
-ax.set_ylabel('time')
-ax.set_zlabel('frequency')
+surf = ax.plot_trisurf(axx.flatten(),axy.flatten(),mat.flatten(), cmap=plt.cm.jet, linewidth=0)
+ax.set_zlim3d(0,0.3)
+ax.set_xlabel('phenotypic value', labelpad=10)
+ax.set_ylabel('time', labelpad=10)
+ax.set_zlabel('frequency', labelpad=10)
 fig.colorbar(surf)
 plt.show()
 
 fig = plt.figure(figsize =(14, 9)); ax = plt.axes(projection ='3d') 
-surf = ax.plot_surface(axx,axy,genData, cmap=plt.cm.jet, edgecolor ='none')
+surf = ax.plot_surface(axx,axy,mat, cmap=plt.cm.jet, edgecolor ='none')
 ax.set_zlim3d(0,0.5)
 fig.colorbar(surf, ax = ax, shrink = 0.7, aspect = 7) 
 plt.show() 
@@ -453,7 +454,7 @@ plt.show()
 
 fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
 for g in range(ngenerations):
-    ax.plot(np.arange(n+1),  genData[g,:],label='generation {0}'.format(g),color=clist[g])
+    ax.plot(np.arange(n+1),  genData[g,:],label='generation {0}'.format(g),color=clist_v[g])
 
 plt.show()
 
