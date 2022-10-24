@@ -112,7 +112,7 @@ showdata(npfrompd(df))
 
 a=npfrompd(df)
 ac=remove_unconnected(a)
-g=array_to_graph(ac)
+g=array_to_graph(a)
 
 
 #%% 
@@ -125,7 +125,7 @@ weights = [g[u][v]['weight'] for u,v in edges]
 degrees = np.array(g.degree)[:,1]
 
 
-palette1=plt.cm.jet #binary jet 
+palette1=plt.cm.binary #binary jet 
 palette2=plt.cm.jet
 edgecolors=list(map(plt.cm.colors.rgb2hex,list(map(palette1, renormalize(weights))))) # 1-renormalize(weights)
 nodecolors=list(map(plt.cm.colors.rgb2hex,list(map(palette2, renormalize(degrees)))))
