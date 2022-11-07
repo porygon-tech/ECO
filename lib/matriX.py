@@ -1,7 +1,15 @@
 import numpy as np
-from scipy import sparse
-from scipy.sparse import linalg
-from scipy.optimize import minimize, fsolve
+#from scipy import sparse
+#from scipy.sparse import linalg
+from scipy.optimize import minimize#, fsolve
+#from scipy.optimize import Bounds as scipy_bounds
+#%%
+'''
+Please understand the code before using.
+This module contains numerical optimization functions, whose output results should be treated with a certain level of skepticism.
+
+'''
+#%%
 
 def is_symmetric(m):
     return (m==m.T).all()
@@ -40,7 +48,8 @@ def is_Lyapunovstable(A):
 
 #%%
 def is_Dstable(A, maxiter=1000, df0='rand', tol=10e-3, ntries=5, fullresult=False):
-   #tells if matrix is D-stable
+    #tells if matrix is D-stable
+    lowestbound=10e-10
     if A.shape[0] != A.shape[1]:
         raise Exception("Matrix is not square") 
 
@@ -55,10 +64,15 @@ def is_Dstable(A, maxiter=1000, df0='rand', tol=10e-3, ntries=5, fullresult=Fals
             minV={'status': None}
             while minV['status'] == 4 or start:
                 start=False
-                df0 = list(np.random.rand(A.shape[0])*2*np.max(A))
+                df0 = list(np.random.rand(A.shape[0])*2*np.max(A)+lowestbound)
                 
-                cons = ({'type': 'ineq', 'fun': lambda df0: np.min(np.array(df0))*10e10})
-                minV = minimize(f, df0, method='COBYLA', options={'maxiter' : maxiter},constraints=cons);
+                #cons = ({'type': 'ineq', 'fun': lambda df0: np.min(np.array(df0))*10e10})
+                #minV = minimize(f, df0, method='COBYLA', options={'maxiter' : maxiter},constraints=cons);
+                
+                #L-BFGS-B  Nelder-Mead
+                bounds = np.repeat([(lowestbound,None)],A.shape[0],axis=0)
+                bounds = [tuple(r) for r in bounds]
+                minV = minimize(f, df0, method='Nelder-Mead', options={'maxiter' : maxiter}, bounds=bounds);
                 minVs.append(minV)
 
         if fullresult:
@@ -66,19 +80,23 @@ def is_Dstable(A, maxiter=1000, df0='rand', tol=10e-3, ntries=5, fullresult=Fals
         elif minV['success'] or minV['status'] == 2:
             #minV['x'][np.where(minV['x']<0)]=0
             #return minV['fun']+0. > 0. and np.all(minV['x'] > tol) and np.all(minV['x']>0)
-            return np.all([np.all(minV['x'] > tol) for minV in minVs]) and np.all([minV['fun']+0. > 0. for minV in minVs])
+            #return np.all([np.all(minV['x'] > tol) for minV in minVs]) and np.all([minV['fun']+0. > 0. for minV in minVs])
+            return np.all([minV['fun']+0. > 0. for minV in minVs])
         else:        
             raise Exception(minV['message']) 
 
 #%%
-
-
-is_Dstable(A,maxiter=1000)
-
-
-
+'''
 n=3
 A = np.random.rand(n,n)*5-2
+minVs = is_Dstable(A,fullresult=True, ntries=6); print(*minVs, sep='\n=============================================================\n')
+[-minV['fun'] for minV in minVs]
+
+
+
+
+
+
 
 df = list(np.random.rand(A.shape[0]))
 D = np.diag(df)
@@ -89,7 +107,7 @@ np.all(np.linalg.eigvals(A) < 0)
 #%%
 n=3
 lstableList=[]
-for _ in range(5000):
+for _ in range(10000):
     A = np.random.randint(-5,5,size=(n,n))
     A = np.triu(A) + np.triu(A,k=1).T
     #minV = is_Dstable(A,fullresult=True)
@@ -99,22 +117,11 @@ for _ in range(5000):
 
 dstableList=[]
 for i in range(len(lstableList)):
-    if is_Dstable(lstableList[i],maxiter=1000,ntries=1):
+    if is_Dstable(lstableList[i],maxiter=1000,ntries=5):
         dstableList.append(lstableList[i])
 
 len(lstableList),len(dstableList)
 
-#%%
-'''
-is_Lyapunovstable(lstableList[0])
-is_Dstable(lstableList[0])
-A = lstableList[0].copy()
-df = list(np.random.rand(A.shape[0]))
-D = np.diag(df)
-is_Lyapunovstable(np.dot(D,A))
--f(df)
--np.real(sparse.linalg.eigs(np.dot(D,A),which='LR',k=1,return_eigenvectors=False))[0]
-'''
 
 #%%
 n=3
@@ -137,9 +144,11 @@ len(lstableList), len(dstableList)
 #should be zero difference, since D-stability guarantees lyapunov stability  
 #%%
 i=0
-minVs = is_Dstable(lstableList[i],fullresult=True); print(*minVs, sep='\n=============================================================\n')
 
-minVs
+is_Lyapunovstable(lstableList[i])
+np.linalg.eigvals(lstableList[i])
+    
+minVs = is_Dstable(lstableList[i],fullresult=True); print(*minVs, sep='\n=============================================================\n')
 
 [np.max(np.real(np.linalg.eigvals(np.dot(np.diag(minV['x']),dstableList[i])))) for minV in minVs]
 
@@ -148,3 +157,62 @@ minVs
 is_Dstable(dstableList[i])
 lstableList[i]
 np.real(np.linalg.eigvals(lstableList[i]))
+
+
+C=dstableList[0]
+minVs = is_Dstable(C,fullresult=True); print(*minVs, sep='\n=============================================================\n')
+[np.diag(minV['x']) for minV in minVs]
+
+
+np.max(np.real(np.linalg.eigvals(np.dot(np.diag(np.random.rand(C.shape[0])*10*np.max(C)),C))))
+
+'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
