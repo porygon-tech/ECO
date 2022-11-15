@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 #from pylab import meshgrid, arange
 #%%
 
-alpha
-beta
-gamma
-
+alpha = 0.2 # prey growth rate
+beta  = 0.2 # predation rate
+gamma = 0.2 # predator death rate
+delta = 0.2 # predator growth rate
 
 x, y = np.meshgrid(np.arange(0, 3, 0.1), np.arange(0, 3, 0.1))
 dx =   x - x * y
