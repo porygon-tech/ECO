@@ -32,6 +32,7 @@ class population(object):
 		self._nloci = nloci
 		self.phenoSpace = phenoSpace
 		self.skew = skew
+		self._history = np.zeros((1,self.nloci+1))
 		if matrix == 'None':
 			self.mtx = np.random.choice((0,1),(nindivs,nloci), p=(1-skew, skew))
 		else:
@@ -49,7 +50,6 @@ class population(object):
 		# amp: extended matrix
 		self.amp = np.concatenate((self.a,self.indepTerms),axis=1)
 		
-
 	# a property is special attribute that can have two features:
 	#   1: being read-only
 	#   2: when a new value is set, modifying other properties
@@ -64,6 +64,16 @@ class population(object):
 		self._nindivs, self._nloci = self.mtx.shape
 		self._phenotypes = mtx.sum(axis=1)/self.nloci * np.diff(self.phenoSpace)[0] + self.phenoSpace[0]
 		self._relativeFitnessValues = self.fitness(self.phenotypes)/self.fitness(self.phenotypes).sum()
+
+		unique, counts = np.unique(self.phenotypes, return_counts=True)
+		pos = (unique - self.phenoSpace[0])*self.nloci/np.diff(self.phenoSpace)[0] 
+		temp=np.zeros((1,self.n+1))
+		temp[0,(pos).astype(int)] = counts/self.m
+		if self.history.sum() != 0:
+			self.history_append(temp)
+		else:
+			self.history[0,:] = temp
+
 		#setters dont need to have a return
 	
 
@@ -90,6 +100,16 @@ class population(object):
 	@property #read-only property
 	def relativeFitnessValues(self):
 		return self._relativeFitnessValues
+	
+	@property #read-only property
+	def history(self):
+		return self._history
+	
+
+
+	def history_append(self,newhist):
+		self._history = np.concatenate((self.history,newhist),axis=0)
+	
 
 	def show(self):
 		showdata(self.mtx)
@@ -160,8 +180,52 @@ class population(object):
 			ax.set_xlim(self.phenoSpace)
 			plt.show()
 
+	def reproduce(self, ngenerations, agentBased=True,):
+		'''
+		agentBased: tells if the simulation should be made with an agent-based
+			model. otherwise, it will use analytical calculations
+		'''
+		if agentBased:
+			offspring = deepcopy(self)
+			m = offspring.m
+			n = offspring.n
+			v_genData=np.zeros((ngenerations, n+1))
+			v_phen = offspring.phenotypes #self.mtx.sum(axis=1)
+			unique, counts = np.unique(v_phen, return_counts=True)
+			#np.asarray((unique, counts/m)).T
+			
+			#v_genData[0,(unique).astype(int)] = counts/m
+			#for g in range(1,ngenerations):
+			for g in range(0,ngenerations):
+				print('generation {0}'.format(g))
+				v_phen = offspring.phenotypes
+				v_fitn = offspring.relativeFitnessValues[:,np.newaxis]
+
+
+				v_pmatch = (v_fitn*v_fitn.T).flatten()[:]
+				v_couples = np.random.choice(m**2, m, p=v_pmatch)
+				v_couples = np.array(np.unravel_index(v_couples, (m,m)))
+				mtx_child = np.zeros((m,n))
+				for i in range(m):
+					recomb = np.random.choice((0,1),n)
+					pA = offspring.mtx[v_couples[0,i],:]
+					pB = offspring.mtx[v_couples[1,i],:]
+					mtx_child[i,:] = np.logical_or(np.logical_and(recomb,pA),np.logical_and(np.logical_not(recomb),pB))+0
+				#
+				offspring.mtx=mtx_child
+				#v_phen_child = offspring.phenotypes
+				#unique, counts = np.unique(v_phen_child, return_counts=True)
+				#pos = (unique - offspring.phenoSpace[0])*offspring.nloci/np.diff(offspring.phenoSpace)[0] 
+				#np.asarray((unique, counts/m)).T
+				#v_genData[g,(pos).astype(int)] = counts/m
+				#offspring.history_append(v_genData)
+			
+			return(offspring)
+
+
+	'''
 	def sexualPreference(self,x,y,k=1):
-		return x*y*0.+1.
+		return x*y*0.+1. #'panmictic' by default
 
 	def set_sexualPreference(self, func):
 		if func == 'panmictic':
@@ -187,7 +251,7 @@ class population(object):
 	def mutate(self, m=0.001):
 		mutations = np.random.choice((0,1),(self.nindivs,self.nloci), p=(1-m, m))
 		self.mtx = np.logical_xor(mutations, self.mtx)
-
+	
 	def makeChildren(self,k, mutRate=0):
 		children = np.zeros((self.nindivs,self.nloci))
 		#pA = np.array([self.phenotypes]*self.nindivs).flatten()
@@ -236,7 +300,7 @@ class population(object):
 
 	def avgPhenotype(self):
 		return self.phenotypes.sum()/self.nindivs
-
+	'''
 
 
 

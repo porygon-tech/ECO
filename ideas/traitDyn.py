@@ -13,12 +13,12 @@ import matplotlib.pyplot as plt
 
 alpha = 0.2 # prey growth rate
 beta  = 0.2 # predation rate
-gamma = 0.2 # predator death rate
+gamma = 0.1 # predator death rate
 delta = 0.2 # predator growth rate
 
 x, y = np.meshgrid(np.arange(0, 3, 0.1), np.arange(0, 3, 0.1))
-dx =   x - x * y
-dy = - y + x * y
+dx =   alpha * x - beta  * x * y
+dy = - gamma * y + delta * x * y
 
 fig = plt.figure(figsize = (12,9))
 plt.streamplot(x, y, dx, dy, density=2.5, linewidth=0.8, arrowsize=0.8)
@@ -26,16 +26,13 @@ plt.show()
 
 #%%
 
-x, y = np.meshgrid(np.arange(0, 3, 0.1), np.arange(0, 3, 0.1))
-
-dx = x - x * y
-dy = - y + x * y
-
 def fdx(x,y):
-    return x - x * y
+    global alpha, beta
+    return alpha * x - beta  * x * y
 
 def fdy(x,y):
-    return - y + x * y
+    global gamma, delta
+    return - gamma * y + delta * x * y
 
 time_delta=0.01
 duration=5
@@ -55,3 +52,8 @@ for i in range(1,ntimesteps):
 fig = plt.figure(figsize = (12,9))
 plt.streamplot(x, y, dx, dy, density=2.5, linewidth=0.8, arrowsize=0.8)
 plt.show()
+
+
+
+
+-3 * (x - a) * (x - (a + b) / 2) * (x - b)
