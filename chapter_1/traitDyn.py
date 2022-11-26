@@ -57,3 +57,26 @@ plt.show()
 
 
 -3 * (x - a) * (x - (a + b) / 2) * (x - b)
+
+
+
+a=2.5
+b=1.5
+c=4
+d=5
+k=1
+
+pS=(2,6)
+
+
+x, y = np.meshgrid(np.arange(0, 6, 0.1), np.arange(0, 6, 0.1))
+dx = + 2*b*(x-y)*np.e**(-b*(x-y)**2) + c*(d**(pS[0]-k*x)-d**(k*x-pS[1])) 
+dy = - 2*a*(y-x)*np.e**(-a*(y-x)**2)
+
+fig = plt.figure(figsize = (12,9))
+plt.streamplot(x, y, dx, dy, density=2.5, linewidth=0.8, arrowsize=0.8)
+plt.show()
+
+
+
+

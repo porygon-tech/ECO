@@ -8,6 +8,7 @@ def bindist(n,k,p=0.5):
     return comb(n,k)*p**k*(1-p)**(n-k)
 
 def oc(v,n,i,j):
+    #prob of getting phenotype v from parent phenotypes i,j with n loci
     sumvar=0
     v=int(v)
     n=int(n)
@@ -33,6 +34,28 @@ def showdata(mat, color=plt.cm.gnuplot, symmetry=False):
         plt.imshow(mat.astype('float32'), interpolation='none', cmap=color)
     plt.colorbar()
     plt.show()
+
+def showsurf(mat, cmap=plt.cm.gnuplot, type = 'surf', zlim=None):
+    fig = plt.figure(); ax = fig.add_subplot(projection='3d')
+    x = np.arange(mat.shape[0])
+    y = np.arange(mat.shape[1])
+    gx,gy = np.meshgrid(x,y)
+    x, y = gx.flatten(), gy.flatten()
+    z=mat.flatten()
+    
+    if type == 'surf':
+        if zlim:
+            ax.axes.set_zlim3d(bottom=zlim[0], top=zlim[1]) 
+        surf = ax.plot_trisurf(x,y,z, cmap=cmap, linewidth=0,antialiased = True)
+        fig.colorbar(surf)
+        plt.show()
+    elif type == 'scatter':
+        if zlim:
+            ax.axes.set_zlim3d(bottom=zlim[0], top=zlim[1]) 
+        scat = ax.scatter3D(x,y,z, c=z, cmap=cmap)
+        fig.colorbar(scat)
+        plt.show()
+
 
 def showF3D(f,type='surf', rangeX=(-1,1),rangeY=(-1,1),res=20,zlim=None,cmap='jet'):
     resX=res
@@ -88,9 +111,13 @@ def oc2 (i,j):
     return oc(v,n,i,j)
 
 #showF3D(oc2, rangeX=(0,nloci),rangeY=(0,nloci),zlim=(0,1),res=int(nloci/4))
-showF3D(oc2, rangeX=(0,nloci),rangeY=(0,nloci),zlim=(0,0.5),res=int(nloci),type='map')
-showF3D(oc2, rangeX=(0,nloci),rangeY=(0,nloci),             res=int(nloci),type='map')
-showF3D(oc2, rangeX=(0,nloci),rangeY=(0,nloci),zlim=(0,0.000000001),res=int(nloci),type='map',cmap='jet')
+showF3D(oc2, rangeX=(0,nloci),rangeY=(0,nloci),zlim=(0,0.5),res=int(nloci+1),type='map')
+showF3D(oc2, rangeX=(0,nloci),rangeY=(0,nloci),             res=int(nloci+1),type='map')
+showF3D(oc2, rangeX=(0,nloci),rangeY=(0,nloci),zlim=(0,0.000000001),res=int(nloci+1),type='map',cmap='jet')
+
+
+#%%
+
 
 
 #%%
@@ -105,7 +132,7 @@ v=50
 
 rangeX=(0,nloci)
 rangeY=(0,nloci)
-res=nloci
+res=nloci+1
 zlim=(0,1)
 resX=res
 resY=res
@@ -193,14 +220,6 @@ ax.plot(np.arange(series.size),parabolic(np.arange(series.size), p_pars[0],p_par
 plt.show()
 
 #%%
-
-
-
-
-
-
-
-
 
 
 
@@ -295,6 +314,7 @@ ax.plot(np.arange(series.size),series)
 ax.plot(np.arange(series.size),parabolic(np.arange(series.size), p_pars[0],p_pars[1],p_pars[2]))
 plt.show()
 
+#%%
 
 
 
@@ -332,26 +352,174 @@ plt.show()
 
 
 
+#%% OC TENSOR GENERATION
+nloci=50
+n=nloci
+nstates=nloci+1
+x = np.arange(nstates)
+y = np.arange(nstates)
+gx,gy = np.meshgrid(x,y)
+x, y = gx.flatten(), gy.flatten()
+
+n_list=np.repeat(nloci,nstates**2)
+oc_tensor = np.zeros((nstates,nstates,nstates))
+
+#
+for v in range(nstates):
+    print('v='+str(v))
+    v_list=np.repeat(v,nstates**2)
+    z = list(map(oc, v_list,n_list,x,y))
+    mat=np.array(z).reshape((nstates,nstates)).astype('float32')
+    oc_tensor[v,...] = mat[np.newaxis,...]
+
+
+#%% PLOT 1
+
+cx,cy,cz = list(map(np.ndarray.flatten, np.meshgrid(np.arange(nstates),np.arange(nstates),np.arange(nstates))))
+
+fig = plt.figure(); ax = fig.add_subplot(projection='3d')
+scat = ax.scatter3D(cz,cx,cy, c=oc_tensor.flatten(),alpha=0.3, s=15,cmap='gnuplot')
+fig.colorbar(scat)
+plt.show()
+
+
+#%% PLOT 2
+
+fig = plt.figure(); ax = fig.add_subplot(projection='3d')
+scat = ax.scatter3D(cz,cx,cy, c=(1-10**(-10*oc_tensor)).flatten(),alpha=0.9, s=40,cmap='gnuplot')
+fig.colorbar(scat)
+plt.show()
+
+
+#%%
+
+
+showdata((1-10**(-5*oc_tensor))[17,...])
 
 
 
 
+#%% NORMAL PARAMS FITTING FOR FIXED v
+v=30
+mat=oc_tensor[v,...]
+showdata(mat)
+
+bounds = np.array(((0, nloci),
+                   (0, np.inf),
+                   (0, np.inf)))
+
+parlist = np.zeros((1,3))
+covlist = np.zeros((1,3,3))
+
+for i in range(nstates):
+    slicedata = mat[i,:]
+    pars, cov = curve_fit(f = normMult,
+                      xdata = np.arange(slicedata.size),
+                      ydata = slicedata,
+                      p0 = [nstates/2,1,1],
+                      bounds = bounds.T,
+                      check_finite = True)
+
+    parlist = np.append(parlist,pars[np.newaxis,:], axis=0)
+    covlist = np.append(covlist, cov[np.newaxis,:], axis=0)
+
+parlist = parlist[1:]
+covlist = covlist[1:]
+showlist(parlist)
+showlist(parlist[:,1])
+showlist(parlist[:,2])
+
+
+#%% ALL NORMAL PARAMS FITTING FOR ALL v,i
+bounds = np.array(((0, nloci),
+                   (0, np.inf),
+                   (0, np.inf)))
+
+museries=np.zeros((nstates,nstates)) #v,i
+sigmaseries=np.zeros((nstates,nstates)) #v,i
+kseries=np.zeros((nstates,nstates)) #v,i
+
+for v in range(nstates):
+    print(v)
+    z = list(map(oc2, x,y))
+    mat=oc_tensor[v,...]
+        
+    parlist = np.zeros((1,3))
+    covlist = np.zeros((1,3,3))
+    
+    for i in range(nstates):
+        slicedata = mat[i,:]
+        pars, cov = curve_fit(f = normMult,
+                          xdata = np.arange(slicedata.size),
+                          ydata = slicedata,
+                          p0 = [nstates/2,1,1],
+                          bounds = bounds.T,
+                          check_finite = True)
+    
+        parlist = np.append(parlist,pars[np.newaxis,:], axis=0)
+        covlist = np.append(covlist, cov[np.newaxis,:], axis=0)
+    
+    parlist = parlist[1:]
+    covlist = covlist[1:]
+    
+    museries[v,:]=parlist[:,0]
+    sigmaseries[v,:]=parlist[:,1]
+    kseries[v,:]=parlist[:,2]
+
+#%%
+showdata(sigmaseries)
+showdata(museries)
+showdata(kseries)
+
+def augment(x,a=10,b=5):
+    return 1-a**(-b*x)
 
 
 
+#%% PARABOLIC FITTING FOR ALL SIGMA OF v,i
+def parabolic(x, a, b, c):
+    return a*x**2+b*x+c
+
+v=40
+
+series=sigmaseries[v,:]
+showlist(list(series))
+
+sigmacut=sigmaseries.copy()
+sigmacut[np.where(sigmacut>20)]=np.NaN
+showdata(sigmacut,color='jet')
+showsurf(sigmacut,cmap='jet')
+showsurf(sigmacut,cmap='jet', type='scatter')
+#%%
 
 
+p_pars, p_cov = curve_fit(f = parabolic,
+                  xdata = np.arange(series.size),
+                  ydata = series,
+                  p0 = [1,1,1])
+
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.plot(np.arange(series.size),series)
+ax.plot(np.arange(series.size),parabolic(np.arange(series.size), p_pars[0],p_pars[1],p_pars[2]))
+plt.show()
 
 
+'''
+showlist(sigmaseries[int(nloci/2)-3,:])
 
-
-
-
-
-
-
-
-
-
-
-
+thres=.2
+parabolic_params_list = np.zeros((nloci,3))
+for v in range(int(nloci*.1),int(nloci*.9)):
+    lb = 0 if v < nloci/2-nloci*thres else v-int(nloci/2-nloci*thres)
+    ub = v+nloci-int(nloci/2+nloci*thres) if v < nloci/2+nloci*thres else nloci
+    print(v,lb,ub)
+    
+    series=sigmaseries[v,lb:ub]
+    series=sigmaseries[v,:]
+    p_pars, p_cov = curve_fit(f = parabolic,
+                      xdata = np.arange(series.size),
+                      ydata = series,
+                      p0 = [1,1,1])
+    
+    parabolic_params_list[v,:]=p_pars
+''' 
