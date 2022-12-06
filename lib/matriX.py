@@ -86,6 +86,94 @@ def is_Dstable(A, maxiter=1000, df0='rand', tol=10e-3, ntries=5, fullresult=Fals
             raise Exception(minV['message']) 
 
 #%%
+
+def nullnet(B):
+    '''
+    CAUTION: may work faster on the transpose matrix.
+    if matrix dimensions are very different, make sure that m is the largest one
+    '''
+    m,n = B.shape
+    B=B[:,np.argsort(B.sum(axis=0))[::-1]]
+    B=B[np.argsort(B.sum(axis=1))[::-1],:]
+    
+    r = list(map(tuple, list(map(np.random.choice, [range(n)]*m, B.sum(axis=1), [False]*m))))
+    
+    Br = np.zeros((m,n))
+
+    for i in range(m):
+        Br[(tuple([i]*len(r[i])),r[i])] = 1
+    
+    colsums = Br.sum(axis=0) - B.sum(axis=0)
+    initial = (colsums > 0).sum()
+    while (colsums > 0).sum() > 0:
+        Br=Br[:,np.argsort(Br.sum(axis=0))[::-1]] #sort columns 
+        #Br=Br[np.argsort(Br.sum(axis=1))[::-1],:] # no row sorting needed
+        
+        colsums = Br.sum(axis=0) - B.sum(axis=0) #;colsums
+        
+        donor    = np.where(colsums > 0)[0] [-1] #;colsums[donor]
+        acceptor = np.where(colsums < 0)[0] [ 0] #;colsums[acceptor]
+        '''
+        donor    = len(colsums) - 1
+        acceptor = 0
+        '''
+ #       transfer_pos = np.array([])
+        
+        transfer_pos = np.where(np.logical_and((Br[:,donor]==1), (Br[:,acceptor]==0)))[0]
+        
+        while transfer_pos.size == 0: #this loop avoids problems when repeated columns
+            if   colsums[donor-1] > 0:
+                donor -= 1
+            elif colsums[acceptor+1] < 0:
+                acceptor += 1
+            transfer_pos = np.where(np.logical_and((Br[:,donor]==1), (Br[:,acceptor]==0)))[0]
+        
+            
+        row = np.random.choice(transfer_pos, int(min(abs(colsums[donor]),abs(colsums[acceptor]))))
+        
+        Br[row, donor    ] = 0
+        Br[row, acceptor ] = 1
+        
+        #print(str(donor) + ' -> ' + str(acceptor) + '. left: ' + str(int(colsums[colsums>0].sum())))
+        colsums = Br.sum(axis=0) - B.sum(axis=0)
+        #print('left: ' + str(int(np.abs(colsums).sum())))
+    return(Br)
+
+
+
+def generateWithoutUnconnected(m,n,c=0.125): 
+    #c is the expected connectance
+    b=np.random.choice((0,1),(m,n), p=(1-c, c))
+    #showdata(b)
+
+    zero_cols=np.where(b.sum(0)==0)[0];np.random.shuffle(zero_cols)
+    zero_rows=np.where(b.sum(1)==0)[0];np.random.shuffle(zero_rows)
+    
+    newb = b.copy()
+    
+    dif = len(zero_rows)-len(zero_cols)
+    nreplaces=max(len(zero_rows),len(zero_cols))
+    
+    if dif < 0:
+        zero_rows = np.append(zero_rows,np.random.choice(zero_rows,-dif))
+    else:
+        zero_cols = np.append(zero_cols,np.random.choice(zero_cols, dif))
+        
+    newb[(zero_rows,zero_cols)] =1
+    #showdata(newb)
+    
+    for _ in range(nreplaces):
+        abundant = np.where(((newb.sum(1)>1)[:,np.newaxis]*(newb.sum(0)>1)[np.newaxis,:] == 1) * (newb==1)) #positions where rows and columns have more than a single entry and b==1
+        pos=np.random.choice(np.arange(len(abundant[0])),1)
+        newb[(abundant[0][pos],abundant[1][pos])]=0
+    
+    return newb
+
+
+
+
+#%%
+
 '''
 n=3
 A = np.random.rand(n,n)*5-2

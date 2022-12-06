@@ -91,13 +91,21 @@ def showF3D(f,type='surf', rangeX=(-1,1),rangeY=(-1,1),res=20,zlim=None,cmap='je
 
 def g(x,y):
     return np.sin(x) + np.cos(y)
-
+'''
 showF3D(g)
 showF3D(g,rangeX=(-5,5),rangeY=(-5,5))
 showF3D(g,rangeX=(-5,5),rangeY=(-5,5),res=40)
 showF3D(g,type='scatter', rangeX=(0,5),rangeY=(0,5))
+'''
+def norm(x, mu, sigma):
+    return 1 / (sigma * np.sqrt(2*np.pi)) * np.exp(-0.5 * ((x - mu) / sigma)**2)
+
+def normMult(x,mu,sigma,k):
+    return norm(x, mu, sigma)*k
 
 
+def augment(x,a=10,b=5):
+    return 1-a**(-b*x)
 #=======================================================================================================
 #%%
 
@@ -148,11 +156,7 @@ showdata(mat)
 slicedata = mat[10,:]
 showlist(slicedata)
 #%%
-def norm(x, mu, sigma):
-    return 1 / (sigma * np.sqrt(2*np.pi)) * np.exp(-0.5 * ((x - mu) / sigma)**2)
 
-def normMult(x,mu,sigma,k):
-    return norm(x, mu, sigma)*k
 #%%
 bounds = np.array(((0, nloci),
                    (0, np.inf),
@@ -386,7 +390,8 @@ plt.show()
 #%% PLOT 2
 
 fig = plt.figure(); ax = fig.add_subplot(projection='3d')
-scat = ax.scatter3D(cz,cx,cy, c=(1-10**(-10*oc_tensor)).flatten(),alpha=0.9, s=40,cmap='gnuplot')
+#scat = ax.scatter3D(cz,cx,cy, c=(1-10**(-10*oc_tensor)).flatten(),alpha=0.9, s=40,cmap='gnuplot')
+scat = ax.scatter3D(cz,cx,cy, c=augment(oc_tensor).flatten(),alpha=0.9, s=10,cmap='gnuplot')
 fig.colorbar(scat)
 plt.show()
 
@@ -394,12 +399,15 @@ plt.show()
 #%%
 
 
-showdata((1-10**(-5*oc_tensor))[17,...])
+showdata((1-10**(-5*oc_tensor))[25,...])
 
+showdata(augment(oc_tensor)[20,...])
 
+v=25; showdata(oc_tensor[v,:int(v),:])
 
 
 #%% NORMAL PARAMS FITTING FOR FIXED v
+'''
 v=30
 mat=oc_tensor[v,...]
 showdata(mat)
@@ -428,7 +436,7 @@ covlist = covlist[1:]
 showlist(parlist)
 showlist(parlist[:,1])
 showlist(parlist[:,2])
-
+'''
 
 #%% ALL NORMAL PARAMS FITTING FOR ALL v,i
 bounds = np.array(((0, nloci),
@@ -440,8 +448,7 @@ sigmaseries=np.zeros((nstates,nstates)) #v,i
 kseries=np.zeros((nstates,nstates)) #v,i
 
 for v in range(nstates):
-    print(v)
-    z = list(map(oc2, x,y))
+    print('v='+str(v))
     mat=oc_tensor[v,...]
         
     parlist = np.zeros((1,3))
@@ -471,8 +478,6 @@ showdata(sigmaseries)
 showdata(museries)
 showdata(kseries)
 
-def augment(x,a=10,b=5):
-    return 1-a**(-b*x)
 
 
 
@@ -480,16 +485,24 @@ def augment(x,a=10,b=5):
 def parabolic(x, a, b, c):
     return a*x**2+b*x+c
 
-v=40
+def deg3(x, a, b, c, d):
+    return a*x**3+b*x**2+c*x+d
 
-series=sigmaseries[v,:]
-showlist(list(series))
 
 sigmacut=sigmaseries.copy()
 sigmacut[np.where(sigmacut>20)]=np.NaN
 showdata(sigmacut,color='jet')
 showsurf(sigmacut,cmap='jet')
 showsurf(sigmacut,cmap='jet', type='scatter')
+
+
+v=20
+showlist(sigmacut[:,-1])
+
+
+series=sigmaseries[v,:]
+showlist(list(series))
+
 #%%
 
 
@@ -523,3 +536,176 @@ for v in range(int(nloci*.1),int(nloci*.9)):
     
     parabolic_params_list[v,:]=p_pars
 ''' 
+
+
+#%%
+
+def avg(k,x,n):
+    sumvar = 0
+    for v in range(n+1):
+        sumvar += comb(k-2*x, v-x)
+    return sumvar
+
+
+
+def f(x, a,b,c):
+    return  c / a**(b**np.log(x))
+
+
+def fLL(x, a,b,c):
+    return  np.log(c / a**(b**x))
+
+
+#%%
+
+n=50
+k=20 # i+j
+nstates=n+1
+x=np.arange(nstates)
+l=list(map(avg, np.repeat(k,nstates),x, np.repeat(n,nstates)))
+#%%
+bounds = np.array(((0, np.inf),
+                   (0, np.inf),
+                   (0, np.inf)))
+
+pars_powL, cov_powL = curve_fit(f = f,
+                      xdata = x[1:int(nstates/2)],
+                      ydata = l[1:int(nstates/2)],
+                      p0 = [4.,2.7,15e20],
+                      #bounds = bounds.T,
+                      check_finite = False)
+
+print(pars_powL)
+#%%
+l
+list(map(int,np.round(f(x,pars_powL[0],pars_powL[1],pars_powL[2]),0)))
+
+#%%
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.plot(x,l)
+ax.plot(x,f(x,pars_powL[0],pars_powL[1],pars_powL[2]))
+plt.show()
+
+#%%
+
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.plot(x,l)
+ax.plot(x,f(x,pars_powL[0],pars_powL[1],pars_powL[2]))
+ax.set_xscale('log')
+ax.set_yscale('log')
+plt.show()
+
+
+#%%
+
+
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.plot(x,f(x,4,2.7,15e20))
+ax.plot(x,list(map(avg, np.repeat(10,nstates),x, np.repeat(n,nstates))))
+ax.plot(x,list(map(avg, np.repeat(20,nstates),x, np.repeat(n,nstates))))
+ax.plot(x,list(map(avg, np.repeat(30,nstates),x, np.repeat(n,nstates))))
+ax.plot(x,list(map(avg, np.repeat(40,nstates),x, np.repeat(n,nstates))))
+ax.plot(x,list(map(avg, np.repeat(50,nstates),x, np.repeat(n,nstates))))
+ax.plot(x,list(map(avg, np.repeat(70,nstates),x, np.repeat(n,nstates))))
+ax.plot(x,list(map(avg, np.repeat(90,nstates),x, np.repeat(n,nstates))))
+ax.plot(x,list(map(avg, np.repeat(100,nstates),x, np.repeat(n,nstates))))
+ax.set_xscale('log')
+ax.set_yscale('log')
+plt.show()
+
+#%%
+
+a=pars_powL[0]
+b=pars_powL[1]
+c=pars_powL[2]
+
+np.round(f(1,a,b,c),0)
+l[1]
+f(np.e,a,b,c)
+f(np.log(np.log(c)/np.log(a))/np.log(b),a,b,c)
+
+np.log(np.log(c)/np.log(a))/np.log(b)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%%
+n=50
+nstates=n+1
+
+mat=np.zeros((nstates,nstates))
+oc_tensor_cut = oc_tensor.copy()
+
+for i in range(nstates):
+    for v in range(nstates):
+        if not 1/2*i+n/8 < v < 1/2*i+n/8*3:
+            oc_tensor_cut[v,i,:] = np.NAN
+
+
+
+
+showdata(sigmacut*mat)
+
+fig = plt.figure(); ax = fig.add_subplot(projection='3d')
+#scat = ax.scatter3D(cz,cx,cy, c=(1-10**(-10*oc_tensor)).flatten(),alpha=0.9, s=40,cmap='gnuplot')
+scat = ax.scatter3D(cz,cx,cy, c=augment(oc_tensor_cut).flatten(),alpha=0.9, s=10,cmap='gnuplot')
+fig.colorbar(scat)
+plt.show()
+
+
+
+
+#%%  
+#*bindist(i + j - 2*x, v - x)
+
+def hypergeometricPMF(N,K,n,k):
+    return comb(K,k) * comb(N - K, n - k) / comb(N,n)
+
+def convo(v,n,i,j):
+    #prob of getting phenotype v from parent phenotypes i,j with n loci
+    sumvar=0
+    v=int(v)
+    n=int(n)
+    i=int(i)
+    j=int(j)
+    for x in range(i+1):
+        sumvar+=hypergeometricPMF(n,i,j,x)*bindist(i + j - 2*x, v - x)
+    return sumvar
+
+
+n=100
+nstates=n+1
+
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.plot(np.arange(nstates),hypergeometricPMF(n,20,10,np.arange(nstates)))
+plt.show()
+
+
+
+hypergeometricPMF(n,i,j,x)*bindist(i + j - 2*x, np.arange(nstates) - x)
+
+i=30
+j=20
+x=3
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.plot(np.arange(nstates),hypergeometricPMF(n,i,j,x)*bindist(i + j - 2*x, np.arange(nstates) - x))
+plt.show()

@@ -86,3 +86,9 @@ for _ in range(20):
 
 
 
+b=generateWithoutUnconnected(100,52,0.025)
+b.sum(1)
+showdata(b)
+b.sum()/(b.shape[0]*b.shape[1])
+
+
