@@ -691,7 +691,19 @@ def convo(v,n,i,j):
         sumvar+=hypergeometricPMF(n,i,j,x)*bindist(i + j - 2*x, v - x)
     return sumvar
 
+def averageTest(n,i,j):
+    #prob of getting phenotype v from parent phenotypes i,j with n loci
+    sumvar=0
+    for x in range(i+1):
+        #if i+j-2*x >= 0 and j-x >= 0 and n+x-i-j >= 0:
+        if i+j-2*x >= 0 :
+            #sumvar+= np.math.factorial(i+j-2*x)/(np.math.factorial(i-x)*np.math.factorial(j-x)*np.math.factorial(x)*np.math.factorial(n+x-i-j))
+            sumvar+=hypergeometricPMF(n,i,j,x)*np.math.factorial(i+j-2*x)
+    return sumvar
+    
 
+
+#%%  
 n=100
 nstates=n+1
 
@@ -709,3 +721,24 @@ x=3
 fig = plt.figure(); ax = fig.add_subplot(111)
 ax.plot(np.arange(nstates),hypergeometricPMF(n,i,j,x)*bindist(i + j - 2*x, np.arange(nstates) - x))
 plt.show()
+
+
+
+
+#%%  
+
+n=42
+nstates=n+1
+mat=np.zeros((nstates,nstates))
+i=np.arange(nstates)
+
+for j in range(nstates):
+    mat[:,j] = list(map(averageTest, np.repeat(n,nstates),i, np.repeat(j,nstates)))
+    
+showdata(mat)
+
+#%%  
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.plot(i,list(map(averageTest, np.repeat(n,nstates),i, np.repeat(5,nstates))))
+plt.show()
+
