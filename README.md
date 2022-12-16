@@ -20,3 +20,7 @@ As a stochastic and dynamical process, population may converge to different attr
 
 ![A](gallery/disrupt_fail.png "A")
 ![B](gallery/disrupt_succ.png "B")
+
+## Credits
+
+https://raw.githubusercontent.com/tsakim/nestedness/master/nestedness_calculator.py

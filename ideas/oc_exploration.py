@@ -742,3 +742,83 @@ fig = plt.figure(); ax = fig.add_subplot(111)
 ax.plot(i,list(map(averageTest, np.repeat(n,nstates),i, np.repeat(5,nstates))))
 plt.show()
 
+
+
+
+
+
+
+
+
+#%%  
+
+
+
+
+def bindist(n,k,p=0.5):
+    return comb(n,k)*p**k*(1-p)**(n-k)
+
+
+
+skw=0.3
+w = []
+for i in range(n+1):
+    parent.append(bindist(n,i,skw))
+    #parent.append(1/(n+1))
+pa
+def showfunc(f,xlim=(-5,5),definition=100, **kwargs):
+            x= np.linspace(xlim[0],xlim[1],definition)
+            fig = plt.figure(); ax = fig.add_subplot(111)
+            ax.plot(x,f(x,**kwargs))
+            plt.show()
+            
+            
+
+ntimesteps = 100
+n=50
+nstates=n+1
+skw=0.7
+#------------------------
+def f(i):
+    #return 1+n-i
+    return 2**(-i/2)
+    #return n**2-i**2
+
+v = np.zeros((ntimesteps, nstates,1))
+l = np.zeros((nstates,1))
+for i in range(nstates):
+    v[0,i] = bindist(n,i,skw)
+    
+for i in range(nstates):
+    l[i] = f(i)
+
+#------------------------
+
+showlist(v[0])
+showlist(l)
+(s*l).sum()
+n*(1-skw)+1
+
+
+
+
+showlist(w)
+
+
+oc_tensor[k,i,j]
+
+
+w = v[0]*l
+for k in range(nstates):
+    v[1,k] = (w.T @ oc_tensor[k,...] @ w) / w.sum()**2
+
+#------------------------
+
+for t in range(1,ntimesteps):
+    w = v[t-1]*l
+    v[t] = ((w.T @ oc_tensor @ w) / w.sum()**2)[:,0]
+
+oc_tensor[v,i,j]
+
+
+

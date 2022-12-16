@@ -61,7 +61,7 @@ showdata(b)
 #%%
 #N=b.shape[0]
 N=20 # number of species
-c=0.2 # expected connectance
+c=0.5 # expected connectance
 ntimesteps=10000
 
 pS=[2,2.5] # phenotypic space
@@ -74,11 +74,17 @@ initial_l=np.tril(initial_l,0)+np.tril(initial_l,0).T
 showdata(initial_l)
 print("connectance of " + str(initial_l.sum()/N**2) + ", expected " + str(c))
 #%%
-mechanism_type = 3 # 1: 'trait matching' or 2: 'exploitation barrier'
-xi_S=0.5 # level of environmental selection (from 0 to 1)
-xi_d=1-xi_S # level of selection imposed by resource species (from 0 to 1)
-epsilon = 0.1 # threshold, assumed to be fixed and identical for all species
-phi=0.25 # slope of the selection gradient
+mechanism_type = 4
+# 1: 'mutualism + trait matching' or 
+# 2: 'mutualism + exploitation barrier' or 
+# 3: 'antagonism + trait matching (trait mismatching)' or
+# 4: 'antagonism + exploitation barrier' 
+
+xi_S=0.2 # level of environmental selection (from 0 to 1).
+xi_d=1-xi_S # level of selection imposed by resource species (from 0 to 1).
+alpha= 100 # strength of the mechanism. Controls how the difference in species traits affects the probability of pairwise interaction.
+epsilon = 0.5 # threshold, assumed to be fixed and identical for all species.
+phi=0.25 # slope of the selection gradient.
 
 #-------------------------------
 z=np.zeros((ntimesteps,N)) # trait values
@@ -110,9 +116,10 @@ if mechanism_type == 1:
         z[t,:] = z[t-1,:] + phi*(S[t-1,:]+M[t-1,:,:].sum(1))
         zdiffs = (z[t,:]*np.ones((N,1))).T - z[t,:]*np.ones((N,1))
         S[t,:] = xi_S*(theta-z[t,:])
-        p[t,:,:]=pM(zdiffs)
+        p[t,:,:]=pM(zdiffs,alpha)
         lxp=l[0,:,:]*p[t,:,:]
         a[t,:,:] = lxp/(lxp-np.diag(np.diag(lxp))).sum(1)[:,np.newaxis]*np.ones((1,N))
+        
         M[t,:,:]=xi_d*a[t,:,:]*zdiffs.T
        
     showlist((S+M.sum(2))[:50]) # all differentials converge to zero when the system reaches a fixed point
@@ -123,26 +130,45 @@ elif mechanism_type == 2:
         z[t,:] = z[t-1,:] + phi*(S[t-1,:]+B[t-1,:,:].sum(1))
         zdiffs = (z[t,:]*np.ones((N,1))).T - z[t,:]*np.ones((N,1))
         S[t,:] = xi_S*(theta-z[t,:])
-        p[t,:,:]=pB(zdiffs)
+        p[t,:,:]=pB(zdiffs,alpha)
         lxp=l[0,:,:]*p[t,:,:]
         a[t,:,:] = lxp/(lxp-np.diag(np.diag(lxp))).sum(1)[:,np.newaxis]*np.ones((1,N))
+        
         B[t,:,:]=xi_d*a[t,:,:]*(zdiffs.T+epsilon)
         
     showlist((S+B.sum(2))[:50]) # all differentials converge to zero when the system reaches a fixed point
     
 elif mechanism_type == 3:
     u[0,:,:] = (np.abs(zdiffs) <= epsilon) + 0.
-    M[0,:,:]=xi_d*a[0,:,:]*u[0,:,:]*zdiffs.T + ((zdiffs.T > 0)*2.-1.)*epsilon
+    M[0,:,:]=xi_d*a[0,:,:]*u[0,:,:]*(zdiffs.T + ((zdiffs.T > 0)*2.-1.)*epsilon)
     for t in range(1,ntimesteps):
         z[t,:] = z[t-1,:] + phi*(S[t-1,:]+M[t-1,:,:].sum(1))
-        zdiffs = (z[t,:]*np.ones((N,1))).T - z[t,:]*np.ones((N,1)); u[t,:,:] = (np.abs(zdiffs)<=epsilon)+ 0
+        zdiffs = (z[t,:]*np.ones((N,1))).T - z[t,:]*np.ones((N,1))
         S[t,:] = xi_S*(theta-z[t,:])
-        p[t,:,:]=pM(z[t,:]*np.ones((N,1)), (z[t,:]*np.ones((N,1))).T)
+        p[t,:,:]=pM(zdiffs,alpha)
         lxp=l[0,:,:]*p[t,:,:]
         a[t,:,:] = lxp/(lxp-np.diag(np.diag(lxp))).sum(1)[:,np.newaxis]*np.ones((1,N))
-        M[t,:,:]=xi_d*a[t,:,:]*u[t,:,:]*zdiffs.T + ((zdiffs.T > 0)*2-1)*epsilon
+        
+        u[t,:,:] = (np.abs(zdiffs)<=epsilon)+ 0.
+        M[t,:,:]=xi_d*a[t,:,:]*u[t,:,:]*(zdiffs.T + ((zdiffs.T > 0)*2-1)*epsilon)
        
     showlist((S+M.sum(2))[:50]) # all differentials converge to zero when the system reaches a fixed point
+
+elif mechanism_type == 4:
+    u[0,:,:] = (np.abs(zdiffs) <= epsilon) + 0.
+    B[0,:,:]=xi_d*a[0,:,:]*u[0,:,:]*(zdiffs.T + epsilon)
+    for t in range(1,ntimesteps):
+        z[t,:] = z[t-1,:] + phi*(S[t-1,:]+B[t-1,:,:].sum(1))
+        zdiffs = (z[t,:]*np.ones((N,1))).T - z[t,:]*np.ones((N,1))
+        S[t,:] = xi_S*(theta-z[t,:])
+        p[t,:,:]=pB(zdiffs,alpha)
+        lxp=l[0,:,:]*p[t,:,:]
+        a[t,:,:] = lxp/(lxp-np.diag(np.diag(lxp))).sum(1)[:,np.newaxis]*np.ones((1,N))
+        
+        u[t,:,:] = (np.abs(zdiffs)<=epsilon)+ 0.
+        B[t,:,:]=xi_d*a[t,:,:]*u[t,:,:]*(zdiffs + epsilon)
+       
+    showlist((S+B.sum(2))[:50]) # all differentials converge to zero when the system reaches a fixed point
 
 
 
@@ -165,6 +191,9 @@ from community import best_partition # pip3 install python-louvain
 from collections import defaultdict
 from networkx.algorithms.community.quality import modularity
 
+from nestedness_calculator import NestednessCalculator
+nodf = lambda x: NestednessCalculator(x).nodf(x)
+#%%
 def groupnodes(G):
     part = best_partition(G)
     inv = defaultdict(list)
@@ -181,15 +210,64 @@ def mod(g):
         mod = list(map(modularity, g, comms))
     return(mod)
 
-#%%
+def renormalize(vlist):
+    x=vlist
+    b=np.max(x)
+    a=np.min(x)
+    x=(x-a)/(b-a)
+    return x
+
+def spectralRnorm(a):
+    a_norm = renormalize(a)
+    #L = sparse.csr_matrix(a_norm)
+    #sR = sparse.linalg.eigs(a_norm,k=1,which='LM', return_eigenvectors=False)
+    sR = np.max(np.real(np.linalg.eigvals(a_norm)))/np.sqrt((a>0).sum())
+    return(sR)
+
+#%% modularity calculation
 G = nx.from_numpy_matrix(a[3,:,:],parallel_edges=False)
 nx.draw(G)
 nx.average_clustering(G)
 mod(G)
 
-
-G = [a[t,:,:] for t in range(1,ntimesteps)]
+#%%
+G = [a[t,:,:] for t in range(1,200)]
 G = list(map(nx.from_numpy_matrix, G))
-modlist = mod(G)
-showlist(modlist[:200])
+mod_list = mod(G)
+showlist(mod_list)
 
+#%% nestedness
+
+sR_list = list(map(spectralRnorm, [a[t,:,:] for t in range(1,200)]))
+sR_list_bin = list(map(spectralRnorm, [(a[t,:,:] > 0.1)+0 for t in range(1,200)]))
+showlist(sR_list_bin)
+showlist(sR_list)
+
+
+nodf_scores = list(map(nodf, [(a[t,:,:] > 0.1)+0 for t in range(1,200)]))
+showlist(nodf_scores)
+
+#%%
+
+g=nx.from_numpy_matrix(a[12,:,:],parallel_edges=False)
+pos = nx.spring_layout(g,scale=0.5)
+edges = g.edges()
+weights = [g[u][v]['weight'] for u,v in edges]
+degrees = np.array(g.degree)[:,1]
+
+
+palette1=plt.cm.summer #binary jet 
+palette2=plt.cm.Wistia_r
+edgecolors=list(map(plt.cm.colors.rgb2hex,list(map(palette1, renormalize(weights))))) # 1-renormalize(weights)
+nodecolors=list(map(plt.cm.colors.rgb2hex,list(map(palette2, renormalize(degrees)))))
+
+#nx.draw(g, width=weights*10, pos=pos, edge_color=edgecolors, node_size=0.7*degrees, node_color=nodecolors)
+#nx.draw(g, width=0.2+3*renormalize(weights), pos=pos, edge_color=edgecolors, node_size=2*degrees, node_color=nodecolors)
+
+
+fig, ax = plt.subplots()
+nx.draw(g, width=0.2+3*renormalize(weights), pos=pos, edge_color=edgecolors, node_size=10+60*renormalize(degrees), node_color=nodecolors)
+ax.set_facecolor('deepskyblue')
+ax.axis('off')
+fig.set_facecolor('black')
+plt.show()
