@@ -1,8 +1,10 @@
-
+#%% IMPORTS
 from scipy.special import comb  
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+
+
 #%%
 def bindist(n,k,p=0.5):
     return comb(n,k)*p**k*(1-p)**(n-k)
@@ -357,7 +359,15 @@ plt.show()
 
 
 #%% OC TENSOR GENERATION
-nloci=50
+from os import chdir
+from pathlib import Path
+import pickle5
+import bz2
+chdir('/home/roman/LAB/ECO') #this line is for Spyder IDE only
+root = Path(".")
+obj_path = root / 'data/obj'
+
+nloci=100
 n=nloci
 nstates=nloci+1
 x = np.arange(nstates)
@@ -376,6 +386,11 @@ for v in range(nstates):
     mat=np.array(z).reshape((nstates,nstates)).astype('float32')
     oc_tensor[v,...] = mat[np.newaxis,...]
 
+
+
+filename='oc_tensor_' + str(n) + '.obj'
+with bz2.BZ2File(obj_path / filename, 'wb') as f:
+    pickle5.dump(oc_tensor, f)
 
 #%% PLOT 1
 
@@ -652,6 +667,8 @@ np.log(np.log(c)/np.log(a))/np.log(b)
 n=50
 nstates=n+1
 
+
+
 mat=np.zeros((nstates,nstates))
 oc_tensor_cut = oc_tensor.copy()
 
@@ -750,6 +767,18 @@ plt.show()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 #%%  
 
 
@@ -758,14 +787,6 @@ plt.show()
 def bindist(n,k,p=0.5):
     return comb(n,k)*p**k*(1-p)**(n-k)
 
-
-
-skw=0.3
-w = []
-for i in range(n+1):
-    parent.append(bindist(n,i,skw))
-    #parent.append(1/(n+1))
-pa
 def showfunc(f,xlim=(-5,5),definition=100, **kwargs):
             x= np.linspace(xlim[0],xlim[1],definition)
             fig = plt.figure(); ax = fig.add_subplot(111)
@@ -774,14 +795,21 @@ def showfunc(f,xlim=(-5,5),definition=100, **kwargs):
             
             
 
-ntimesteps = 100
+#%%  
+
 n=50
 nstates=n+1
-skw=0.7
+filename='oc_tensor_' + str(n) + '.obj'
+with bz2.BZ2File(my_path / filename, 'rb') as f:
+	oc_tensor = pickle5.load(f)
+#%%  
 #------------------------
+skw=0.7
+ntimesteps = 200
+
 def f(i):
-    #return 1+n-i
-    return 2**(-i/2)
+    return 1+n-i
+    #return 2**(-i/2)
     #return n**2-i**2
 
 v = np.zeros((ntimesteps, nstates,1))
@@ -793,32 +821,129 @@ for i in range(nstates):
     l[i] = f(i)
 
 #------------------------
-
 showlist(v[0])
 showlist(l)
-(s*l).sum()
-n*(1-skw)+1
-
-
-
-
-showlist(w)
-
-
-oc_tensor[k,i,j]
-
-
 w = v[0]*l
-for k in range(nstates):
-    v[1,k] = (w.T @ oc_tensor[k,...] @ w) / w.sum()**2
-
+(w).sum()
+n*(1-skw)+1
+showlist(w)
+#%%  
+#oc_tensor[k,i,j]
+#for k in range(nstates):
+#    v[1,k] = (w.T @ oc_tensor[k,...] @ w) / w.sum()**2
 #------------------------
 
 for t in range(1,ntimesteps):
     w = v[t-1]*l
     v[t] = ((w.T @ oc_tensor @ w) / w.sum()**2)[:,0]
 
-oc_tensor[v,i,j]
+showdata(v)
+
+#%% 
+#------------------------
+v2 = np.zeros((ntimesteps, nstates,1))
+l2 = np.flip(l)
+
+showlist(v[-1])
+v2[0] = v[-1]
+for t in range(1,ntimesteps):
+    w2 = v2[t-1]*l2
+    v2[t] = ((w2.T @ oc_tensor @ w2) / w2.sum()**2)[:,0]
+
+showdata(np.append(v,v2,axis=0))
 
 
+#%% 
+
+def hgPMF_fit(k,N,K,n):
+    return comb(K,k) * comb(N - K, n - k) / comb(N,n)
+
+def nhgPMF_fit(k,N,K,r):
+    return  comb(k+r-1, k) * comb(N - r - k, K - k) / comb(N, K)
+
+
+
+
+
+bounds = np.array(((0, np.inf),
+                   (0, np.inf),
+                   (0, np.inf)))
+
+parlist = np.zeros((ntimesteps,3))
+covlist = np.zeros((ntimesteps,3,3))
+
+for t in range(ntimesteps):
+    slicedata = v[t,:][:,0]
+    m = np.sum(slicedata*np.arange(nstates))
+    K = nstates-1
+    N = np.round(K*3)
+    r = m*(N-K+1)/K
+    pars, cov = curve_fit(f = nhgPMF_fit,
+                      xdata = np.arange(nstates),
+                      ydata = slicedata,
+                      p0 = [N,K,r],
+                      bounds = bounds.T,
+                      check_finite = False)
+    
+    parlist[t]=pars
+    covlist[t]=cov
+
+    #parlist = np.append(parlist,pars[np.newaxis,:], axis=0)
+    #covlist = np.append(covlist, cov[np.newaxis,:], axis=0)
+
+#parlist = parlist[1:]
+#covlist = covlist[1:]
+
+
+#%%
+
+showlist(parlist)
+showlist(parlist[:,1])
+showdata(covlist[10])
+v_predict = np.zeros((ntimesteps, nstates,1))
+for t in range(ntimesteps):
+    v_predict[t] = nhgPMF_fit(*(np.append(np.arange(nstates)[:,np.newaxis], np.repeat(parlist[t,np.newaxis,:],nstates,axis=0),axis=1)).T)[:,np.newaxis]
+
+showdata(v_predict)
+showdata(v)
+showdata((v_predict-v)[5:30])
+
+#%%
+
+
+t=25
+slicedata = v[t,:][:,0]
+pars, cov = curve_fit(f = nhgPMF_fit,
+                  xdata = np.arange(nstates),
+                  ydata = slicedata,
+                  p0 = [np.round((nstates-1)*1.5),nstates-1,int(nstates/4)],
+                  bounds = bounds.T,
+                  check_finite = False)
+  
+
+showlist(slicedata)
+pred = nhgPMF_fit(np.arange(nstates),*pars)
+showlist(pred)
+showlist(nhgPMF_fit(np.arange(nstates),*[int(nstates*1.5),nstates,int(nstates/4)]))
+
+
+
+int(nstates/4)*nstates/(int(nstates*1.5)-nstates+1)
+
+#
+m=np.sum(slicedata*np.arange(nstates))
+K=nstates-1
+N=np.round(K*1.5)
+r = m*(N-K+1)/K
+showlist(nhgPMF_fit(np.arange(nstates),*[N,K,r]))
+
+#%%
+N=50
+K=31
+r=3
+nstates=K+1
+test = nhgPMF_fit(np.arange(nstates),*[N,K,r])
+showlist(test)
+m=np.sum(test*np.arange(nstates))
+r*K/(N-K+1)
 
