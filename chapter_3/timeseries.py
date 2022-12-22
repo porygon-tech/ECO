@@ -25,7 +25,7 @@ def showlist(l, distbins=False):
             ax.plot(np.arange(len(l)),list(l))
             plt.show()
 
-def showdata(mat, color=plt.cm.gnuplot, symmetry=False):
+def showdata(mat, color='magma', symmetry=False):
     mat = np.copy(mat)
     if symmetry:
         top = np.max([np.abs(np.nanmax(mat)),np.abs(np.nanmin(mat))])
@@ -37,6 +37,13 @@ def showdata(mat, color=plt.cm.gnuplot, symmetry=False):
     
 def augment(x,a=10,b=5):
     return 1-a**(-b*x)
+
+#%%  
+def pM (i,j, alpha=50):
+    return np.exp(-alpha*(i-j)**2)
+
+def pB (i,j, alpha=50):
+    return 1/(1+np.exp(-alpha*(i-j)))
 
 #%%  
 from os import chdir
@@ -114,6 +121,7 @@ showdata(augment(np.append(v,v2,axis=0)))
 
 #%% 
 
+alpha=0.5
 s1=v[np.random.randint(ntimesteps)]
 s2=v[np.random.randint(ntimesteps)]
 
@@ -152,8 +160,9 @@ for t in range(1,ntimesteps):
     v_s2[t] = ((w_s2.T @ oc_tensor @ w_s2) / w_s2.sum()**2)[:,0]
     #l_s1[t] = np.max(v_s2[t])-v_s2[t]
     #l_s2[t] = np.max(v_s1[t])-v_s1[t]
-    l_s1[t] = 1/(1+100*v_s2[t])*1/(1+1000*v_s1[t])
-    l_s2[t] = 1/(1+10000*v_s1[t])*1/(1+10000*v_s2[t])
+    l_s1[t] = 1/(1+100*v_s2[t])#*1/(1+1000*v_s1[t])
+    #l_s2[t] = 1/(1+10000*v_s1[t])#*1/(1+10000*v_s2[t])
+    l_s2[t] = v_s1[t]*1/(1+100*v_s2[t])
 
 #%%
 showdata(v_s1)
@@ -162,8 +171,59 @@ showdata(v_s2)
 #%%
 showlist(v_s1[5])
 
+#%%
+
+gi,gj = np.meshgrid(np.arange(nstates),np.arange(nstates))
+i,j = gi.flatten(), gj.flatten()
+z = list(map(pB, i,j, (np.repeat(0.1,nstates**2))))
+p=np.array(z).reshape((nstates,nstates)).astype('float32')
+showdata(p)
+
+t=10
+m_comb_probs=v_s1[t]@v_s2[t].T
+showdata(m_comb_probs)
+
+interactors= m_comb_probs*p
+interactors/=interactors.sum()
+showdata(interactors)
+
+
+
+
+
+showdata(v_s1[t]@np.ones((1,nstates)))
+
+showdata((np.ones((nstates,1))@v_s2[t].T)*p)
+showdata(interactors / (v_s1[t]@np.ones((1,nstates))))
+
+
+showlist(.sum(0))
+
+
+
+
+
+
+showlist(l)
+showlist(v_s2[t])
+showlist(1/(1+100*l))
+
+showlist()
+
+v_s2[t]
+
 #antagonism + self-frequency selection can lead to multimodal distributions
 
-t=5
+
 showdata(v_s1[t]@v_s2[t].T)
 
+
+
+
+
+#%%
+l=np.zeros(nstates)
+for i in range(nstates):
+    l+=v_s2[t,i]*pM(np.arange(nstates),i,alpha=0.1)
+    
+showlist(l)
