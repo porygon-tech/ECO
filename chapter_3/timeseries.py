@@ -56,11 +56,21 @@ obj_path = root / 'data/obj'
 
 #%%  
 
-n=100
+n=50
 nstates=n+1
 filename='oc_tensor_' + str(n) + '.obj'
 with bz2.BZ2File(obj_path / filename, 'rb') as f:
 	oc_tensor = pickle5.load(f)
+    
+#%%
+
+cx,cy,cz = list(map(np.ndarray.flatten, np.meshgrid(np.arange(nstates),np.arange(nstates),np.arange(nstates))))
+
+fig = plt.figure(figsize=(12,9)); ax = fig.add_subplot(projection='3d')
+#scat = ax.scatter3D(cz,cx,cy, c=(1-10**(-10*oc_tensor)).flatten(),alpha=0.9, s=40,cmap='gnuplot')
+scat = ax.scatter3D(cz,cx,cy, c=oc_tensor.flatten(),alpha=0.9, s=10,cmap='gnuplot')
+fig.colorbar(scat)
+plt.show()
 #%% POPULATION INITIALISATION
 #------------------------
 skw=0.7

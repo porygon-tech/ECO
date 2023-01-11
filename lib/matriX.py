@@ -169,6 +169,15 @@ def generateWithoutUnconnected(m,n,c=0.125):
     
     return newb
 
+def rmUnco(m):
+    zero_rows=np.where(m.sum(1)==0)[0]
+    zero_cols=np.where(m.sum(0)==0)[0]
+    m = np.delete(m, zero_rows, axis=0)
+    m = np.delete(m, zero_cols, axis=1)
+    return m
+    
+
+
 
 
 

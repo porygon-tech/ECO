@@ -61,7 +61,7 @@ showdata(b)
 #%%
 #N=b.shape[0]
 N=20 # number of species
-c=0.5 # expected connectance
+c=0.3 # expected connectance
 ntimesteps=10000
 
 pS=[2,2.5] # phenotypic space
@@ -74,7 +74,7 @@ initial_l=np.tril(initial_l,0)+np.tril(initial_l,0).T
 showdata(initial_l)
 print("connectance of " + str(initial_l.sum()/N**2) + ", expected " + str(c))
 #%%
-mechanism_type = 4
+mechanism_type = 1
 # 1: 'mutualism + trait matching' or 
 # 2: 'mutualism + exploitation barrier' or 
 # 3: 'antagonism + trait matching (trait mismatching)' or
@@ -191,7 +191,7 @@ from community import best_partition # pip3 install python-louvain
 from collections import defaultdict
 from networkx.algorithms.community.quality import modularity
 
-from nestedness_calculator import NestednessCalculator
+from nestedness_calculator import NestednessCalculator #https://github.com/tsakim/nestedness
 nodf = lambda x: NestednessCalculator(x).nodf(x)
 #%%
 def groupnodes(G):
@@ -231,21 +231,103 @@ nx.average_clustering(G)
 mod(G)
 
 #%%
-G = [a[t,:,:] for t in range(1,200)]
-G = list(map(nx.from_numpy_matrix, G))
+workingwindow = 100
+
+#%%
+Gl = [a[t,:,:] for t in range(workingwindow)]
+G = list(map(nx.from_numpy_matrix, Gl))
 mod_list = mod(G)
 showlist(mod_list)
 
-#%% nestedness
+#%%
+nsamples=120
+mod_list_b_sum = np.zeros((nsamples,workingwindow))
 
-sR_list = list(map(spectralRnorm, [a[t,:,:] for t in range(1,200)]))
-sR_list_bin = list(map(spectralRnorm, [(a[t,:,:] > 0.1)+0 for t in range(1,200)]))
+for i in range(nsamples):
+    print('sample #' + str(i))
+    #thres=np.random.rand(N,N)*.8+.1
+    thres=np.random.rand(N,N)
+    Glb =  [Gl[t] > thres for t in range(workingwindow)]
+    #Glb =  [Gl[t] > 0.1 for t in range(200)]
+    Gb = list(map(nx.from_numpy_matrix, Glb))
+    mod_list_b = mod(Gb)
+    mod_list_b_sum[i,:] = mod_list_b
+    
+mod_list_b_avg = mod_list_b_sum.sum(axis=0)/nsamples
+showlist(mod_list_b_avg)
+
+#%%
+'''   FIXED THRESHOLD DOES NOT WORK WELL
+
+Glb_fix =  [Gl[t] > 0.2 for t in range(200)]
+Glb_fix =  [np.logical_and(Glb_fix[t],Glb_fix[t].T) for t in range(200)]
+Glb_fix = list(map(mX.rmUnco, Glb_fix))
+Gb_fix = list(map(nx.from_numpy_matrix, Glb_fix))
+mod_list_b_fix = mod(Gb_fix)
+showlist(mod_list_b_fix)
+showlist(np.stack((mod_list_b_fix, mod_list_b_avg),1))
+'''
+
+#%%
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.scatter( np.repeat(np.arange(workingwindow), nsamples), mod_list_b_sum.flatten('F'), s=0.5)
+ax.plot(np.arange(workingwindow),mod_list_b_avg, color='orange')
+plt.show()
+
+#%% nestedness (spectral radius)
+
+sR_list = list(map(spectralRnorm, [a[t,:,:] for t in range(1,workingwindow)]))
+#sR_list_bin = list(map(spectralRnorm, [(a[t,:,:] > 0.1)+0 for t in range(1,200)]))
+sR_list_bin = list(map(spectralRnorm, [(a[t,:,:] > 0.1)+0 for t in range(1,workingwindow)]))
 showlist(sR_list_bin)
 showlist(sR_list)
 
+#%% nestedness (NODF)
+'''
+Haz que discutir como determinar la matriz binaria para el NODF.
+El enfoque probabilistico esta bien, pero dependiendo de como sea, el resultado
+puede variar mucho.
 
-nodf_scores = list(map(nodf, [(a[t,:,:] > 0.1)+0 for t in range(1,200)]))
-showlist(nodf_scores)
+He probado la dist uniforme entre 0,1. pero da cosas muy distintass a si aplico
+un threshold (links por encima de cierto valor siempre estaran, y por debajo de
+cierto valor nunca apareceran). Esto puede dar pie a un concepto interesante de 
+nestedness a distintos niveles. Quiza los nexos con alta energia aportan mucho 
+a la estructura anidada. quiza son los de baja energia. 
+
+Ninguna forma parece asimilarse a la producida por el radio espectral.
+'''
+nsamples=200
+nodf_scores_sum = np.zeros((nsamples,workingwindow))
+
+for i in range(nsamples):
+    #thres=np.random.rand(N,N) #*.95+.025
+    thres=0.02+(np.random.rand(N,N)-.5)*.01
+    Glb = [mX.rmUnco((Gl[t] > thres)+0) for t in range(workingwindow)]
+    nodf_scores_sum[i,:]  = list(map(nodf, Glb))
+    #test = [np.all(Glb[t].sum(axis=1) != 0) for t in range(workingwindow)]
+
+    
+nodf_scores_avg = nodf_scores_sum.sum(axis=0)/nsamples
+
+#nodf_scores = list(map(nodf, [(a[t,:,:] > thres*0.1)+0 for t in range(1,workingwindow)]))
+#nodf_scores = list(map(nodf, [(a[t,:,:] > 0.01)+0 for t in range(1,200)]))
+showlist(nodf_scores_avg)
+
+#%%
+
+fig = plt.figure(figsize=(12,9)); ax = fig.add_subplot(111)
+ax.scatter( np.repeat(np.arange(workingwindow), nsamples), nodf_scores_sum.flatten('C'), s=0.5)
+ax.plot(np.arange(workingwindow),nodf_scores_avg, color='orange')
+plt.show()
+
+#%%
+
+fig = plt.figure(figsize=(12,9)); ax = fig.add_subplot(111)
+ax.plot(np.arange(workingwindow),nodf_scores_avg, color='orange')
+ax.boxplot(nodf_scores_sum, sym='.')
+plt.xlabel('time')
+plt.xticks(np.arange(0, workingwindow+1,25))
+plt.show()
 
 #%%
 
