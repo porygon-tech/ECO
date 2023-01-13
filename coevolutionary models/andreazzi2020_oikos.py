@@ -48,6 +48,45 @@ showfunc(pM, zj=2., xlim=(0,3))
 showfunc(pB, zj=2., alpha=9, xlim=(0,3))
 showfunc(pB, zj=2., alpha=2, xlim=(0,3))
 
+
+#%% NETWORK ANALYSIS IMPORTS
+import networkx as nx
+from community import best_partition # pip3 install python-louvain
+from collections import defaultdict
+from networkx.algorithms.community.quality import modularity
+
+from nestedness_calculator import NestednessCalculator #https://github.com/tsakim/nestedness
+nodf = lambda x: NestednessCalculator(x).nodf(x)
+#%% NETWORK ANALYSIS FUNCTIONS
+def groupnodes(G):
+    part = best_partition(G)
+    inv = defaultdict(list)
+    {inv[v].append(k) for k, v in part.items()}
+    result = dict(inv)
+    return(list(result.values()))
+
+def mod(g):
+    if type(g)==nx.classes.graph.Graph:
+        comms = groupnodes(g)
+        mod = modularity(g, comms)
+    elif type(g)==list and np.all(type(G)==nx.classes.graph.Graph for G in g):
+        comms = list(map(groupnodes, g))
+        mod = list(map(modularity, g, comms))
+    return(mod)
+
+def renormalize(vlist):
+    x=vlist
+    b=np.max(x)
+    a=np.min(x)
+    x=(x-a)/(b-a)
+    return x
+
+def spectralRnorm(a):
+    a_norm = renormalize(a)
+    #L = sparse.csr_matrix(a_norm)
+    #sR = sparse.linalg.eigs(a_norm,k=1,which='LM', return_eigenvectors=False)
+    sR = np.max(np.real(np.linalg.eigvals(a_norm)))/np.sqrt((a>0).sum())
+    return(sR)
 #%% DATA LOAD
 dataPath = root / 'data/dataBase'
 df = pd.read_csv(dataPath / 'FW_017_03.csv', index_col=0)
@@ -58,22 +97,25 @@ np.all(df.columns == df.index)
 
 b=(df.to_numpy()>0)+0
 showdata(b)
-#%%
+#%% set simulation parameters
 #N=b.shape[0]
-N=20 # number of species
-c=0.3 # expected connectance
+N=5 # number of species
+c=0.7 # expected connectance
 ntimesteps=10000
 
 pS=[2,2.5] # phenotypic space
-
-theta=np.random.rand(N)*np.diff(pS)+pS[0] # values favoured by env. selection
+#%%
 initial_l=mX.generateWithoutUnconnected(N,N,c) 
 initial_l=initial_l-np.diag(np.diag(initial_l))
 initial_l=np.tril(initial_l,0)+np.tril(initial_l,0).T
 #initial_l=b
 showdata(initial_l)
+nx.draw(nx.from_numpy_matrix(initial_l,parallel_edges=False))
 print("connectance of " + str(initial_l.sum()/N**2) + ", expected " + str(c))
-#%%
+
+#%% generate theta
+theta=np.random.rand(N)*np.diff(pS)+pS[0] # values favoured by env. selection
+#%% simulate
 mechanism_type = 1
 # 1: 'mutualism + trait matching' or 
 # 2: 'mutualism + exploitation barrier' or 
@@ -176,53 +218,35 @@ showlist(z[:40,:])
 #showlist(S[:50])
 
 #%%
+'''
 i,j = 2,10
 zdiffs[i,j] == z[t,i]-z[t,j]
-
 
 
 #%%
 showdata(p[5,:,:])
 showdata(a[3,:,:])
+'''
 
-#%% NETWORK ANALYSIS
-import networkx as nx
-from community import best_partition # pip3 install python-louvain
-from collections import defaultdict
-from networkx.algorithms.community.quality import modularity
 
-from nestedness_calculator import NestednessCalculator #https://github.com/tsakim/nestedness
-nodf = lambda x: NestednessCalculator(x).nodf(x)
-#%%
-def groupnodes(G):
-    part = best_partition(G)
-    inv = defaultdict(list)
-    {inv[v].append(k) for k, v in part.items()}
-    result = dict(inv)
-    return(list(result.values()))
+showdata(M[-1])
 
-def mod(g):
-    if type(g)==nx.classes.graph.Graph:
-        comms = groupnodes(g)
-        mod = modularity(g, comms)
-    elif type(g)==list and np.all(type(G)==nx.classes.graph.Graph for G in g):
-        comms = list(map(groupnodes, g))
-        mod = list(map(modularity, g, comms))
-    return(mod)
 
-def renormalize(vlist):
-    x=vlist
-    b=np.max(x)
-    a=np.min(x)
-    x=(x-a)/(b-a)
-    return x
 
-def spectralRnorm(a):
-    a_norm = renormalize(a)
-    #L = sparse.csr_matrix(a_norm)
-    #sR = sparse.linalg.eigs(a_norm,k=1,which='LM', return_eigenvectors=False)
-    sR = np.max(np.real(np.linalg.eigvals(a_norm)))/np.sqrt((a>0).sum())
-    return(sR)
+
+delta = [phi*np.dot(S[t,np.newaxis].T/N,np.ones((1,N)))+M[t] for t in range(ntimesteps)]
+
+
+t=1
+(S[t]+M[t].sum(1))*phi
+delta[t].sum(1)
+
+
+t=2
+np.all(np.real(np.linalg.eigvals(delta[t]))<1)
+
+
+
 
 #%% modularity calculation
 G = nx.from_numpy_matrix(a[3,:,:],parallel_edges=False)
@@ -296,12 +320,12 @@ a la estructura anidada. quiza son los de baja energia.
 
 Ninguna forma parece asimilarse a la producida por el radio espectral.
 '''
-nsamples=200
+nsamples=120
 nodf_scores_sum = np.zeros((nsamples,workingwindow))
 
 for i in range(nsamples):
-    #thres=np.random.rand(N,N) #*.95+.025
-    thres=0.02+(np.random.rand(N,N)-.5)*.01
+    thres=np.random.rand(N,N) #*.95+.025
+    #thres=0.02+(np.random.rand(N,N)-.5)*.01
     Glb = [mX.rmUnco((Gl[t] > thres)+0) for t in range(workingwindow)]
     nodf_scores_sum[i,:]  = list(map(nodf, Glb))
     #test = [np.all(Glb[t].sum(axis=1) != 0) for t in range(workingwindow)]
@@ -311,7 +335,7 @@ nodf_scores_avg = nodf_scores_sum.sum(axis=0)/nsamples
 
 #nodf_scores = list(map(nodf, [(a[t,:,:] > thres*0.1)+0 for t in range(1,workingwindow)]))
 #nodf_scores = list(map(nodf, [(a[t,:,:] > 0.01)+0 for t in range(1,200)]))
-showlist(nodf_scores_avg)
+showlist(nodf_scores_avg[1:])
 
 #%%
 
@@ -321,12 +345,15 @@ ax.plot(np.arange(workingwindow),nodf_scores_avg, color='orange')
 plt.show()
 
 #%%
+n_intervals=4
+temp_labellist=np.arange(0, workingwindow+1, int(workingwindow/n_intervals))
 
 fig = plt.figure(figsize=(12,9)); ax = fig.add_subplot(111)
 ax.plot(np.arange(workingwindow),nodf_scores_avg, color='orange')
 ax.boxplot(nodf_scores_sum, sym='.')
+plt.ylabel('NODF score')
 plt.xlabel('time')
-plt.xticks(np.arange(0, workingwindow+1,25))
+ax.set_xticks(ticks = temp_labellist, labels=temp_labellist)
 plt.show()
 
 #%%
