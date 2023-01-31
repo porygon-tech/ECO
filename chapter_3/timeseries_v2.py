@@ -603,6 +603,9 @@ ax.set_xlabel('Time (generations)')
 plt.tight_layout()
 plt.show()
 
+
+#%%
+fig.savefig(img_path / 'bands.pdf',format='pdf')
 #%% 
 
 fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
