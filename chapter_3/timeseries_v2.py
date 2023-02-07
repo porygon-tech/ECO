@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 #from scipy.optimize import curve_fit
 
 #---for obj handling---
-from os import chdir
+from os import chdir, listdir
 from pathlib import Path
 import pickle5
 import bz2
@@ -49,6 +49,24 @@ def blend(image1, image2, cmap1, cmap2,norm=None):
 def rescale(arr: np.ndarray, vmin=0,vmax=1):
     re = (arr - vmin) / (vmax - vmin)
     return re
+#%% 
+
+
+def quantilebands(mat,width=0.25):
+    t=np.arange(mat.shape[1])
+    return np.append(t,np.flip(t)), np.append((mat.cumsum(0)>=.5-width).argmax(0),np.flip((mat.cumsum(0)>=.5+width).argmax(0)))
+
+
+def plotQuantilebands(ax, mat, widths, alpha=1, color='green'):
+    for width in widths:
+        x,y=quantilebands(mat,width); ax.fill(x,y,alpha=alpha/len(widths)*np.sqrt(.5-width),color=color) #alpha*(.5-width)
+
+def expnorm(x, a=1):
+    return 1-np.exp(-a*x)
+#showlist(expnorm(np.linspace(0, 1, 200),5))
+def cNorm(x, k=1):
+    return (k**2*x) / (1 + (-1 + k**2)*x)
+
 #%%
 
 '''
@@ -89,6 +107,7 @@ def showdata(mat, color='magma', symmetry=False):
 
 def augment(x,a=10,b=5):
     return 1-a**(-b*x)
+
 #%%
 n=100
 nstates=n+1
@@ -356,6 +375,7 @@ def convpB(values,nstates,alpha):
     c = c + pB(np.arange(nstates)-i, alpha)*values[i]
   return c
 
+#%%
 s1=np.zeros((nstates,1))
 s2=np.zeros((nstates,1))
 
@@ -407,12 +427,6 @@ for t in range(1,ntimesteps):
 
 
 #%% ADDITIVE PLOT
-
-def expnorm(x, a=1):
-    return 1-np.exp(-a*x)
-#showlist(expnorm(np.linspace(0, 1, 200),5))
-def cNorm(x, k=1):
-    return (k**2*x) / (1 + (-1 + k**2)*x)
 
 
 mat1= (v_s1[...,0].T)
@@ -476,6 +490,22 @@ fig.text(.11, 0.5, 'Trait value',       va='center', rotation='vertical',size=12
 plt.show()
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #%% THREE SPECIES
 skw_1, skw_2, skw_3 = np.random.rand(3)
 
@@ -489,14 +519,12 @@ for i in range(nstates):
     s3[i] = bindist(n,i,skw_3)
 
 #%%
-
-alpha=0.02
-a=7
-a1=a
-a2=a
-a3=a
+alpha=0.04
+ntimesteps=4000
+a=4.9
+a12=a
+a13=a
 b=1
-
 v_s1 = np.zeros((ntimesteps, nstates,1))
 v_s2 = np.zeros((ntimesteps, nstates,1))
 v_s3 = np.zeros((ntimesteps, nstates,1))
@@ -522,14 +550,352 @@ for t in range(1,ntimesteps):
     pM_s1=convpM(v_s1[t],nstates,alpha)[:,np.newaxis]
     pM_s2=convpM(v_s2[t],nstates,alpha)[:,np.newaxis]
     pM_s3=convpM(v_s3[t],nstates,alpha)[:,np.newaxis]
+    
+    l_s1[t] = pM_s2*b+pM_s3*b 
+    l_s2[t] = 1/(1+a12*pM_s1) 
+    l_s3[t] = 1/(1+a13*pM_s1) 
+
+
+'''
+l_s1[t] = pM_s2*b 
+l_s2[t] = pM_s3*b /(1+a*pM_s1) 
+l_s3[t] =       1 /(1+a*pM_s2) 
+'''
+
+mat1= (v_s1[...,0].T)
+mat2= (v_s2[...,0].T)
+mat3= (v_s3[...,0].T)
+
+dataset_temp = (tuple((vrange*mat1*nstates).mean(0)),tuple((vrange*mat2*nstates).mean(0)),tuple((vrange*mat3*nstates).mean(0)))
+
+#%% BAND PLOT
+vrange=np.arange(nstates)[:,np.newaxis]
+t=np.arange(ntimesteps)
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
+#ax.imshow(mat1,interpolation='None')
+
+ax.plot(t, (vrange*mat1*nstates).mean(0), color='red'); plotQuantilebands(ax, mat1, [.25,.40,.49],color='red')
+
+ax.plot(t,(vrange*mat2*nstates).mean(0),color='green'); plotQuantilebands(ax, mat2, [.25,.40,.49],color='green')
+
+ax.plot(t,(vrange*mat3*nstates).mean(0),color='blue');  plotQuantilebands(ax, mat3, [.25,.40,.49],color='blue')
+#ax.plot(t, (mat1.cumsum(0)>=.5).argmax(0))
+
+fig.suptitle(r'$\alpha=$'+str(alpha)+r'$, a_{12}=$'+str(a12)+r'$, a_{13}=$'+str(a13)+', b='+str(b))
+ax.set_ylabel('Trait value')
+ax.set_xlabel('Time (generations)')
+plt.tight_layout()
+plt.show()
+
+
+#%%
+#fig.savefig(img_path / 'bands_nonchaos.pdf',format='pdf')
+
+#%%
+
+#%% SAVE
+filename='trajectory_alpha'+str(alpha)+'_a'+str(a)+'_t' + str(ntimesteps) +'.obj'
+with bz2.BZ2File(obj_path / 'trajectories' / filename, 'wb') as f:
+    pickle5.dump(dataset_temp, f)
+#%% LOAD
+#filename='trajectory_alpha0.04_a5_t8000.obj'
+#filename=trajectory_alpha0.04_a4.9_t4000.obj
+listdir(obj_path / 'trajectories' )
+filename=np.random.choice(listdir(obj_path / 'trajectories' )); print('imported ' + filename)
+with bz2.BZ2File(obj_path / 'trajectories' / filename, 'rb') as f:
+	dataset_temp = pickle5.load(f)
+
+#%%
+fig = plt.figure(figsize=(12,16))
+ax = fig.add_subplot(111, projection='3d')
+ax.plot(dataset_temp[0],dataset_temp[1],dataset_temp[2],linewidth=.5)
+ax.set_xlabel('$S_1$')
+ax.set_ylabel('$S_2$')
+ax.set_zlabel(r'$S_3$')
+ax.xaxis.set_rotate_label(False) 
+ax.yaxis.set_rotate_label(False) 
+ax.zaxis.set_rotate_label(False) 
+plt.show()
+
+
+#%% Fast fourier transform
+
+fig = plt.figure(figsize=(8,6));ax = fig.add_subplot(111)
+for i in range(len(dataset_temp)):
+    FFT =np.fft.fft(dataset_temp[i])
+    new_N=int(len(FFT)/2) 
+    new_X = np.linspace(10**-12, f_nat/2, new_N, endpoint=True)
+    new_Xph=1.0/(new_X)
+    FFT_abs=np.abs(FFT)
+    ax.plot(new_Xph,2*FFT_abs[0:int(len(FFT)/2.)]/len(new_Xph),alpha=1,linewidth=1)
+    
+ax.set_xlabel('Period ($h$)',fontsize=10)
+ax.set_ylabel('Amplitude',fontsize=10)
+fig.suptitle('(Fast) Fourier Transform Method Algorithm',fontsize=20)
+ax.grid(True)
+ax.set_xlim(0,600)
+ax.set_ylim(0,60)
+plt.show()
+
+#%%
+#showlist(dataset_temp[i])
+#from scipy.signal import find_peaks
+#from scipy.fft import fft, fftfreq
+
+
+#%% Fast fourier transform
+f_nat=1
+FFT =np.fft.fft(dataset_temp[1])
+new_N=int(len(FFT)/2) 
+new_X = np.linspace(10**-12, f_nat/2, new_N, endpoint=True)
+new_Xph=1.0/(new_X)
+FFT_abs=np.abs(FFT)
+
+
+height_threshold=10
+# peaks_index contains the indices in x that correspond to peaks:
+peaks_index, properties = find_peaks(FFT_abs, height=height_threshold*new_N/2)
+freq = np.fft.fftfreq(len(dataset_temp[0]))
+
+fig = plt.figure(figsize=(8,6));ax = fig.add_subplot(111)
+ax.plot(new_Xph,2*FFT_abs[0:new_N]/len(new_Xph),color='black')
+ax.scatter(1/freq[peaks_index],properties['peak_heights']*2/new_N)
+ax.set_xlabel('Period ($h$)',fontsize=10)
+ax.set_ylabel('Amplitude',fontsize=10)
+fig.suptitle('(Fast) Fourier Transform Method Algorithm',fontsize=20)
+ax.grid(True)
+ax.set_xlim(0,600)
+ax.set_ylim(0,60)
+plt.show()
+
+
+
+#%%
+def get_cmap(n, name='hsv'):
+    '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
+    RGB color; the keyword argument name must be a standard mpl colormap name.'''
+    return plt.cm.get_cmap(name, n+1)
+
+
+#%% freq bars
+
+periods=1/freq[peaks_index]
+periods=periods[:int(len(periods)/2)]
+
+
+bands_x=(periods[:,np.newaxis]*np.arange(100)[np.newaxis,:])
+
+colors=get_cmap(bands_x.shape[0])
+
+fig = plt.figure(figsize=(8,6));ax = fig.add_subplot(111)
+#ax.plot(np.arange(len(dataset_temp[0])),dataset_temp[0])
+ax.plot(np.arange(len(dataset_temp[0])),dataset_temp[1])
+#ax.plot(np.arange(len(dataset_temp[0])),dataset_temp[2])
+
+for i_freq in range(bands_x.shape[0]):
+    for band in range(bands_x.shape[1]):
+        ax.plot((bands_x[i_freq,band],bands_x[i_freq,band]),(0,nstates),color=colors(i_freq),alpha=0.5)
+ax.set_xlim(10,1000)
+plt.show()
+
+
+
+#%% ADDITIVE PLOT
+
+
+temp_max=np.max((mat1,mat2,mat3))
+temp_min=np.min((mat1,mat2,mat3))
+
+R_r = rescale(mat1, temp_min,temp_max) #clip?
+G_r = rescale(mat2, temp_min,temp_max)
+B_r = rescale(mat3, temp_min,temp_max)
+
+cmapgrn = matplotlib.colors.LinearSegmentedColormap.from_list("", ["black", "green"]) #seagreen also
+cmapred = matplotlib.colors.LinearSegmentedColormap.from_list("", ["black", "red"])
+cmapblu = matplotlib.colors.LinearSegmentedColormap.from_list("", ["black", "blue"])
+
+blended = 1 - (1 - cmapred(R_r)) * (1 - cmapgrn(G_r)) * (1 - cmapblu(B_r))
+
+temp_g = 1.1
+blended = cNorm(blended,temp_g)
+
+
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
+pos = ax.imshow(blended,interpolation='None')
+fig.suptitle(r'$\alpha=$'+str(alpha)+r'$, a_{12}=$'+str(a12)+r'$, a_{13}=$'+str(a13)+', b='+str(b),y=0.75)
+ax.set_ylim(0,n)  # decreasing time
+ax.set_ylabel('Trait value')
+ax.set_xlabel('Time (generations)')
+
+plt.tight_layout()
+plt.show()
+
+#%%
+fig.savefig(img_path / 'intensity1.pdf',format='pdf')
+
+
+
+#%% 
+
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
+ax.imshow(mat1,interpolation='None')
+
+ax.plot(t, (vrange*mat1*nstates).mean(0), color='red')
+x,y=quantilebands(mat1); ax.fill(x,y,alpha=0.2,color='red')
+x,y=quantilebands(mat1,0.45); ax.fill(x,y,alpha=0.1,color='red')
+
+fig.suptitle(r'$\alpha=$'+str(alpha)+r'$, a_1=$'+str(a1)+r'$, a_3=$'+str(a3)+', b='+str(b),y=1)
+ax.set_ylabel('Trait value')
+ax.set_xlabel('Time (generations)')
+plt.tight_layout()
+plt.show()
+
+
+
+
+#%%
+def accumulateExp(x,v=1,L=1):
+    return L* (1-np.exp(-v*x))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%% THREE SPECIES with abundances
+skw_1, skw_2, skw_3 = np.random.rand(3)
+
+s1=np.zeros((nstates,1))
+s2=np.zeros((nstates,1))
+s3=np.zeros((nstates,1))
+
+for i in range(nstates):
+    s1[i] = bindist(n,i,skw_1)
+    s2[i] = bindist(n,i,skw_2)
+    s3[i] = bindist(n,i,skw_3)
+
+#%% RUN
+alpha=0.8
+a=10
+a1=a
+a2=a
+a3=a
+b=1
+#deathRate=0.2
+#v_param=1/10
+#L_param=20
+death_base=0.1
+death_resource=1
+intra_competition=0.0002
+maxoffspr_s1=3
+maxoffspr_s2=3
+maxoffspr_s3=3
+basegrowth=0.1
+
+
+v_s1 = np.zeros((ntimesteps, nstates,1))
+v_s2 = np.zeros((ntimesteps, nstates,1))
+v_s3 = np.zeros((ntimesteps, nstates,1))
+l_s1 = np.zeros((ntimesteps, nstates,1))
+l_s2 = np.zeros((ntimesteps, nstates,1))
+l_s3 = np.zeros((ntimesteps, nstates,1))
+
+pM_s1 = np.zeros((ntimesteps, nstates,1))
+pM_s2 = np.zeros((ntimesteps, nstates,1))
+pM_s3 = np.zeros((ntimesteps, nstates,1))
+
+l_s1[0] = s1
+l_s2[0] = s2
+l_s3[0] = s3
+
+v_s1[0] = s1
+v_s2[0] = s2
+v_s3[0] = s3
+
+N_s1 = np.zeros(ntimesteps); N_s1[0] = 500
+N_s2 = np.zeros(ntimesteps); N_s2[0] = 1000
+N_s3 = np.zeros(ntimesteps); N_s3[0] = 1000
+
+for t in range(1,ntimesteps):
+    w_s1 = v_s1[t-1]*l_s1[t-1]
+    w_s2 = v_s2[t-1]*l_s2[t-1]
+    w_s3 = v_s3[t-1]*l_s3[t-1]
+    
+    #alpha_s1 = w_s1.sum(); N_s1[t] =  N_s1[t-1] * (1+alpha_s1-deathRate)
+    #alpha_s2 = w_s2.sum(); N_s2[t] =  N_s2[t-1] * (1+alpha_s2-deathRate)
+    #alpha_s3 = w_s3.sum(); N_s3[t] =  N_s3[t-1] * (1+alpha_s3-deathRate)
+    #r_s1 = w_s1.sum(); N_s1[t] = N_s1[t-1] + r_s1 * N_s1[t-1] * (1 - N_s1[t-1]/K) - (death_base + death_resource * N_s1[t-1]/K) * N_s1[t-1] 
+    #r_s2 = w_s2.sum(); N_s2[t] = N_s2[t-1] + r_s2 * N_s2[t-1] * (1 - N_s2[t-1]/K) - (death_base + death_resource * N_s2[t-1]/K) * N_s2[t-1] 
+    #r_s3 = w_s3.sum(); N_s3[t] = N_s3[t-1] + r_s3 * N_s3[t-1] * (1 - N_s3[t-1]/K) - (death_base + death_resource * N_s3[t-1]/K) * N_s3[t-1] 
+    #r_s1 = w_s1.sum(); N_s1[t] = N_s1[t-1] + r_s1 * N_s1[t-1] * (1-intra_competition*r_s1 * N_s1[t-1] ) - death_resource * N_s1[t-1]#**2 
+    #r_s2 = w_s2.sum(); N_s2[t] = N_s2[t-1] + r_s2 * N_s2[t-1] * (1-intra_competition*r_s2 * N_s2[t-1] ) - death_resource * N_s2[t-1]#**2 
+    #r_s3 = w_s3.sum(); N_s3[t] = N_s3[t-1] + r_s3 * N_s3[t-1] * (1-intra_competition*r_s3 * N_s3[t-1] ) - death_resource * N_s3[t-1]#**2 
+    r_s1 = w_s1.sum()+basegrowth; N_s1[t] = N_s1[t-1] * (r_s1) * (1-intra_competition*r_s1 * N_s1[t-1] )
+    r_s2 = w_s2.sum()+basegrowth; N_s2[t] = N_s2[t-1] * (r_s2) * (1-intra_competition*r_s2 * N_s2[t-1] )
+    r_s3 = w_s3.sum()+basegrowth; N_s3[t] = N_s3[t-1] * (r_s3) * (1-intra_competition*r_s3 * N_s3[t-1] )
+
+    v_s1[t] = ((w_s1.T @ oc_tensor @ w_s1) / w_s1.sum()**2)[:,0]
+    v_s2[t] = ((w_s2.T @ oc_tensor @ w_s2) / w_s2.sum()**2)[:,0]
+    v_s3[t] = ((w_s3.T @ oc_tensor @ w_s3) / w_s3.sum()**2)[:,0]
+    pM_s1[t]=convpM(v_s1[t],nstates,alpha)[:,np.newaxis] #* accumulateExp(N_s1[t-1],v_param,L_param)
+    pM_s2[t]=convpM(v_s2[t],nstates,alpha)[:,np.newaxis] #* accumulateExp(N_s2[t-1],v_param,L_param)
+    pM_s3[t]=convpM(v_s3[t],nstates,alpha)[:,np.newaxis] #* accumulateExp(N_s3[t-1],v_param,L_param)
+    
+    pM_s1[t]*=N_s1[t]/pM_s1[t].sum()
+    pM_s2[t]*=N_s2[t]/pM_s2[t].sum()
+    pM_s3[t]*=N_s3[t]/pM_s3[t].sum()
+
+    #N[t] = N[t-1] + r * N[t-1] * (1 - N[t-1]/K) - (death_base + death_resource * N[t-1]/K) * N[t-1] 
     '''
     l_s1[t] = pM_s2*b+pM_s3*b 
     l_s2[t] = 1/(1+a1*pM_s1) 
     l_s3[t] = 1/(1+a3*pM_s1) 
     '''
-    l_s1[t] = pM_s2*b+pM_s3*b 
-    l_s2[t] = 1/(1+a1*pM_s1) 
-    l_s3[t] = 1/(1+a3*pM_s1) 
+    #l_s1[t] = maxoffspr_s1*(1-1/(1+pM_s2[t]*b+pM_s3[t]*b)) 
+    l_s2[t] = 1/(1+a12*pM_s1[t]+a12*pM_s3[t]) * maxoffspr_s2             
+    #l_s3[t] = 1/(1+a3*pM_s1[t]) * maxoffspr_s3      
+    
+    l_s1[t] = maxoffspr_s1*(1-1/(1+pM_s2[t])) 
+    l_s3[t] = maxoffspr_s1*(1-1/(1+pM_s2[t])) 
+
+#%% Popsize plot
+
+t=np.arange(ntimesteps)
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
+ax.plot(t, N_s1, alpha=0.33,color='red')
+ax.plot(t, N_s2, alpha=0.33,color='green')
+ax.plot(t, N_s3, alpha=0.33,color='blue')
+#fig.suptitle(r'$\alpha=$'+str(alpha)+r'$, a_1=$'+str(a1)+r'$, a_3=$'+str(a3)+', b='+str(b),y=1)
+ax.set_xlim(0,200)
+ax.set_ylim(0,2000)
+ax.set_ylabel('Species abundances')
+ax.set_xlabel('Time (generations)')
+plt.tight_layout()
+plt.show()
+
 
 #%% ADDITIVE PLOT
 
@@ -550,7 +916,7 @@ cmapblu = matplotlib.colors.LinearSegmentedColormap.from_list("", ["black", "blu
 
 blended = 1 - (1 - cmapred(R_r)) * (1 - cmapgrn(G_r)) * (1 - cmapblu(B_r))
 
-temp_g = 1.5
+temp_g = 1.8
 blended = cNorm(blended,temp_g)
 
 
@@ -560,16 +926,30 @@ fig.suptitle(r'$\alpha=$'+str(alpha)+r'$, a_1=$'+str(a1)+r'$, a_3=$'+str(a3)+', 
 ax.set_ylabel('Trait value')
 ax.set_xlabel('Time (generations)')
 
-ax.plot(t, (vrange*mat1*nstates).mean(0), color='red')
-x,y=quantilebands(mat1); ax.fill(x,y,alpha=0.2,color='red')
-
-ax.plot(t,(vrange*mat2*nstates).mean(0),color='green')
-x,y=quantilebands(mat2); ax.fill(x,y,alpha=0.2,color='green')
-
-ax.plot(t,(vrange*mat3*nstates).mean(0),color='blue')
-x,y=quantilebands(mat3); ax.fill(x,y,alpha=0.2,color='blue')
 plt.tight_layout()
 plt.show()
+
+
+#%% 
+w_s1=v_s1*l_s1
+w_s2=v_s2*l_s2
+w_s3=v_s3*l_s3
+showdata(v_s1)
+showdata(v_s2)
+showdata(v_s3)
+
+showdata(w_s1)
+showdata(w_s2)
+showdata(w_s3)
+
+showlist(w_s1.sum(1))
+showlist(w_s2.sum(1))
+showlist(w_s3.sum(1))
+
+showdata(pM_s1)
+
+
+
 
 
 #%% 
@@ -596,24 +976,6 @@ ax.plot(t,(vrange*mat2*nstates).mean(0),color='green'); plotQuantilebands(ax, ma
 
 ax.plot(t,(vrange*mat3*nstates).mean(0),color='blue');  plotQuantilebands(ax, mat3, [.25,.40,.49],color='blue')
 #ax.plot(t, (mat1.cumsum(0)>=.5).argmax(0))
-
-fig.suptitle(r'$\alpha=$'+str(alpha)+r'$, a_1=$'+str(a1)+r'$, a_3=$'+str(a3)+', b='+str(b),y=1)
-ax.set_ylabel('Trait value')
-ax.set_xlabel('Time (generations)')
-plt.tight_layout()
-plt.show()
-
-
-#%%
-fig.savefig(img_path / 'bands.pdf',format='pdf')
-#%% 
-
-fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
-ax.imshow(mat1,interpolation='None')
-
-ax.plot(t, (vrange*mat1*nstates).mean(0), color='red')
-x,y=quantilebands(mat1); ax.fill(x,y,alpha=0.2,color='red')
-x,y=quantilebands(mat1,0.45); ax.fill(x,y,alpha=0.1,color='red')
 
 fig.suptitle(r'$\alpha=$'+str(alpha)+r'$, a_1=$'+str(a1)+r'$, a_3=$'+str(a3)+', b='+str(b),y=1)
 ax.set_ylabel('Trait value')
