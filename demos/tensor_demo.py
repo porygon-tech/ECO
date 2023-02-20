@@ -71,7 +71,14 @@ cx,cy,cz = list(map(np.ndarray.flatten, np.meshgrid(np.arange(nstates),np.arange
 #fig = plt.figure(figsize=(12,24)); ax = fig.add_subplot(211,projection='3d');ax2 = fig.add_subplot(212)
 #fig, (ax, ax2) = plt.subplots(2,1, gridspec_kw={'height_ratios': [3, 1]})
 
-fig = plt.figure(figsize=(12,16));
+fig = plt.figure(fig = plt.figure(figsize=(12,16))
+ax = fig.add_subplot(111, projection='3d')
+ax.plot(dataset_temp[0],dataset_temp[1],dataset_temp[2],linewidth=.5)
+ax.set_xlabel(r'$S_1$')
+ax.set_ylabel(r'$S_2$')
+ax.set_zlabel(r'$S_3$')
+plt.show()
+);
 gs0 = fig.add_gridspec(2, 1,height_ratios=[3, 1])
 ax  = fig.add_subplot(gs0[0],projection='3d')
 ax2 = fig.add_subplot(gs0[1])
