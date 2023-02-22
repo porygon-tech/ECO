@@ -1,0 +1,72 @@
+1676993717359	geckodriver	INFO	Listening on 127.0.0.1:32837
+1676993717533	mozrunner::runner	INFO	Running command: "/snap/firefox/current/firefox.launcher" "--marionette" "--remote-debugging-port" "60367" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "/tmp/rust_mozprofileDpCGPM"
+Gtk-Message: 16:35:17.554: Not loading module "atk-bridge": The functionality is provided by GTK natively. Please try to not load it.
+[GFX1-]: glxtest: VA-API test failed: no supported VAAPI profile found.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+1676993718185	Marionette	INFO	Marionette enabled
+1676993718188	Marionette	INFO	Listening on port 43033
+Read port: 43033
+WebDriver BiDi listening on ws://127.0.0.1:60367
+1676993718316	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileDpCGPM/search.json.mozlz4", (void 0)))
+DevTools listening on ws://127.0.0.1:60367/devtools/browser/99e8ca3b-ea5e-4e5a-8c7e-cc261229a970
+JavaScript warning: https://pagead2.googlesyndication.com/bg/ENhUjQ5Efr1LKcBlRSMtCxEMsPeXm4hb-JW7itjXrRA.js line 2 > eval line 2506 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://beacon.riskified.com/?shop=https://onlinelibrary.wiley.com&sid=aaa_CjHrKptQX4x3NlXzy, line 7: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1676994104440	Marionette	INFO	Stopped listening on port 43033
+1676994111275	geckodriver	INFO	Listening on 127.0.0.1:45533
+1676994111592	mozrunner::runner	INFO	Running command: "/snap/firefox/current/firefox.launcher" "--marionette" "--remote-debugging-port" "59609" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "/tmp/rust_mozprofilercVyc1"
+Gtk-Message: 16:41:51.626: Not loading module "atk-bridge": The functionality is provided by GTK natively. Please try to not load it.
+[GFX1-]: glxtest: VA-API test failed: no supported VAAPI profile found.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+1676994112215	Marionette	INFO	Marionette enabled
+1676994112218	Marionette	INFO	Listening on port 39681
+Read port: 39681
+WebDriver BiDi listening on ws://127.0.0.1:59609
+1676994112351	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilercVyc1/search.json.mozlz4", (void 0)))
+DevTools listening on ws://127.0.0.1:59609/devtools/browser/6f74f38e-7f0a-4271-9524-114a03eb6165
+1676994118540	Marionette	INFO	Stopped listening on port 39681
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
+1676994273259	geckodriver	INFO	Listening on 127.0.0.1:36875
+1676994273598	mozrunner::runner	INFO	Running command: "/snap/firefox/current/firefox.launcher" "--marionette" "--remote-debugging-port" "49351" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "/tmp/rust_mozprofilemz1FWq"
+Gtk-Message: 16:44:33.627: Not loading module "atk-bridge": The functionality is provided by GTK natively. Please try to not load it.
+[GFX1-]: glxtest: VA-API test failed: no supported VAAPI profile found.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+1676994274238	Marionette	INFO	Marionette enabled
+1676994274241	Marionette	INFO	Listening on port 37575
+Read port: 37575
+WebDriver BiDi listening on ws://127.0.0.1:49351
+1676994274374	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofilemz1FWq/search.json.mozlz4", (void 0)))
+DevTools listening on ws://127.0.0.1:49351/devtools/browser/c1ef109f-2ecc-445c-844c-9250b5155d3a
+Exiting due to channel error.
+Exiting due to channel error.
+Exiting due to channel error.
+1676994299855	geckodriver	INFO	Listening on 127.0.0.1:50771
+1676994300235	mozrunner::runner	INFO	Running command: "/snap/firefox/current/firefox.launcher" "--marionette" "--remote-debugging-port" "60225" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "/tmp/rust_mozprofileEsgGsk"
+Gtk-Message: 16:45:00.274: Not loading module "atk-bridge": The functionality is provided by GTK natively. Please try to not load it.
+[GFX1-]: glxtest: VA-API test failed: no supported VAAPI profile found.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+1676994300902	Marionette	INFO	Marionette enabled
+1676994300905	Marionette	INFO	Listening on port 35121
+Read port: 35121
+WebDriver BiDi listening on ws://127.0.0.1:60225
+1676994301054	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileEsgGsk/search.json.mozlz4", (void 0)))
+DevTools listening on ws://127.0.0.1:60225/devtools/browser/1f86f8c0-fada-44d9-a0a1-674410f30760
+JavaScript warning: https://pagead2.googlesyndication.com/bg/ENhUjQ5Efr1LKcBlRSMtCxEMsPeXm4hb-JW7itjXrRA.js line 2 > eval line 4637 > eval line 1 > eval line 1 > eval, line 1: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://beacon.riskified.com/?shop=https://onlinelibrary.wiley.com&sid=aaaG5V1AlidBTgNC8kXzy, line 7: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+1676995066453	Marionette	INFO	Stopped listening on port 35121
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
