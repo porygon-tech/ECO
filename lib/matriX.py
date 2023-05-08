@@ -3,6 +3,7 @@ import numpy as np
 #from scipy.sparse import linalg
 from scipy.optimize import minimize#, fsolve
 #from scipy.optimize import Bounds as scipy_bounds
+import matplotlib.pyplot as plt
 #%%
 '''
 Please understand the code before using.
@@ -10,7 +11,25 @@ This module contains numerical optimization functions, whose output results shou
 
 '''
 #%%
+def showdata(mat, color=plt.cm.gnuplot, symmetry=False,colorbar=False):
+    mat = np.copy(mat)
+    if symmetry:
+        top = np.max([np.abs(np.nanmax(mat)),np.abs(np.nanmin(mat))])
+        plt.imshow(mat.astype('float32'), interpolation='none', cmap='seismic',vmax=top,vmin=-top)
+    else:
+        plt.imshow(mat.astype('float32'), interpolation='none', cmap=color)
+    if colorbar: plt.colorbar()
+    plt.show()
 
+def showlist(l, distbins=False):
+            fig = plt.figure(); ax = fig.add_subplot(111)
+            ax.plot(np.arange(len(l)),list(l))
+            plt.show()
+
+def cNorm(x, k=1):
+    return (k**2*x) / (1 + (-1 + k**2)*x)
+
+#%%
 def is_symmetric(m):
     return (m==m.T).all()
 
@@ -178,6 +197,25 @@ def rmUnco(m):
     
 
 
+
+
+
+def flat_nDist(B):
+    '''
+    keeps degree distribution along one axis, sets a random uniform to the other one
+    '''
+    m,n = B.shape
+    B=B[:,np.argsort(B.sum(axis=0))[::-1]]
+    B=B[np.argsort(B.sum(axis=1))[::-1],:]
+    
+    r = list(map(tuple, list(map(np.random.choice, [range(n)]*m, B.sum(axis=1).astype(int), [False]*m))))
+    
+    Br = np.zeros((m,n))
+
+    for i in range(m):
+        Br[(tuple([i]*len(r[i])),r[i])] = 1
+    
+    return(Br)
 
 
 

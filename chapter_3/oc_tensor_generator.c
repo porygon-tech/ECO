@@ -25,17 +25,19 @@ double oc(double v, double n, double i, double j) {
 
 int main() {
 
-    int nloci = 100;
+    int nloci = 20;
     int nstates = nloci + 1;
 
 
     // create 2D array for x and y
-    double **x, **y;
-    x = (double **)malloc(nstates * sizeof(double *));
-    y = (double **)malloc(nstates * sizeof(double *));
+    double *x_data = (double *)malloc(nstates * nstates * sizeof(double));
+    double *y_data = (double *)malloc(nstates * nstates * sizeof(double));
+
+    double **x = (double **)malloc(nstates * sizeof(double *));
+    double **y = (double **)malloc(nstates * sizeof(double *));
     for (int i = 0; i < nstates; i++) {
-        x[i] = (double *)malloc(nstates * sizeof(double));
-        y[i] = (double *)malloc(nstates * sizeof(double));
+        x[i] = x_data + i * nstates;
+        y[i] = y_data + i * nstates;
         for (int j = 0; j < nstates; j++) {
             x[i][j] = i;
             y[i][j] = j;
@@ -50,14 +52,7 @@ int main() {
     }
 
     // create 3D array for oc_tensor
-    double ***oc_tensor = (double ***)malloc(nstates * sizeof(double **));
-    for (int i = 0; i < nstates; i++) {
-        oc_tensor[i] = (double **)malloc(nstates * sizeof(double *));
-        for (int j = 0; j < nstates; j++) {
-            oc_tensor[i][j] = (double *)malloc(nstates * sizeof(double));
-        }
-    }
-
+    double *oc_tensor = (double *)malloc(nstates * nstates * nstates * sizeof(double));
 
     for (int v = 0; v < nstates; v++) {
         printf("v=%d\n", v);
@@ -68,9 +63,10 @@ int main() {
 
         for (int i = 0; i < nstates; i++) {
             for (int j = 0; j < nstates; j++) {
-                oc_tensor[v][i][j] = oc(v_list[i * nstates + j], n_list[i * nstates + j], x[i][j], y[i][j]);
+                oc_tensor[v * nstates * nstates + i * nstates + j] = oc(v_list[i * nstates + j], n_list[i * nstates + j], x[i][j], y[i][j]);
             }
         }
+        free(v_list);
     }
 
     // Open file for writing
@@ -82,19 +78,12 @@ int main() {
     // Close file
     fclose(f);
 
-    //Free memory
-    for (int i = 0; i < nstates; i++) {
-        free(x[i]);
-        free(y[i]);
-        for (int j = 0; j < nstates; j++) {
-            free(oc_tensor[i][j]);
-        }
-        free(oc_tensor[i]);
-    }
     free(x);
     free(y);
+    free(x_data);
+    free(y_data);
     free(oc_tensor);
     free(n_list);
-    //free(v_list);
+
     return 0;
 }

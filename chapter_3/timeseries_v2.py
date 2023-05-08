@@ -106,7 +106,7 @@ def showdata(mat, color='magma', symmetry=False):
     plt.show()
 
 def augment(x,a=10,b=5):
-    return 1-a**(-b*x)
+    return 1-np.exp**(-b*x)
 
 #%%
 n=100
