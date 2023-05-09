@@ -32,7 +32,9 @@ import matplotlib.colors
 def rescale(arr: np.ndarray, vmin=0,vmax=1):
     return  (arr - vmin) / (vmax - vmin)
 
-def blendmat(mat1,mat2,mat3,saturation = 1.1,additive=False):
+def blendmat(mat1,mat2,mat3=None,saturation = 1.1,additive=False):
+    if !mat3:
+        mat3=mat2.copy()
     temp_max=np.max((mat1,mat2,mat3))
     temp_min=np.min((mat1,mat2,mat3))
 

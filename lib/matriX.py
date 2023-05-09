@@ -29,6 +29,46 @@ def showlist(l, distbins=False):
 def cNorm(x, k=1):
     return (k**2*x) / (1 + (-1 + k**2)*x)
 
+import matplotlib.colors
+def rescale(arr, vmin=0,vmax=1):
+    amin = np.min(arr)
+    amax = np.max(arr)
+    return  (arr - amin) / (amax - amin) * (vmax - vmin) +  vmin
+
+def blendmat(mat1,mat2,mat3=None,saturation = 1.1,additive=False):
+    if not mat3:
+        mat3=mat2.copy()
+    temp_max=np.max((mat1,mat2,mat3))
+    temp_min=np.min((mat1,mat2,mat3))
+
+    R_r = rescale(mat1, temp_min,temp_max) #clip?
+    G_r = rescale(mat2, temp_min,temp_max)
+    B_r = rescale(mat3, temp_min,temp_max)
+    if additive:
+        cmapgrn = matplotlib.colors.LinearSegmentedColormap.from_list("", ["black", "green"]) #seagreen also
+        cmapred = matplotlib.colors.LinearSegmentedColormap.from_list("", ["black", "red"])
+        cmapblu = matplotlib.colors.LinearSegmentedColormap.from_list("", ["black", "blue"])
+        
+        blended = 1 - (1 - cmapred(R_r)) * (1 - cmapgrn(G_r)) * (1 - cmapblu(B_r))
+        blended = mx.cNorm(blended,saturation)
+    else:
+        cmapgrn = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", "magenta"]) #seagreen also
+        cmapred = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", "cyan"])
+        cmapblu = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", "yellow"])
+        
+        blended = (cmapred(R_r)+cmapgrn(G_r)+cmapblu(B_r))/3
+        blended = mx.cNorm(blended,1/saturation)
+    
+    fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
+    pos = ax.imshow(blended,interpolation='None')
+    #fig.suptitle(r'$\alpha=$'+str(alpha)+r'$, a_{12}=$'+str(a12)+r'$, a_{13}=$'+str(a13)+', b='+str(b),y=0.75)
+    #ax.set_ylim(0,n)  # decreasing time
+    ax.set_ylabel('Trait value')
+    ax.set_xlabel('Time (generations)')
+    ax.invert_yaxis()
+    plt.tight_layout()
+    plt.show()
+
 #%%
 def is_symmetric(m):
     return (m==m.T).all()
