@@ -372,6 +372,17 @@ mx.showlist(N[:20])
 mx.showlist(N)
 
 
+
+def predict(N0,l,mu=0.,ntimesteps=100):
+    if type(mut) == float:
+        mut= evo.generate_mut_matrix(nstates,mu=mu)
+
+    
+l = np.zeros((nstates,1))
+for i in range(nstates):
+    l[i] = 
+np.array([f(s) for s in states])
+        
  
 
 

@@ -41,7 +41,7 @@ def bindist(n,k,p=0.5):
 #%% Initial setup
 nloci = 100
 ps = (500,500+nloci)
-mu=0.00
+mu=0.001
 # ---------------
 
 nstates = nloci+1
@@ -135,9 +135,9 @@ mx.showdata(c.history, colorbar=True, color='binary') # 3. Agents
 
 #%% set simulation parameters
 #N=b.shape[0]
-N=56 # number of species
-c=0.3 # expected connectance
-ntimesteps=50
+N=32 # number of species
+c=0.5 # expected connectance
+ntimesteps=100
 
 #%%
 initial_l= mx.generateWithoutUnconnected(N,N,c) 
@@ -217,9 +217,9 @@ mx.showlist(z)
 mutual_effs = initial_l.copy()
 allowed_links = initial_l.copy()
 
-ntimesteps = 90
-alpha=1
-xi_S=0.6 # level of environmental selection (from 0 to 1).
+ntimesteps = 100
+alpha=0.2
+xi_S=0.5 # level of environmental selection (from 0 to 1).
 xi_d=1-xi_S # level of selection imposed by resource species (from 0 to 1).
 turnover=1
 v = np.zeros((ntimesteps+1, N, nstates))
@@ -250,22 +250,22 @@ for t in range(1,ntimesteps+1):
     # l[t-1] = np.outer(np.ones(N),f(states))
     w = v[t-1]*l[t-1]
     for species_id in range(N):
-        newgen= w[species_id] @ h @ w[species_id] / w[species_id].sum()**2
+        newgen= w[species_id] @ ha @ w[species_id] / w[species_id].sum()**2
         v[t,species_id] = v[t-1,species_id]*(1-turnover) + newgen*turnover
-        # v[t] = mut @ v[t]
+        v[t] = v[t] @ mut.T
         
     print(t)
+
 
 
 #%% change of averages over time
 
 avgseries = (v*states*nstates).mean(2)
-mx.showlist(avgseries[:50])
+# mx.showlist(avgseries[:50])
 mx.showlist(avgseries)
-#%%
 # -------------------------------------------------------------------------------   
 # -------------------------------------------------------------------------------   
-#get adjacency and fitness
+#%%get adjacency and fitness
 
 # 1. get adjacency timeseries ----------
 adj_timeseries = []
@@ -317,7 +317,7 @@ def frame(t):
 
 ani = animation.FuncAnimation(fig, frame, frames=ntimesteps+1, interval=50, blit=False)
 # Save the animation as a GIF file
-ani.save('animation.gif')
+ani.save('../figures/gif/distributions' + str(time.time()) +'.gif')
 
 #%%
 '''
@@ -400,7 +400,7 @@ def frame(t):
     return ax
 
 ani = animation.FuncAnimation(fig, frame, frames=ntimesteps, interval=50, blit=False)
-ani.save('gallery/net' + str(time.time()) +'.gif')
+ani.save('../figures/gif/net' + str(time.time()) +'.gif')
 
 #%% ANIMATE NETWORK ((2))
 rsc = mx.rescale(fits)
@@ -412,9 +412,9 @@ def frame(t):
     global pos
     ax.clear()
     G=nx.from_numpy_array(adj_timeseries[t])
-    pos=nx.layout.fruchterman_reingold_layout(G, weight='weight', pos=pos,threshold=1e-10,iterations=10)
+    pos=nx.layout.fruchterman_reingold_layout(G, weight='weight', pos=pos,threshold=1e-8,iterations=10) # threshold=1e-10,iterations=10
     #pos = dict(zip(G.nodes(), list(np.array(list(pos.values()))+np.array(list(pos_new.values()))/2)))
-    linewidths = list(3*np.array(list(nx.get_edge_attributes(G, 'weight').values())))
+    linewidths = list(1*np.array(list(nx.get_edge_attributes(G, 'weight').values())))
     node_weights = dict(zip(G.nodes(), rsc[t].tolist()))
     nx.set_node_attributes(G, node_weights, "weight")
     cmap = plt.cm.get_cmap("cool_r")
@@ -431,7 +431,7 @@ def frame(t):
     return ax
 
 ani = animation.FuncAnimation(fig, frame, frames=ntimesteps, interval=50, blit=False)
-ani.save('net.gif')
+ani.save('../figures/gif/net' + str(time.time()) +'.gif')
 
 
 
@@ -501,7 +501,8 @@ def frame(t):
     return ax1,ax2,ax3
 
 ani = animation.FuncAnimation(fig, frame, frames=ntimesteps, interval=50, blit=False)
-ani.save('complete.gif')
+filename = '../figures/gif/complete_0_' + str(time.time()) +'.gif'
+ani.save(filename)
 
 
 #%% ANIMATE COMPLETE 2
@@ -531,7 +532,7 @@ def frame(t):
     
     forces = np.array([sum([data['weight'] for _, _, data in G.edges(node, data=True)]) for node in G.nodes])
     node_colors = {node: cmap(weight) for node, weight in node_weights.items()}
-    nx.draw_networkx(G, ax=ax2, pos=pos, width=linewidths, edge_color=linewidths, edge_cmap=plt.cm.turbo, node_size= 4*forces, node_color=list(node_colors.values())) #node_size= force ?
+    nx.draw_networkx(G, ax=ax2, pos=pos, width=linewidths, edge_color=linewidths, edge_cmap=plt.cm.turbo, node_size= 10, node_color=list(node_colors.values())) #node_size= force ?
 
    # ---------------------------------------------------------------------
    
@@ -539,11 +540,111 @@ def frame(t):
     return ax1,ax2,ax3
 
 ani = animation.FuncAnimation(fig, frame, frames=ntimesteps, interval=50, blit=False)
-ani.save('complete.gif')
+filename = '../figures/gif/complete' + str(time.time()) +'.gif'
+ani.save(filename)
+os.system('eog ' + filename)
 
 '''
 node size: force
 node color: populations average fitness
 
 '''
+#%%
+
+
+statesdiff=np.outer(np.ones(nstates),states)-np.outer(states,np.ones(nstates))
+assortMat = pM(statesdiff,alpha=0.1)
+
+mx.showdata(assortMat,colorbar=True)
+#assortMat=1-assortMat
+I = np.newaxis
+
+assortMat[ ..., I ].shape
+np.swapaxes(v[t,1,I,I],0,-1).shape
+
+vs = np.c_[v[t,1]]
+
+dir(np.lib.index_tricks)
+test=assortMat[ ..., I ] @ np.swapaxes(v[t,1,I,I],0,-1)
+test.shape
+
+test= vs.T @ assortMat @ vs
+assortMat.shape
+mx.showdata(test)
+
+
+test2= assortMat[...,I] @ np.ones((1,nstates))
+test2= np.swapaxes(test2,0,-1) 
+
+
+test3 = (test2 * h)
+mx.showdata(test3[50])
+
+
+mx.showdata(test3.sum(0))
+
+test2.sum(0)
+
+
+h.sum(0)
+
+#%%
+
+
+statesdiff=np.outer(np.ones(nstates),states)-np.outer(states,np.ones(nstates))
+a=-0.0000
+assortMat = pM(statesdiff,alpha=abs(a))
+if a<0:
+    assortMat = 1 - assortMat
+mx.showdata(assortMat,colorbar=True)
+
+
+v0 = [bindist(nloci,i,0.5) for i in range(nstates)]
+mx.showlist(1/(1+v0))
+
+l = pM(np.arange(nstates)-20,0.007) + pM(np.arange(nstates)-80,0.007)
+l = np.array(4*l)[:,I]
+mx.showlist(l)
+
+temp_nt=200
+
+traj = evo.predict(v0,l,h=h,a=-0.0001, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=-0.001, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=-0.01, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=-0.1, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=-10, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=0., ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=0.0001, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=0.001, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=0.01, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=0.1, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=1, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=10, ntimesteps=temp_nt) ; mx.showdata(traj)
+traj = evo.predict(v0,l,h=h,a=1000, ntimesteps=temp_nt) ; mx.showdata(traj)
+
+traj.sum(1)
+
+
+
+#%%
+statesdiff=np.outer(np.ones(nstates),states)-np.outer(states,np.ones(nstates))
+assortMat = pM(statesdiff,alpha=-0.001)
+assortMat = 1 - assortMat
+mx.showdata(assortMat)
+#assortMat = np.ones((nstates,nstates))
+v0 = np.c_[list(v0)]
+
+vc = (v0.T @ assortMat).T * v0
+mx.showlist(vc)
+mx.showlist(v0)
+
+w = v0*l
+w = (w.T @ assortMat).T * w
+v1 = ((w.T @ h @ w) / w.sum()**2)[:,0]
+mx.showlist(v1)
+v1.sum()
+sum(v0)
+
+
+
 

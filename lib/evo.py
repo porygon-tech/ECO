@@ -67,6 +67,35 @@ def generate_mut_matrix(nstates,mu=0):
     else:
         return np.array([ list(map(lambda i: sum(list(map(lambda k: bindist(i,i-k,mu) * bindist(n-i,b-k,mu), list(range(i+1))))), list(range(nstates)))) for b in list(range(nstates))])
     
+def generate_h_tensor(n):
+    def oc(v,n,i,j):
+        #prob of getting phenotype v from parent phenotypes i,j with n loci
+        sumvar=0
+        v=int(v)
+        n=int(n)
+        i=int(i)
+        j=int(j)
+        for x in range(i+1):
+            sumvar+=comb(i,x) * comb(n - i, j - x) / comb(n,j)*bindist(i + j - 2*x, v - x)
+        return sumvar
+    
+    nstates=n+1
+    x = np.arange(nstates)
+    y = np.arange(nstates)
+    gx,gy = np.meshgrid(x,y)
+    x, y = gx.flatten(), gy.flatten()
+
+    n_list=np.repeat(n,nstates**2)
+    oc_tensor = np.zeros((nstates,nstates,nstates))
+
+    for v in range(nstates):
+        print('v='+str(v))
+        v_list=np.repeat(v,nstates**2)
+        z = list(map(oc, v_list,n_list,x,y))
+        mat=np.array(z).reshape((nstates,nstates)).astype('float32')
+        oc_tensor[v,...] = mat[np.newaxis,...]
+    return(oc_tensor)
+    
 
 def flat_nDist(B): #copied from matriX
     '''
@@ -438,6 +467,50 @@ except NameError as e:
     # Do whatever you want if the variable is not defined yet in the program.
     print('ERROOOOR: ' + str(e))
 '''
+import interactors
 
+def predict(v0,l,ntimesteps=100,h=None, mut=0., a=0., ps=None):
+    """
+    Parameters
+    ----------
+    v0 : array-like
+        initial state.
+    l : array-like
+        absolute fitnesses.
+    h : 3rd order ndarray, optional
+        inheritance tensor. The default is None.
+    mut : float or 2nd order ndarray, optional
+        mutation matrix. The default is 0..
+    ntimesteps : TYPE, optional
+        n of generations simulated. The default is 100.
 
+    Returns
+    -------
+    evolutionary history.
+
+    """
+    v0 = np.c_[list(v0)]
+    nstates=len(v0)
+    if type(mut) == float:
+        mut= generate_mut_matrix(nstates,mu=mut)
+    if type(h) != np.ndarray:
+        h = generate_h_tensor(nstates-1)
+    if ps is None:
+        ps=(0,nstates-1)
+    states = np.linspace(ps[0],ps[1], nstates)
+    statesdiff=np.outer(np.ones(nstates),states)-np.outer(states,np.ones(nstates))
+    assortMat = interactors.pM(statesdiff,alpha=abs(a))
+    if a<0:
+        assortMat = 1 - assortMat
+        
+    v = np.zeros((ntimesteps+1, nstates,1))
+    v[0] = np.squeeze(v0)[:,np.newaxis]
+    for t in range(1,ntimesteps+1):
+    #for t in range(1,10):
+        w = v[t-1]*l
+        w = (w.T @ assortMat).T * w
+        v[t] = ((w.T @ h @ w) / w.sum()**2)[:,0]
+        v[t] = mut @ v[t]
+        print(t)
+    return(v)
 
