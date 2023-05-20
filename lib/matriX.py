@@ -11,6 +11,15 @@ This module contains numerical optimization functions, whose output results shou
 
 '''
 #%%
+def to_square(m):
+	rows, cols = m.shape
+	uL = np.zeros((rows,rows))
+	dR = np.zeros((cols,cols))
+	Um = np.concatenate((uL , m ), axis=1)
+	Dm = np.concatenate((m.T, dR), axis=1)
+	return(np.concatenate((Um,Dm), axis=0))
+
+#%%
 def showdata(mat, color=plt.cm.gnuplot, symmetry=False,colorbar=False):
     mat = np.copy(mat)
     if symmetry:
