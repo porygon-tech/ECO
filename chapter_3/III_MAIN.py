@@ -201,7 +201,7 @@ N=b.shape[0]
 theta=np.random.rand(N)*np.diff(ps)+ps[0] # values favoured by env. selection
 
 #%% ALTERNATIVE: test
-'''
+#'''
 b=np.array([[0,1,1],
             [1,0,1],
             [1,1,0]])
@@ -209,21 +209,22 @@ initial_l=b.copy()
 N=b.shape[0]
 m=np.zeros((N,1))
 m=np.array([[0,0,0.5]]).T
-theta = np.array([1,100,80])
-'''
-#%% simulate as Guimaraes (new)
-
+theta = np.array([1,100,40])+500
+#'''
+#%% simulate as Guimaraes
+find_fixedpoint = True
+theta=np.random.rand(N)*np.diff(ps)+ps[0] # values favoured by env. selection
 mechanism_type = 1 # the rest of mechanisms can be taken from coevolutionary models/andreazzi...
 # 1: 'mutualism + trait matching' or 
 # 2: 'mutualism + exploitation barrier' or 
 # 3: 'antagonism + trait matching (trait mismatching)' or
 # 4: 'antagonism + exploitation barrier' 
 
-xi_S=0.01 # level of environmental selection (from 0 to 1).
+xi_S=0.1 # level of environmental selection (from 0 to 1).
 xi_d=1-xi_S # level of selection imposed by resource species (from 0 to 1).
 alpha= 0.01 # strength of the mechanism. Controls how the difference in species traits affects the probability of pairwise interaction.
-epsilon = 0.5 # threshold, assumed to be fixed and identical for all species.
-phi=0.4 # slope of the selection gradient.
+#epsilon = 0.5 # threshold, assumed to be fixed and identical for all species.
+phi=0.9 # slope of the selection gradient.
 #m=np.zeros((N,1))+xi_d
 m=np.clip(np.random.normal(xi_d,0.01,(N,1)),0,1) # vector of levels of selection imposed by mutualistic partners (from 0 to 1)
 
@@ -259,13 +260,37 @@ if mechanism_type == 1:
         M[t,:,:]=q[t,:,:]*zdiffs.T
        
     #mx.showlist((S+M.sum(2))[:500]) # all differences converge to zero when the system reaches a fixed point
+    
 
+if find_fixedpoint == True:
+    while not np.all(np.abs(np.diff(z[-2:],axis=0))<10e-4):
+        t+=1
+        print(t)
+        z=np.append(z, np.zeros((1,N))  ,axis=0)        # trait values
+        S=np.append(S, np.zeros((1,N))  ,axis=0)        # partial selection differentials caused by the environment
+        p=np.append(p, np.zeros((1,N,N)),axis=0)        # pairwise interaction probabilities
+        a=np.append(a, np.zeros((1,N,N)),axis=0)        # 1 if species i and j interact at time t and 0 otherwise 
+        q=np.append(q, np.zeros((1,N,N)),axis=0)        # evolutionary effect of the interaction between species i and j at time t 
+        M=np.append(M, np.zeros((1,N,N)),axis=0)        # partial selection differentials caused by other species (trait matching)
+        z[t,:] = z[t-1,:] + phi*(S[t-1,:]+M[t-1,:,:].sum(1))
+        zdiffs = (z[t,:]*np.ones((N,1))).T - z[t,:]*np.ones((N,1))
+        S[t,:] = (1-m.T)*(theta-z[t,:])
+        p[t,:,:]=evo.interactors.pM(zdiffs,alpha)
+        AxP=a[0,:,:]*p[t,:,:]
+        q[t,:,:] = m * (AxP/(AxP-np.diag(np.diag(AxP))).sum(1)[:,np.newaxis]*np.ones((1,N)))
+        M[t,:,:]=q[t,:,:]*zdiffs.T
+        
 mx.showlist(z)
 
+# mx.showdata(AxP)
+# mx.showdata(a[0])
+mx.showdata(b,     colorbar=True)
+mx.showdata(q[-1], colorbar=True)
 
 
 
-#%% simulate as Guimaraes
+#%% simulate as Andreazzi
+'''
 mechanism_type = 1 # the rest of mechanisms can be taken from coevolutionary models/andreazzi...
 # 1: 'mutualism + trait matching' or 
 # 2: 'mutualism + exploitation barrier' or 
@@ -317,13 +342,7 @@ if mechanism_type == 1:
     #mx.showlist((S+M.sum(2))[:500]) # all differences converge to zero when the system reaches a fixed point
 
 mx.showlist(z)
-
-
-
-
-
-
-
+'''
 
 
 #%% simulate as Roman
@@ -335,7 +354,9 @@ allowed_links = initial_l.copy()
 
 ntimesteps = 200
 
-alpha=0.005
+alpha=0.01
+alpha_environ=alpha#0.00001
+turnover=1
 '''
 xi_S=0.5 # level of environmental selection (from 0 to 1).
 xi_d=1-xi_S # level of selection imposed by resource species (from 0 to 1).
@@ -365,6 +386,22 @@ l = np.zeros((ntimesteps+1, N, nstates)) # fitness landscape
 for t in range(1,ntimesteps+1):
     for species_id in range(N):
         p[t-1,species_id]=convpM(v[t-1,species_id],nstates,alpha)
+    l[t-1] = (mutual_effs @ p[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ)
+    # l[t-1] = np.outer(np.ones(N),f(states))
+    w = v[t-1]*l[t-1]
+    for species_id in range(N):
+        newgen= w[species_id] @ h @ w[species_id] / w[species_id].sum()**2
+        v[t,species_id] = v[t-1,species_id]*(1-turnover) + newgen*turnover
+        #v[t] = v[t] @ mut.T
+        
+    print(t)
+
+'''
+p = np.zeros((ntimesteps+1, N, nstates))
+l = np.zeros((ntimesteps+1, N, nstates)) # fitness landscape
+for t in range(1,ntimesteps+1):
+    for species_id in range(N):
+        p[t-1,species_id]=convpM(v[t-1,species_id],nstates,alpha)
     l[t-1] = (mutual_effs @ p[t-1]) * xi_d + xi_S*pM(thetadiff,alpha=alpha)
     # l[t-1] = np.outer(np.ones(N),f(states))
     w = v[t-1]*l[t-1]
@@ -374,6 +411,7 @@ for t in range(1,ntimesteps+1):
         #v[t] = v[t] @ mut.T
         
     print(t)
+'''
 
 
 
@@ -420,6 +458,42 @@ mx.showlist(v[1].T)
 mx.showdata(pM(thetadiff,alpha=alpha))
 mx.showdata(v[:,0])
 '''
+#%% INVASION
+invaders = v[0].copy()
+for species_id in range(N):
+    p=np.random.rand()
+    invaders[species_id] = [bindist(nloci,i,p) for i in range(nstates)]
+#invaders = v[0].copy()
+
+mx.showlist(v[0].T)
+mx.showlist(invaders.T)
+invaderproportion=0.1
+v_afterinvasion = invaders*invaderproportion+v[-1]*(1-invaderproportion)
+mx.showlist((v_afterinvasion).T)
+
+v2 = np.zeros((ntimesteps+1, N, nstates))
+v2[0] = v_afterinvasion
+p = np.zeros((ntimesteps+1, N, nstates))
+l = np.zeros((ntimesteps+1, N, nstates)) # fitness landscape
+for t in range(1,ntimesteps+1):
+    for species_id in range(N):
+        p[t-1,species_id]=convpM(v2[t-1,species_id],nstates,alpha)
+    l[t-1] = (mutual_effs @ p[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ)
+    # l[t-1] = np.outer(np.ones(N),f(states))
+    w = v2[t-1]*l[t-1]
+    for species_id in range(N):
+        newgen= w[species_id] @ h @ w[species_id] / w[species_id].sum()**2
+        v2[t,species_id] = v2[t-1,species_id]*(1-turnover) + newgen*turnover
+        #v2[t] = v2[t] @ mut.T
+        
+    print(t)
+
+v_invaded = np.append(v,v2,axis=0)
+avgseries = (v_invaded*states*nstates).mean(2)
+# mx.showlist(avgseries[:50])
+mx.showlist(avgseries)
+
+
 #%%
 import matplotlib.animation as animation
 #matplotlib.use('TkAgg') # or 'Qt5Agg'
@@ -758,7 +832,8 @@ if a<0:
 mx.showdata(assortMat,colorbar=True)
 
 
-v0 = [bindist(nloci,i,0.5) for i in range(nstates)]
+v0 = np.c_[np.array([bindist(nloci,i,0.5) for i in range(nstates)])]
+
 mx.showlist(1/(1+v0))
 
 l = pM(np.arange(nstates)-20,0.007) + pM(np.arange(nstates)-80,0.007)
@@ -782,6 +857,28 @@ traj = evo.predict(v0,l,h=h,a=10, ntimesteps=temp_nt) ; mx.showdata(traj)
 traj = evo.predict(v0,l,h=h,a=1000, ntimesteps=temp_nt) ; mx.showdata(traj)
 
 traj.sum(1)
+
+
+X, Y = np.meshgrid(np.linspace(-3, 3, 256), np.linspace(-3, 3, 256))
+Z = (1 - X/2 + X**5 + Y**3) * np.exp(-X**2 - Y**2)
+levels = np.linspace(Z.min(), Z.max(), 7)
+
+# plot
+fig, ax = plt.subplots()
+ax.contourf(X, Y, Z, levels=levels,cmap='gnuplot')
+plt.show()
+
+
+X, Y = np.meshgrid(np.linspace(0,ntimesteps,ntimesteps+1), np.linspace(ps[0],ps[1], nstates))
+Z = np.squeeze(traj)
+levels = np.linspace(0,Z.max(), 8)
+
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
+CS = ax.contourf(X.T, Y.T, Z, levels=7,cmap='binary')
+#ax.contour(X.T, Y.T, Z, levels=levels,colors='r',linewidths=1)
+cbar = fig.colorbar(CS)
+cbar.ax.set_ylabel('probability')
+plt.show()
 
 
 

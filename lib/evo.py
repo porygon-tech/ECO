@@ -478,15 +478,16 @@ def predict(v0,l,ntimesteps=100,h=None, mut=0., a=0., ps=None):
     l : array-like
         absolute fitnesses.
     h : 3rd order ndarray, optional
-        inheritance tensor. The default is None.
+        inheritance tensor. If nothing is provided, it tries to generate one. The default is None.
     mut : float or 2nd order ndarray, optional
-        mutation matrix. The default is 0..
+        mutation matrix or mutation rate. If a matrix is not provided, it tries to generate one with the mutation rate. 
+        The default is 0..
     ntimesteps : TYPE, optional
         n of generations simulated. The default is 100.
 
     Returns
     -------
-    evolutionary history.
+    Predicted evolutionary history for a single population under a fixed fitness function.
 
     """
     v0 = np.c_[list(v0)]
