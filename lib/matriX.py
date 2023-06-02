@@ -4,6 +4,7 @@ import numpy as np
 from scipy.optimize import minimize#, fsolve
 #from scipy.optimize import Bounds as scipy_bounds
 import matplotlib.pyplot as plt
+import networkx as nx
 #%%
 '''
 Please understand the code before using.
@@ -244,7 +245,17 @@ def rmUnco(m):
     m = np.delete(m, zero_cols, axis=1)
     return m
     
-
+def symmetric_connected_adjacency(N, c=0.5):
+    initial_l= generateWithoutUnconnected(N,N,c) 
+    initial_l=np.tril(initial_l,0)+np.tril(initial_l,0).T
+    initial_l=initial_l-np.diag(np.diag(initial_l))
+    
+    while initial_l.shape != rmUnco(initial_l).shape or not nx.is_connected(nx.from_numpy_array(initial_l)):
+        initial_l= generateWithoutUnconnected(N,N,c)
+        initial_l=np.tril(initial_l,0)+np.tril(initial_l,0).T
+        initial_l=initial_l-np.diag(np.diag(initial_l))
+        
+    return initial_l
 
 
 

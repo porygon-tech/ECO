@@ -125,6 +125,10 @@ class transformations:
         r = x/ (1-np.exp(-v*x))
         r[np.where(x==0)] = 1/v
         return r
+    
+#class eco:
+
+
 
 class population(object):
     """docstring for population"""
@@ -548,7 +552,8 @@ def simulate_explicit(
         ntimesteps = 50,
         alpha=0.01,
         xi_S=0.5, # level of environmental selection (from 0 to 1).
-        D0=50
+        D0=50,
+        complete_output=False
         ): 
     """
     Frequency-explicit coevolution
@@ -608,7 +613,10 @@ def simulate_explicit(
             D[t,species_id] = (1-1/(D[t-1,species_id] * r/K+1))*K
             
         print(t)
-    return v
+    if complete_output:
+        return v, D
+    else:
+        return v
 
 #%%
 
