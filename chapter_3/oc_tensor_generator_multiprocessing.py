@@ -51,67 +51,46 @@ x, y = gx.flatten(), gy.flatten()
 n_list=np.repeat(nloci,nstates**2)
 oc_tensor = np.zeros((nstates,nstates,nstates))
 
-#%%
-for v in range(nstates):
-    print('v='+str(v))
-    v_list=np.repeat(v,nstates**2)
-    z = list(map(oc, v_list,n_list,x,y))
-    mat=np.array(z).reshape((nstates,nstates)).astype('float32')
-    oc_tensor[v,...] = mat[np.newaxis,...]
-
-
-
-filename='oc_tensor_' + str(n) + '.obj'
-with bz2.BZ2File(obj_path / filename, 'wb') as f:
-    pickle5.dump(oc_tensor, f)
-    
-    
-    
-    
 
 #%%
 import os
 def split(string, n):
     return [string[i:i+n] for i in range(0, len(string), n)]
 
-import threading
+import multiprocessing
 
-# A flag variable to indicate whether threads should exit
-# Set the exit flag to True to signal threads to exit
-exit_flag = False
-class customthread(threading.Thread):
-    def run(self):
-        global exit_flag
-        # Thread execution logic
-        while not exit_flag:
-            # Perform thread's task
-            pass
 
 def task_ocgen(cola):
-    print("Task 1 assigned to thread: {}".format(threading.current_thread().name))
+    print("Task 1 assigned to process: {}".format(multiprocessing.current_process().name))
     print("ID of process running task 1: {}".format(os.getpid()))
     global oc_tensor
     global nstates
     global n_list
     for v in cola:
-        print(threading.current_thread().name + ' running v='+str(v))
-        v_list=np.repeat(v,nstates**2)
-        z = list(map(oc, v_list,n_list,x,y))
-        mat=np.array(z).reshape((nstates,nstates)).astype('float32')
-        oc_tensor[v,...] = mat[np.newaxis,...]
+        print(multiprocessing.current_process().name + ' running v='+str(v))
+        v_list = np.repeat(v, nstates**2)
+        z = list(map(oc, v_list, n_list, x, y))
+        mat = np.array(z).reshape((nstates, nstates)).astype('float32')
+        oc_tensor[v, ...] = mat[np.newaxis, ...]
+
+if __name__ == "__main__":
+    colas = split(np.arange(nstates), int(np.ceil(nstates/32)))
+    processes = []
+    for i, cola in enumerate(colas):
+        # Creating processes
+        processes.append(multiprocessing.Process(target=task_ocgen, args=(cola,), name='calc_'+str(i)))
+    print('SPAWNED ' + str(len(colas)) + ' PROCESSES')
+    for process in processes:
+        process.start()
+
+    for process in processes:
+        process.join()
+        
+    #%%
     
-
-colas = split(np.arange(nstates),int(nstates/16))
-threads=[]
-for i,cola in enumerate(colas):
-    # creating threads
-    threads.append(customthread(target=task_ocgen, args=[cola], name='calc_'+str(i)))
-
-for thread in threads:
-    thread.start()
-
-
-for thread in threads:
-    thread.join()
+    filename='oc_tensor_' + str(n) + '.obj'
+    print('\nSAVING TENSOR AS ' + str(obj_path / filename))
+    with bz2.BZ2File(obj_path / filename, 'wb') as f:
+        pickle5.dump(oc_tensor, f)
     
-
+    

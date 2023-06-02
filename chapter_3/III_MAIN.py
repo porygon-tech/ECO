@@ -5,11 +5,11 @@ Created on Fri May  5 15:41:57 2023
 
 @author: roman
 """
-from os import chdir, listdir
+from os import chdir, listdir, environ
 from pathlib import Path
 import pickle5
 import bz2
-chdir('/home/roman/LAB/ECO') #this line is for Spyder IDE only
+chdir(environ['HOME'] + '/LAB/ECO') #this line is for Spyder IDE only
 root = Path(".")
 obj_path = root / 'data/obj'
 img_path = root / 'gallery/timeseries'

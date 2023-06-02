@@ -51,23 +51,6 @@ x, y = gx.flatten(), gy.flatten()
 n_list=np.repeat(nloci,nstates**2)
 oc_tensor = np.zeros((nstates,nstates,nstates))
 
-#%%
-for v in range(nstates):
-    print('v='+str(v))
-    v_list=np.repeat(v,nstates**2)
-    z = list(map(oc, v_list,n_list,x,y))
-    mat=np.array(z).reshape((nstates,nstates)).astype('float32')
-    oc_tensor[v,...] = mat[np.newaxis,...]
-
-
-
-filename='oc_tensor_' + str(n) + '.obj'
-with bz2.BZ2File(obj_path / filename, 'wb') as f:
-    pickle5.dump(oc_tensor, f)
-    
-    
-    
-    
 
 #%%
 import os
@@ -75,17 +58,6 @@ def split(string, n):
     return [string[i:i+n] for i in range(0, len(string), n)]
 
 import threading
-
-# A flag variable to indicate whether threads should exit
-# Set the exit flag to True to signal threads to exit
-exit_flag = False
-class customthread(threading.Thread):
-    def run(self):
-        global exit_flag
-        # Thread execution logic
-        while not exit_flag:
-            # Perform thread's task
-            pass
 
 def task_ocgen(cola):
     print("Task 1 assigned to thread: {}".format(threading.current_thread().name))
@@ -100,18 +72,26 @@ def task_ocgen(cola):
         mat=np.array(z).reshape((nstates,nstates)).astype('float32')
         oc_tensor[v,...] = mat[np.newaxis,...]
     
-
-colas = split(np.arange(nstates),int(nstates/16))
-threads=[]
-for i,cola in enumerate(colas):
-    # creating threads
-    threads.append(customthread(target=task_ocgen, args=[cola], name='calc_'+str(i)))
-
-for thread in threads:
-    thread.start()
-
-
-for thread in threads:
-    thread.join()
+#%%
+if __name__ == "__main__":
+      
+    colas = split(np.arange(nstates),int(nstates/32))
+    threads=[]
+    for i,cola in enumerate(colas):
+        # creating threads
+        threads.append(threading.Thread(target=task_ocgen, args=[cola], name='calc_'+str(i)))
     
-
+    for thread in threads:
+        thread.start()
+    
+    for thread in threads:
+        thread.join()
+        
+    #%%
+    
+    filename='oc_tensor_' + str(n) + '.obj'
+    print('\nSAVING TENSOR AS ' + print(obj_path / filename))
+    with bz2.BZ2File(obj_path / filename, 'wb') as f:
+        pickle5.dump(oc_tensor, f)
+    
+    
