@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
 
+I = np.newaxis
+
 #https://www.geeksforgeeks.org/decorators-in-python/
 #https://www.geeksforgeeks.org/passing-function-as-an-argument-in-python/
 #https://stackoverflow.com/questions/14916284/in-class-object-how-to-auto-update-attributes
@@ -21,6 +23,11 @@ def pois(x,l=1):
 
 def norm(x, mu, sigma):
     return 1 / (sigma * np.sqrt(2*np.pi)) * np.exp(-0.5 * ((x - mu) / sigma)**2)
+
+
+from scipy.special import comb  
+def bindist(n,k,p=0.5):
+    return comb(n,k)*p**k*(1-p)**(n-k)
 # '''
 # def nofixation(M):
 #     maf=1/2-np.abs(M.mean(0) -1/2)
@@ -54,9 +61,6 @@ def mutate(mtx, rate=0.001):
     mutations = np.random.choice((0,1),mtx.shape, p=(1-rate, rate))
     return(np.logical_xor(mutations, mtx))
 
-from scipy.special import comb  
-def bindist(n,k,p=0.5):
-    return comb(n,k)*p**k*(1-p)**(n-k)
 
 def generate_mut_matrix(nstates,mu=0):
     n= nstates-1
@@ -68,6 +72,7 @@ def generate_mut_matrix(nstates,mu=0):
         return np.array([ list(map(lambda i: sum(list(map(lambda k: bindist(i,i-k,mu) * bindist(n-i,b-k,mu), list(range(i+1))))), list(range(nstates)))) for b in list(range(nstates))])
     
 def generate_h_tensor(n):
+    print('Generating inheritance tensor for n={0}...'.format(n))
     def oc(v,n,i,j):
         #prob of getting phenotype v from parent phenotypes i,j with n loci
         sumvar=0
@@ -115,6 +120,11 @@ def flat_nDist(B): #copied from matriX
     return(Br)
 
 
+class transformations:
+    def negativeSaturator( x,v=1):
+        r = x/ (1-np.exp(-v*x))
+        r[np.where(x==0)] = 1/v
+        return r
 
 class population(object):
     """docstring for population"""
@@ -506,6 +516,7 @@ def predict(v0,l,ntimesteps=100,h=None, mut=0., a=0., ps=None):
         
     v = np.zeros((ntimesteps+1, nstates,1))
     v[0] = np.squeeze(v0)[:,np.newaxis]
+    print('Iterating...')
     for t in range(1,ntimesteps+1):
     #for t in range(1,10):
         w = v[t-1]*l
@@ -515,3 +526,125 @@ def predict(v0,l,ntimesteps=100,h=None, mut=0., a=0., ps=None):
         print(t)
     return(v)
 
+#%%
+
+
+def initialize_bin_explicit(N,nloci,dev):
+    #sets all distributions being binomials, only first timestep
+    nstates = nloci+1
+    v0 = np.zeros((N,nstates))
+    #dev is equivalent to temp_thetanorm
+    for species_id in range(N):
+        v0[species_id] = [bindist(nloci,i,dev[species_id]) for i in range(nstates)]
+    return v0
+
+
+def simulate_explicit(
+        v0,
+        theta=None,
+        ps=None,
+        h=None,
+        mutual_effs=None,
+        ntimesteps = 50,
+        alpha=0.01,
+        xi_S=0.5, # level of environmental selection (from 0 to 1).
+        D0=50
+        ): 
+    """
+    Frequency-explicit coevolution
+    """
+
+    N,nstates = v0.shape
+    nloci = nstates-1
+    if theta is None:
+        xi_S=0
+    if h is None:
+        h = generate_h_tensor(nstates-1)
+    if ps is None:
+        ps=(0,nloci)
+    if mutual_effs is None:
+        mutual_effs = np.ones((N,N))/N**2 # ALERT: THIS IS SUPER ARBITRARY
+    states = np.linspace(ps[0],ps[1], nstates)
+    
+    v = np.zeros((ntimesteps+1, N, nstates))
+    v[0] = v0
+
+    xi_d=1-xi_S # level of selection imposed by resource species (from 0 to 1).
+    K=200 # carrying capacity  
+    alpha_environ=alpha#0.00001
+    turnover=1 # DEPRECATED proportion of population renewed from generation to generation 
+    m=np.clip(np.random.normal(xi_d,0.01,(N,1)),0,1) # vector of levels of selection imposed by mutualistic partners (from 0 to 1)
+
+
+    # you can randomize theta to test how it affects
+    # theta=np.random.rand(N)*np.diff(ps)+ps[0] # values favoured by env. selection
+
+    thetadiff=np.outer(np.ones(N),states)-np.outer(theta,np.ones(nstates))
+
+    p = np.zeros((ntimesteps+1, N, nstates))
+    l = np.zeros((ntimesteps+1, N, nstates)) # fitness landscape
+    D = np.zeros((ntimesteps+1, N)) # demography
+    D[0]= D0
+    #demoEff = 0
+    print('Iterating...')
+    for t in range(1,ntimesteps+1):
+        for species_id in range(N):
+            p[t-1,species_id]=interactors.convpM(v[t-1,species_id],nstates,alpha)
+            #DE = D[t-1][:,I] - (demoEff - 1) * (1 - D[t-1][:,I])
+            #DE = D[t-1][:,I]/K * 10
+            #DE = D[t-1][:,I]/D[t-1].sum()*100
+            #DE = D[t-1][:,I] * 0.04 # mutualistic benefit of a single interaction with a partner(fixed)
+            DE = D[t-1][:,I] 
+        l[t-1] = (mutual_effs @ p[t-1]) * DE * m + (1-m)*interactors.pM(thetadiff,alpha=alpha_environ)
+        #l[t-1] = (mutual_effs @ p[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ) #without demography mass interaction
+        l[t-1] = transformations.negativeSaturator(l[t-1])
+        # l[t-1] = np.outer(np.ones(N),f(states))
+        w = v[t-1]*l[t-1]
+        for species_id in range(N):
+            newgen= w[species_id] @ h @ w[species_id] / w[species_id].sum()**2
+            v[t,species_id] = v[t-1,species_id]*(1-turnover) + newgen*turnover
+            #v[t] = v[t] @ mut.T
+            r = w[species_id].sum()
+            D[t,species_id] = (1-1/(D[t-1,species_id] * r/K+1))*K
+            
+        print(t)
+    return v
+
+#%%
+
+def dist_averages(v,phenospace=None):
+    """
+    Parameters
+    ----------
+    v : 3rd order ndarray
+        Community's genetic history.
+        shape: [n time steps, n species, 1 + n loci]
+    phenospace : TYPE, optional
+        min and max values of the trait. The default is (0, n loci).
+
+    Returns
+    -------
+    avgseries : 2nd order ndarray
+        timeseries of averages of the trait values.
+
+    """
+    _,_,nstates = v.shape
+    if phenospace is None:
+        phenospace=(0,nstates-1)
+    states = np.linspace(phenospace[0],phenospace[1], nstates)
+    avgseries = (v*states*nstates).mean(2)
+    # mx.showlist(avgseries[:50])
+    return avgseries
+
+
+def dist_variances(v,phenospace=None):
+    _,_,nstates = v.shape
+    if phenospace is None:
+        phenospace=(0,nstates-1)
+    states = np.linspace(phenospace[0],phenospace[1], nstates)
+    varseries = (v*states*nstates).var(2)
+    # mx.showlist(avgseries[:50])
+    return varseries
+
+    
+#transformations = transformations()

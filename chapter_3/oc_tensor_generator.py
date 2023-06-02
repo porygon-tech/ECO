@@ -11,6 +11,8 @@ from scipy.special import comb
 import numpy as np
 #import matplotlib.pyplot as plt
 #from scipy.optimize import curve_fit
+import sys
+
 
 
 #%%
@@ -37,7 +39,7 @@ chdir('/home/roman/LAB/ECO') #this line is for Spyder IDE only
 root = Path(".")
 obj_path = root / 'data/obj'
 
-nloci=25
+nloci=int(sys.argv[1])
 n=nloci
 nstates=nloci+1
 x = np.arange(nstates)

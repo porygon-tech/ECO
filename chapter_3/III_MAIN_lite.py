@@ -31,10 +31,43 @@ import matriX as mx
 #%%
 
 #%% DATA LOAD
-
+# network
 df = pd.read_csv(dataPath / 'M_PL_058.csv', index_col=0)
-#np.all(df.columns == df.index)
-#b=(df.to_numpy()>0)+0
 b=df.to_numpy()
-mx.showdata(b)
+if not np.equal(b.shape[0],b.shape[1]):
+    b=mx.to_square(b)
+elif not mx.is_symmetric(b):
+    b=mx.to_square(b)
 
+mx.showdata(b)
+A = (b>0)+0
+N=A.shape[0]
+#----------------------
+# tensor object
+nloci=100
+filename='oc_tensor_' + str(nloci) + '.obj'
+with bz2.BZ2File(obj_path / filename, 'rb') as f:
+	h = pickle5.load(f)
+#%%
+
+
+#%%
+ps=(23,37)
+dev=np.random.rand(N) # p for the binomial distributions
+theta=dev*np.diff(ps)+ps[0] # we set it to start at their environmental optima
+#------
+v0=evo.initialize_bin_explicit(N,nloci,dev); mx.showlist(v0.T)
+
+test = evo.simulate_explicit(
+    v0=v0,
+    ntimesteps=50,
+    h=h,
+    theta=theta,
+    alpha=0.02,
+    xi_S=0.
+)
+
+mx.showlist(evo.dist_averages(test,ps))
+
+
+#C0AF852B6365458F1396DE679CC974FF

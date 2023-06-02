@@ -42,6 +42,12 @@ from scipy.special import comb
 def bindist(n,k,p=0.5):
     return comb(n,k)*p**k*(1-p)**(n-k)
 
+def accumulateExp(x,v=1,L=1):
+    return L* (1-np.exp(-v*x))
+
+def negativeSaturator(x,v=1):
+    return x/ (1-np.exp(-v*x))
+
 #%% Initial setup
 nloci = 100
 ps = (500,500+nloci)
@@ -165,24 +171,52 @@ plt.show()
 
 #%%
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #%% set simulation parameters
 #N=b.shape[0]
 N=32 # number of species
-c=0.2 # expected connectance
+c=0.7 # expected connectance
 ntimesteps=200
 
 #%%
 initial_l= mx.generateWithoutUnconnected(N,N,c) 
-
 initial_l=np.tril(initial_l,0)+np.tril(initial_l,0).T
+initial_l=initial_l-np.diag(np.diag(initial_l))
 
 while initial_l.shape != mx.rmUnco(initial_l).shape or not nx.is_connected(nx.from_numpy_array(initial_l)):
     initial_l= mx.generateWithoutUnconnected(N,N,c)
+    initial_l=np.tril(initial_l,0)+np.tril(initial_l,0).T
+    initial_l=initial_l-np.diag(np.diag(initial_l))
 
 #initial_l=np.ones((N,N))
-initial_l=initial_l-np.diag(np.diag(initial_l))
-mx.showdata(initial_l)
 
+mx.showdata(initial_l)
+mutual_effs = initial_l.copy() * (np.random.rand(N,N)*0.1-0.02) # includes some antagonisms
+#mutual_effs = initial_l.copy() * (np.random.rand(N,N))
+allowed_links = initial_l.copy()
+
+mx.showdata(mutual_effs,colorbar=True,symmetry=True)
 print("connectance of " + str(initial_l.sum()/N**2) + ", expected " + str(c))
 #nx.draw(nx.from_numpy_array(initial_l,parallel_edges=False))
 
@@ -206,6 +240,7 @@ b=np.array([[0,1,1],
             [1,0,1],
             [1,1,0]])
 initial_l=b.copy()
+mutual_effs = initial_l.copy() 
 N=b.shape[0]
 m=np.zeros((N,1))
 m=np.array([[0,0,0.5]]).T
@@ -220,13 +255,13 @@ mechanism_type = 1 # the rest of mechanisms can be taken from coevolutionary mod
 # 3: 'antagonism + trait matching (trait mismatching)' or
 # 4: 'antagonism + exploitation barrier' 
 
-xi_S=0.1 # level of environmental selection (from 0 to 1).
+xi_S=0.2 # level of environmental selection (from 0 to 1).
 xi_d=1-xi_S # level of selection imposed by resource species (from 0 to 1).
 alpha= 0.01 # strength of the mechanism. Controls how the difference in species traits affects the probability of pairwise interaction.
 #epsilon = 0.5 # threshold, assumed to be fixed and identical for all species.
 phi=0.9 # slope of the selection gradient.
 #m=np.zeros((N,1))+xi_d
-m=np.clip(np.random.normal(xi_d,0.01,(N,1)),0,1) # vector of levels of selection imposed by mutualistic partners (from 0 to 1)
+#m=np.clip(np.random.normal(xi_d,0.01,(N,1)),0,1) # vector of levels of selection imposed by mutualistic partners (from 0 to 1)
 
 #-------------------------------
 z=np.zeros((ntimesteps,N)) # trait values
@@ -284,7 +319,7 @@ mx.showlist(z)
 
 # mx.showdata(AxP)
 # mx.showdata(a[0])
-mx.showdata(b,     colorbar=True)
+mx.showdata(initial_l,     colorbar=True)
 mx.showdata(q[-1], colorbar=True)
 
 
@@ -349,11 +384,10 @@ mx.showlist(z)
 # you can randomize theta to test how it affects
 #theta=np.random.rand(N)*np.diff(ps)+ps[0] # values favoured by env. selection
 
-mutual_effs = initial_l.copy()
-allowed_links = initial_l.copy()
 
-ntimesteps = 200
+ntimesteps = 70
 
+K=200 # carrying capacity
 alpha=0.01
 alpha_environ=alpha#0.00001
 turnover=1
@@ -379,22 +413,37 @@ thetadiff=np.outer(np.ones(N),states)-np.outer(theta,np.ones(nstates))
 
 def f(x):
     return (x-500)/26
-
+#negativeSaturator
 
 p = np.zeros((ntimesteps+1, N, nstates))
 l = np.zeros((ntimesteps+1, N, nstates)) # fitness landscape
+D = np.zeros((ntimesteps+1, N)) # demography
+D[0]= 50
+demoEff = 0
 for t in range(1,ntimesteps+1):
     for species_id in range(N):
         p[t-1,species_id]=convpM(v[t-1,species_id],nstates,alpha)
-    l[t-1] = (mutual_effs @ p[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ)
+        #DE = D[t-1][:,I] - (demoEff - 1) * (1 - D[t-1][:,I])
+        #DE = D[t-1][:,I]/K * 10
+        #DE = D[t-1][:,I]/D[t-1].sum()*100
+        #DE = D[t-1][:,I] * 0.04 # mutualistic benefit of a single interaction with a partner(fixed)
+        DE = D[t-1][:,I] 
+    l[t-1] = (mutual_effs @ p[t-1]) * DE * m + (1-m)*pM(thetadiff,alpha=alpha_environ)
+    #l[t-1] = (mutual_effs @ p[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ) #without demography mass interaction
+    l[t-1] = negativeSaturator(l[t-1])
     # l[t-1] = np.outer(np.ones(N),f(states))
     w = v[t-1]*l[t-1]
     for species_id in range(N):
         newgen= w[species_id] @ h @ w[species_id] / w[species_id].sum()**2
         v[t,species_id] = v[t-1,species_id]*(1-turnover) + newgen*turnover
         #v[t] = v[t] @ mut.T
+        r = w[species_id].sum()
+        D[t,species_id] = (1-1/(D[t-1,species_id] * r/K+1))*K
         
     print(t)
+
+
+
 
 '''
 p = np.zeros((ntimesteps+1, N, nstates))
@@ -420,11 +469,23 @@ for t in range(1,ntimesteps+1):
 avgseries = (v*states*nstates).mean(2)
 # mx.showlist(avgseries[:50])
 mx.showlist(avgseries)
+
+#varseries = (v*states*nstates).var(2)
+#mx.showlist(varseries)
+
+#%% change of demographies over time
+mx.showlist(D)
+print('{0} species went extinct out of {1}.'.format(((D[-1]<1).sum()),N))
 # -------------------------------------------------------------------------------   
 # -------------------------------------------------------------------------------   
 #%%get adjacency and fitness
+# 1. get fitnesses ---------------------
+fits = (v*l).sum(2)
+mx.showlist(fits)
 
-# 1. get adjacency timeseries ----------
+#%%
+# 2. get adjacency timeseries ----------
+ntimesteps=v.shape[0]
 adj_timeseries = []
 for t in range(ntimesteps):
     print(t)
@@ -436,10 +497,8 @@ for t in range(ntimesteps):
 
 vmax= np.max(adj_timeseries)
 
-# 2. get fitnesses ---------------------
-fits = (v*l).sum(2)
-# mx.showlist(fits)
-# fits[t]
+
+# fits[-2]
 #%% some explorations
 '''
 mx.showlist(l[-2].T)
@@ -458,29 +517,30 @@ mx.showlist(v[1].T)
 mx.showdata(pM(thetadiff,alpha=alpha))
 mx.showdata(v[:,0])
 '''
-#%% INVASION
+#%% GENEFLOW
+ntimesteps=100
 invaders = v[0].copy()
 for species_id in range(N):
     p=np.random.rand()
     invaders[species_id] = [bindist(nloci,i,p) for i in range(nstates)]
 #invaders = v[0].copy()
 
-mx.showlist(v[0].T)
-mx.showlist(invaders.T)
-invaderproportion=0.1
+# mx.showlist(v[0].T)
+# mx.showlist(invaders.T)
+invaderproportion=0.2
 v_afterinvasion = invaders*invaderproportion+v[-1]*(1-invaderproportion)
-mx.showlist((v_afterinvasion).T)
+#mx.showlist((v_afterinvasion).T)
 
 v2 = np.zeros((ntimesteps+1, N, nstates))
 v2[0] = v_afterinvasion
-p = np.zeros((ntimesteps+1, N, nstates))
-l = np.zeros((ntimesteps+1, N, nstates)) # fitness landscape
+p2 = np.zeros((ntimesteps+1, N, nstates))
+l2 = np.zeros((ntimesteps+1, N, nstates)) # fitness landscape
 for t in range(1,ntimesteps+1):
     for species_id in range(N):
-        p[t-1,species_id]=convpM(v2[t-1,species_id],nstates,alpha)
-    l[t-1] = (mutual_effs @ p[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ)
-    # l[t-1] = np.outer(np.ones(N),f(states))
-    w = v2[t-1]*l[t-1]
+        p2[t-1,species_id]=convpM(v2[t-1,species_id],nstates,alpha)
+    l2[t-1] = (mutual_effs @ p2[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ)
+    # l2[t-1] = np.outer(np.ones(N),f(states))
+    w = v2[t-1]*l2[t-1]
     for species_id in range(N):
         newgen= w[species_id] @ h @ w[species_id] / w[species_id].sum()**2
         v2[t,species_id] = v2[t-1,species_id]*(1-turnover) + newgen*turnover
@@ -493,6 +553,8 @@ avgseries = (v_invaded*states*nstates).mean(2)
 # mx.showlist(avgseries[:50])
 mx.showlist(avgseries)
 
+v=v_invaded
+l=np.append(l,l2,axis=0)
 
 #%%
 import matplotlib.animation as animation
@@ -538,6 +600,17 @@ e[:,2,:].sum(1)
 mx.showdata(e.sum(2))
 '''
 #%% 
+v = np.zeros((ntimesteps+1, N, nstates))
+v0 = np.zeros((N,nstates))
+v[0] = v0
+
+
+
+
+
+
+
+
 #%% ANIMATE GUIMARAES
 
 pos = nx.layout.kamada_kawai_layout(nx.from_numpy_array(initial_l))
@@ -900,6 +973,25 @@ v1 = ((w.T @ h @ w) / w.sum()**2)[:,0]
 mx.showlist(v1)
 v1.sum()
 sum(v0)
+
+
+
+"""
+def initialize_bin_explicit(N,nloci,dev,ntimesteps):
+    #initializes all distributions being binomials
+    v0 = set_bin_explicit(N,nloci,dev)
+    v = np.zeros((ntimesteps+1, N, nloci+1))
+    v[0] = v0
+""" 
+    
+        
+N=13
+nloci=100
+#nstates = nloci+1
+ntimesteps=100
+#%% generate theta
+
+
 
 
 

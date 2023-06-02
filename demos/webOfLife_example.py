@@ -115,6 +115,26 @@ ac=remove_unconnected(a)
 g=array_to_graph(a)
 
 
+#%% alternatively you can download json data if you know the network name, in this example is M_PL_058
+
+import requests
+url = 'https://www.web-of-life.es/get_networks.php?network_name=' + 'M_PL_058'
+r = requests.get(url)
+j = r.json()
+db = pd.DataFrame.from_dict(j)
+
+db[['species1', 'species2', 'connection_strength']]
+
+df = pd.pivot_table(
+    db,
+    values='connection_strength',
+    index='species1',
+    columns='species2',
+    aggfunc='sum',
+    fill_value=0
+)
+
+
 #%% 
 nx.draw(nx.maximum_spanning_tree(g), width=0.1, node_size=10)
 
