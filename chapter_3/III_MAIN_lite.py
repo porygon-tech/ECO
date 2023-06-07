@@ -17,12 +17,12 @@ dataPath = root / 'data/dataBase'
 
 
 #%% imports 
-import time
+#import time
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
-from copy import deepcopy
-import networkx as nx
+#import matplotlib.pyplot as plt
+#from copy import deepcopy
+#import networkx as nx
 import pandas as pd
 #%% OWN LIBS
 sys.path.insert(0, "./lib")
@@ -43,82 +43,73 @@ mx.showdata(b)
 A = (b>0)+0
 N=A.shape[0]
 #----------------------
-#%% tensor object load
-nloci=100
+#%% HYPERPARAMETERS
+N=23 # number of species. Has an important relation with the mutualRange and c parameters
+nloci=100 # number of loci
+ps=(23,37) # phenotypic space. Has an important relation with the alpha parameter
+ntimesteps = 200 # number of generations simulated
+K=1000 # carrying capacity  
+
+# tensor object load
 filename='oc_tensor_' + str(nloci) + '.obj'
 with bz2.BZ2File(obj_path / filename, 'rb') as f:
 	h = pickle5.load(f)
+
+#%% MODEL PARAMETERS
+c=0.5 # expected connectance of the allowed links matrix
+mutualRange = (-0.01, 0.01) # range of values for the uniform distribution of ecological effects
+a=0. # assortative mating coefficients, real value (single value or array of values)
+alpha= 0.01 # strength of the trait matching mechanism. Positive real value. Lower values = greater promiscuity
+xi_S=0.1 # level of environmental selection (from 0 to 1).
+D0=50 # initial population sizes (single value or array of values)
+
+
+# a=np.linspace(0, 1, N) # assortative mating coefficients, real value (array)
+
 #%% mutual effects matrix generation
-N=23
-A = mx.symmetric_connected_adjacency(N,0.2); mx.showdata(A)
-#A_e = A/(N**2)*np.sqrt(A.sum())
-A_e = A* (np.random.rand(N,N)*0.1-0.01);mx.showdata(A_e,symmetry=True,colorbar=True)
 
-#%%
-ps=(23,37)
-dev=np.random.rand(N) # p for the binomial distributions
-theta=dev*np.diff(ps)+ps[0] # we set it to start at their environmental optima
-#%%------
-v0=evo.initialize_bin_explicit(N,nloci,dev); #mx.showlist(v0.T)
-v0=evo.initialize_bin_explicit(N,nloci,np.random.rand(N)); #mx.showlist(v0.T)
+A = mx.symmetric_connected_adjacency(N,c); mx.showdata(A)
+A_e = A* (np.random.rand(N,N)*np.diff(mutualRange)+mutualRange[0]);mx.showdata(A_e,symmetry=True,colorbar=True)
 
-v,D = evo.simulate_explicit(
+# mx.showdata((A_e>0) & (A_e.T>0)) # mutualisms
+# mx.showdata((A_e<0) & (A_e.T<0)) # antagonisms (competitors)
+# mx.showdata((A_e>0) & (A_e.T<0)) # antagonisms (predation)
+print("connectance of " + str(A.sum()/N**2) + ", expected " + str(c))
+print("generated with: \n{0} mutualisms, \n{1} antagonisms (competitors), and \n{2} antagonisms (predation)".format(int(((A_e>0) & (A_e.T>0)).sum()/2),
+                                                int(((A_e<0) & (A_e.T<0)).sum()/2),
+                                                ((A_e>0) & (A_e.T<0)).sum()))
+
+#%% environmental optima generation (theta)
+dev=np.random.rand(N) 
+theta=dev*np.diff(ps)+ps[0] 
+
+#%% initialization of phenotype makeups
+v0=evo.initialize_bin_explicit(N,nloci,dev); # set to start at their environmental optima
+v0=evo.initialize_bin_explicit(N,nloci,np.random.rand(N)); # set to start at random location
+
+#%% 
+v,D,l = evo.simulate_explicit(
     v0=v0,
-    ntimesteps=50,
+    ntimesteps=ntimesteps,
     h=h,
     mutual_effs=A_e,
     theta=theta,
     ps=ps,
-    alpha=0.01,
-    xi_S=0.1,
+    alpha=alpha,
+    xi_S=xi_S,
+    D0=D0,
+    a=a,
+    K=K,
     complete_output=True
 )
 
+#%% 
 mx.showlist(evo.dist_averages(v,ps))
-mx.showlist(D); print('{0} species went extinct out of {1}.'.format(((D[-1]<2).sum()),N))
+mx.showlist(D); #print('{0} species went extinct out of {1}.'.format(((D[-1]<2).sum()),N))
+
+fits = (v*l).sum(2)
+mx.showlist(fits)
 
 
 
 #C0AF852B6365458F1396DE679CC974FF
-#%% DELETE AFTERW
-I = np.newaxis
-nstates=nloci+1
-states = np.linspace(ps[0],ps[1], nstates)
-statesdiff=np.outer(np.ones(nstates),states)-np.outer(states,np.ones(nstates))
-assortMat = evo.interactors.pM(statesdiff,alpha=0.2); mx.showdata(assortMat)
-#assortTen = np.repeat(assortMat[...,I],N,axis=-1)
-assortTen = np.repeat(assortMat[I,...],N,axis=0)
-
-
-vs = np.c_[v[-1,15]]
-test = (vs.T @ assortMat).T * vs
-comp = (assortMat @ vs) * vs
-mx.showdata(np.repeat(comp,23,1))
-
-vs = v[-1,...,I]
-vs = v[-1,...].T[...,I]
-
-vs = v[-1,...]
-test = np.tensordot(vs, assortTen,axes=1)
-test = vs @ assortTen 
-test = assortTen.T @ vs
-
-test.shape
-mx.showdata(test)
-mx.showdata(test[15,:,:])
-mx.showdata(test[:,15,:])
-mx.showdata(test[:,:,15])
-mx.showdata(test[-1])
-
-test2=vs*test[0]
-test2[15]
-comp
-mx.showdata(np.repeat(test2[15,I],23,0))
-
-
-
-
-vs = v[-1,...]
-assortTen = np.repeat(assortMat[I,...],N,axis=0)
-test = vs @ assortTen 
-test2=vs*test[0]
