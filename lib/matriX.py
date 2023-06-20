@@ -245,13 +245,21 @@ def rmUnco(m):
     m = np.delete(m, zero_cols, axis=1)
     return m
     
-def symmetric_connected_adjacency(N, c=0.5):
-    initial_l= generateWithoutUnconnected(N,N,c) 
-    initial_l=np.tril(initial_l,0)+np.tril(initial_l,0).T
-    initial_l=initial_l-np.diag(np.diag(initial_l))
+def symmetric_connected_adjacency(N, c=0.5,ntries=100):
+        
+    initial_l=np.zeros((N,N))
     
     while initial_l.shape != rmUnco(initial_l).shape or not nx.is_connected(nx.from_numpy_array(initial_l)):
-        initial_l= generateWithoutUnconnected(N,N,c)
+        for i in range(ntries):
+            try :
+                #tmp = mx.generateWithoutUnconnected(N,N,0.1)
+                initial_l= generateWithoutUnconnected(N,N,c)
+            except ValueError:
+
+                print(str(i) + ' failed')
+            else:
+                break
+        
         initial_l=np.tril(initial_l,0)+np.tril(initial_l,0).T
         initial_l=initial_l-np.diag(np.diag(initial_l))
         
@@ -366,8 +374,62 @@ np.max(np.real(np.linalg.eigvals(np.dot(np.diag(np.random.rand(C.shape[0])*10*np
 
 
 
+#%% NETWORK ANALYSIS FUNCTIONS
+#find positive or negative feedbacks
+
+def find_feedbacks(G,ftype='positive'):
+    cycles = nx.simple_cycles(G)
+    weighted_cycles = [cycle for cycle in cycles if np.prod(G[u][v]['weight'] for u, v in zip(cycle, cycle[1:] + cycle[:1])) != 0]
+    r1=[]
+    r2=[]
+    
+    if   ftype=='positive':
+        for cycle in weighted_cycles:
+            cycle_weights = []
+            
+            for u, v in zip(cycle, cycle[1:] + cycle[:1]):
+                weight = G[u][v]['weight']
+                cycle_weights.append(weight)
+    
+                if np.prod(cycle_weights)>0:
+                    #print(f"Weights in cycle {cycle}: {cycle_weights}")
+                    r1.append(cycle); r2.append(cycle_weights)
+                    
+    elif ftype=='negative':
+        for cycle in weighted_cycles:
+            cycle_weights = []
+            
+            for u, v in zip(cycle, cycle[1:] + cycle[:1]):
+                weight = G[u][v]['weight']
+                cycle_weights.append(weight)
+
+                if np.prod(cycle_weights)<0:
+                    #print(f"Weights in cycle {cycle}: {cycle_weights}")
+                    r1.append(cycle); r2.append(cycle_weights)
+    return [r1,r2]
 
 
+#!pip install python-louvain #run this on iPython if you find problems
+from community import community_louvain
+from community.community_louvain import best_partition # pip3 install python-louvain
+from collections import defaultdict
+from networkx.algorithms.community.quality import modularity
+
+def groupnodes(G):
+    part = best_partition(G)
+    inv = defaultdict(list)
+    {inv[v].append(k) for k, v in part.items()}
+    result = dict(inv)
+    return(list(result.values()))
+
+def mod(g):
+    if type(g)==nx.classes.graph.Graph:
+        comms = groupnodes(g)
+        mod = modularity(g, comms)
+    elif type(g)==list and np.all(type(G)==nx.classes.graph.Graph for G in g):
+        comms = list(map(groupnodes, g))
+        mod = list(map(modularity, g, comms))
+    return(mod)
 
 
 

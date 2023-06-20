@@ -1,3 +1,6 @@
 __pycache__/
 spyder-env/
 data/dataBase/
+data/obj/
+SIMULATIONS*
+report*

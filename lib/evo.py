@@ -551,12 +551,14 @@ def simulate_explicit(
         mutual_effs=None,
         ntimesteps = 50,
         alpha=0.01,
-        xi_S=0.5, # level of environmental selection (from 0 to 1).
+        #xi_S=None, # level of environmental selection (from 0 to 1). Overrides parameter m,
+        m=None, # vector of levels of selection imposed by other species (from 0 to 1).
         D0=50,
         a=0.,
         d=0., # frequency dependence coefficient
         K=200,
-        complete_output=False
+        complete_output=False,
+        find_fixedpoints=False
         ): 
     """
     Frequency-explicit coevolution
@@ -564,24 +566,42 @@ def simulate_explicit(
 
     N,nstates = v0.shape
     nloci = nstates-1
-    if theta is None:
-        xi_S=0
+    # if theta is None:
+    #     xi_S=0
     if h is None:
         h = generate_h_tensor(nstates-1)
     if ps is None:
         ps=(0,nloci)
     if mutual_effs is None:
         mutual_effs = np.ones((N,N))/N**2 # ALERT: THIS IS SUPER ARBITRARY TO BE A DEFAULT
+        
+    if m is None:
+        xi_d=0.5
+        m=np.clip(np.random.normal(xi_d,0.01,(N,1)),0,1) # vector of levels of selection imposed by other species (from 0 to 1)
+        
+    xi_d=np.mean(m)
+    xi_S=1-xi_d # xi_S is the level of environmental selection (from 0 to 1). Overrides parameter m,
+
+    
     states = np.linspace(ps[0],ps[1], nstates)
     statesdiff=np.outer(np.ones(nstates),states)-np.outer(states,np.ones(nstates))
     #---------------------------------------------
     #assortative mating coefficients: if float, repeat. if list, do a matrix for each coefficient
     if hasattr(a, "__len__"): 
         assortTen = np.zeros((N,nstates,nstates))
+        
         for i in range(N):
+            '''
             assortMat = interactors.pM(statesdiff,alpha=abs(a[i]))
-            if a[i]<0:
+            if a[i]<0:                                                        ## a = -1/a?;assortMat = 1 - assortMat
                 assortMat = 1 - assortMat
+            assortTen[i] = assortMat
+            '''
+            if a[i]<0:  
+                assortMat = 1 - interactors.pM(statesdiff,alpha=1/a[i]**2)
+            else:
+                assortMat =     interactors.pM(statesdiff,alpha=a[i]**2)
+            
             assortTen[i] = assortMat
     else:
         assortMat = interactors.pM(statesdiff,alpha=abs(a))
@@ -592,12 +612,10 @@ def simulate_explicit(
     v = np.zeros((ntimesteps+1, N, nstates))
     v[0] = v0
 
-    xi_d=1-xi_S # level of selection imposed by resource species (from 0 to 1).
+    
     # K=200 # carrying capacity  
     alpha_environ=alpha#0.00001
     turnover=1 # DEPRECATED proportion of population renewed from generation to generation 
-    m=np.clip(np.random.normal(xi_d,0.01,(N,1)),0,1) # vector of levels of selection imposed by mutualistic partners (from 0 to 1)
-
 
     # you can randomize theta to test how it affects
     # theta=np.random.rand(N)*np.diff(ps)+ps[0] # values favoured by env. selection
@@ -611,21 +629,34 @@ def simulate_explicit(
     #demoEff = 0
     
 
-
+    tol=1e-1
+    maxgen=4000
     print('Iterating...')
-    for t in range(1,ntimesteps+1):
+    # for t in range(1,ntimesteps+1):
+    t=1;
+    while t < ntimesteps+1:
+        if find_fixedpoints:
+            if t==ntimesteps:
+                if not np.all(np.abs(np.diff(v[-2:],axis=0))<tol) and t < maxgen+1:
+
+                    v=np.append(v,np.zeros((1,N,nstates)),axis=0)
+                    D=np.append(D,np.zeros((1,N)),axis=0)
+                    p=np.append(p,np.zeros((1,N,nstates)),axis=0)
+                    l=np.append(l,np.zeros((1,N,nstates)),axis=0)
+                    ntimesteps+=1
+            
         for species_id in range(N):
             p[t-1,species_id]=interactors.convpM(v[t-1,species_id],nstates,alpha)
             #DE = D[t-1][:,I] - (demoEff - 1) * (1 - D[t-1][:,I])
             #DE = D[t-1][:,I]/K * 10
             #DE = D[t-1][:,I]/D[t-1].sum()*100
             #DE = D[t-1][:,I] * 0.04 # mutualistic benefit of a single interaction with a partner(fixed)
-            DE = D[t-1][:,I] 
+        DE = D[t-1][:,I] 
         l[t-1] = (mutual_effs @ p[t-1]) * DE * m + (1-m)*interactors.pM(thetadiff,alpha=alpha_environ)
         #l[t-1] = (mutual_effs @ p[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ) #without demography mass interaction
         l[t-1] = transformations.negativeSaturator(l[t-1])
         # l[t-1] = np.outer(np.ones(N),f(states))
-        w = v[t-1]*l[t-1]*np.exp(d*v[t-1])
+        w = v[t-1]*l[t-1]*np.exp(np.c_[d]*v[t-1])
         
         
         w = ((w @ assortTen)[0] * w) / np.c_[np.where(w.sum(1) == 0, 0.0001, w.sum(1))] # assortative mating effect
@@ -642,8 +673,12 @@ def simulate_explicit(
             r = w[species_id].sum()
             D[t,species_id] = (1-1/(D[t-1,species_id] * r/K+1))*K
         
-        if t%int((ntimesteps)/10)==0:
-            print(t)
+        if t%int((ntimesteps)/5)==0:
+            print(t)    
+            if find_fixedpoints:
+                print(str(round((np.abs(np.diff(v[-2:],axis=0))<tol).sum()/(N*nstates),4)) + " stabilized")
+        t+=1
+        
     if complete_output:
         print('{0} species went extinct out of {1}.'.format(((D[-1]<2).sum()),N))
         return v, D, l
@@ -660,12 +695,13 @@ class simulator(object):
             theta,
             ps,
             alpha,
-            xi_S,
+            m,
             D0,
             a,
             d,
-            K):
-
+            K,
+            find_fixedpoints=False):
+        self.find_fixedpoints = find_fixedpoints
         self._v0=v0
         self._ntimesteps=ntimesteps
         self._h=h
@@ -673,11 +709,12 @@ class simulator(object):
         self._theta=theta
         self._ps=ps
         self._alpha=alpha
-        self._xi_S=xi_S
+        self._m=m
         self._D0=D0
         self._a=a
         self._d=d
         self._K=K
+        
         A_e=self._mutual_effs
         self.n_mutualisms   = int(((A_e>0) & (A_e.T>0)).sum()/2)
         self.n_competitions = int(((A_e<0) & (A_e.T<0)).sum()/2)
@@ -692,12 +729,13 @@ class simulator(object):
             theta=self._theta,
             ps=self._ps,
             alpha=self._alpha,
-            xi_S=self._xi_S,
+            m=self._m,
             D0=self._D0,
             a=self._a,
             d=self._d,
             K=self._K,
-            complete_output=True
+            complete_output=True,
+            find_fixedpoints=self.find_fixedpoints
         )
         self.fits = (self.v*self.l).sum(2)
         self.dist_avgs = dist_averages(self.v,self._ps)

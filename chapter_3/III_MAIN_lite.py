@@ -56,10 +56,10 @@ with bz2.BZ2File(obj_path / filename, 'rb') as f:
 	h = pickle5.load(f)
 
 #%% MODEL PARAMETERS
-c=0.5 # expected connectance of the allowed links matrix
-mutualRange = (-0.01, 0.01) # range of values for the uniform distribution of ecological effects
-a=0. # assortative mating coefficients, real value (single value or array of values)
-alpha= 0.01 # strength of the trait matching mechanism. Positive real value. Lower values = greater promiscuity
+c=0.4 # expected connectance of the allowed links matrix
+mutualRange = (-0.01, 0.02) # range of values for the uniform distribution of ecological effects
+a=-0.01 # assortative mating coefficients, real value (single value or array of values)
+alpha= 0.1 # strength of the trait matching mechanism. Positive real value. Lower values = greater promiscuity
 xi_S=0.1 # level of environmental selection (from 0 to 1).
 D0=50 # initial population sizes (single value or array of values)
 
@@ -86,19 +86,25 @@ theta=dev*np.diff(ps)+ps[0]
 #%% initialization of phenotype makeups
 v0=evo.initialize_bin_explicit(N,nloci,dev); # set to start at their environmental optima
 v0=evo.initialize_bin_explicit(N,nloci,np.random.rand(N)); # set to start at random location
+#%% 
+xi_d=1-xi_S
+m=np.clip(np.random.normal(xi_d,0.01,(N,1)),0,1) # vector of levels of selection imposed by other species (from 0 to 1)
 
 #%% 
+import evo
 v,D,l = evo.simulate_explicit(
+    find_fixedpoints=False,
     v0=v0,
-    ntimesteps=ntimesteps,
+    ntimesteps=130,
     h=h,
     mutual_effs=A_e,
     theta=theta,
     ps=ps,
     alpha=alpha,
-    xi_S=xi_S,
+    #xi_S=xi_S,
+    m=m,
     D0=D0,
-    a=a,
+    a=0.1,
     K=K,
     complete_output=True
 )
@@ -113,3 +119,14 @@ mx.showlist(fits)
 
 
 #C0AF852B6365458F1396DE679CC974FF
+#%%
+a=0.001
+nstates=nloci+1
+states = np.linspace(ps[0],ps[1], nstates)
+statesdiff=np.outer(np.ones(nstates),states)-np.outer(states,np.ones(nstates))
+if a<0:  
+    assortMat = 1 - evo.interactors.pM(statesdiff,alpha=1/a**2)
+else:
+    assortMat =     evo.interactors.pM(statesdiff,alpha=a**2)
+        
+mx.showdata(assortMat,colorbar=True)
