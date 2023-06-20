@@ -1,0 +1,1031 @@
+REPORT for simulation Wed_Jun_14_134034_2023 =======================
+non-fixed values:
+	_mutual_effs
+	_a
+	n_mutualisms
+	n_competitions
+	n_predations
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 7.936507936507937e-05
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.00015873015873015873
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0002380952380952381
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.00031746031746031746
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 8
+ competitions: 14
+ predations: 24
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0003968253968253968
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 2
+ competitions: 29
+ predations: 15
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0004761904761904762
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0005555555555555556
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 40
+ competitions: 0
+ predations: 6
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0006349206349206349
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0007142857142857143
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0007936507936507937
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 39
+ predations: 7
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.000873015873015873
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0009523809523809524
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 44
+ predations: 2
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0010317460317460316
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0011111111111111111
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 43
+ competitions: 0
+ predations: 3
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0011904761904761906
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0012698412698412698
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 10
+ competitions: 12
+ predations: 24
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.001349206349206349
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 43
+ predations: 3
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0014285714285714286
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.001507936507936508
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0015873015873015873
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 20
+ competitions: 6
+ predations: 20
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0016666666666666666
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.001746031746031746
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0018253968253968255
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 13
+ competitions: 11
+ predations: 22
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0019047619047619048
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.001984126984126984
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 18
+ competitions: 3
+ predations: 25
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0020634920634920633
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.002142857142857143
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 45
+ predations: 1
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0022222222222222222
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0023015873015873015
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 12
+ competitions: 6
+ predations: 28
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.002380952380952381
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 44
+ predations: 2
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0024603174603174604
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0025396825396825397
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 45
+ competitions: 0
+ predations: 1
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.002619047619047619
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 22
+ competitions: 5
+ predations: 19
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.002698412698412698
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 10
+ competitions: 18
+ predations: 18
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.002777777777777778
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 25
+ competitions: 3
+ predations: 18
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.002857142857142857
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 33
+ competitions: 1
+ predations: 12
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0029365079365079364
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 7
+ competitions: 14
+ predations: 25
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.003015873015873016
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0030952380952380953
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 35
+ competitions: 1
+ predations: 10
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0031746031746031746
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.003253968253968254
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.003333333333333333
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 20
+ competitions: 6
+ predations: 20
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.003412698412698413
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 25
+ competitions: 3
+ predations: 18
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.003492063492063492
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 1
+ competitions: 27
+ predations: 18
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0035714285714285713
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.003650793650793651
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0037301587301587303
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0038095238095238095
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0038888888888888888
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.003968253968253968
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.004047619047619047
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 39
+ competitions: 0
+ predations: 7
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0041269841269841265
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 8
+ competitions: 13
+ predations: 25
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.004206349206349207
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.004285714285714286
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.004365079365079365
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.0044444444444444444
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 46
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.004523809523809524
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 12
+ competitions: 15
+ predations: 19
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.004603174603174603
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 0
+ competitions: 43
+ predations: 3
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.004682539682539682
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.004761904761904762
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 11
+ competitions: 12
+ predations: 23
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.004841269841269842
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 7
+ competitions: 12
+ predations: 27
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.004920634920634921
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 46
+ competitions: 0
+ predations: 0
+
+--------------------------------
+
+ connectance of 0.5443786982248521
+ the population was NOT (!!) initialized with trait averages at their environmental optima.
+ generations: 120
+ phenotypic space: (23, 37)
+ strength of the trait matching mechanism: 0.05
+ average level of environmental selection: 0.3964432070439924
+ initial population sizes: 100
+ assortative mating coefficients: 0.005
+ frequency dependence coefficients: 0.0
+ carrying capacity: 1000
+ mutualisms: 12
+ competitions: 9
+ predations: 25
