@@ -558,7 +558,8 @@ def simulate_explicit(
         d=0., # frequency dependence coefficient
         K=200,
         complete_output=False,
-        find_fixedpoints=False
+        find_fixedpoints=False,
+        tol=1e-1
         ): 
     """
     Frequency-explicit coevolution
@@ -629,7 +630,7 @@ def simulate_explicit(
     #demoEff = 0
     
 
-    tol=1e-1
+    #tol=1e-1
     maxgen=4000
     print('Iterating...')
     # for t in range(1,ntimesteps+1):
@@ -637,8 +638,8 @@ def simulate_explicit(
     while t < ntimesteps+1:
         if find_fixedpoints:
             if t==ntimesteps:
-                if not np.all(np.abs(np.diff(v[-2:],axis=0))<tol) and t < maxgen+1:
-
+                if not np.all(np.abs(np.diff(D[-3:-1],axis=0))<tol) and t < maxgen+1:
+                    #print('{0} fixed'.format((np.abs(np.diff(D[-2:],axis=0))<tol).sum()/N))
                     v=np.append(v,np.zeros((1,N,nstates)),axis=0)
                     D=np.append(D,np.zeros((1,N)),axis=0)
                     p=np.append(p,np.zeros((1,N,nstates)),axis=0)
@@ -676,7 +677,8 @@ def simulate_explicit(
         if t%int((ntimesteps)/5)==0:
             print(t)    
             if find_fixedpoints:
-                print(str(round((np.abs(np.diff(v[-2:],axis=0))<tol).sum()/(N*nstates),4)) + " stabilized")
+                if t==ntimesteps:
+                        print(str(round((np.abs(np.diff(v[-2:],axis=0))<tol).sum()/(N*nstates),4)) + " stabilized")
         t+=1
         
     if complete_output:
@@ -720,7 +722,7 @@ class simulator(object):
         self.n_competitions = int(((A_e<0) & (A_e.T<0)).sum()/2)
         self.n_predations   = ((A_e>0) & (A_e.T<0)).sum()
 
-    def run(self):
+    def run(self,tol=1e-1):
         self.v,self.D,self.l = simulate_explicit(
             v0=self._v0,
             ntimesteps=self._ntimesteps,
@@ -735,7 +737,8 @@ class simulator(object):
             d=self._d,
             K=self._K,
             complete_output=True,
-            find_fixedpoints=self.find_fixedpoints
+            find_fixedpoints=self.find_fixedpoints,
+            tol=tol
         )
         self.fits = (self.v*self.l).sum(2)
         self.dist_avgs = dist_averages(self.v,self._ps)
@@ -778,3 +781,41 @@ def dist_variances(v,phenospace=None):
 
     
 #transformations = transformations()
+
+
+def getADJs(simulations, t, return_gammas=False):
+    I=np.newaxis
+    adjs=[]
+    mutu=[]
+    comp=[]
+    pred=[]
+    gammas=[] # effect matrix without mass action
+
+    for sim in simulations:
+        
+        ntimesteps, N, nstates = sim['v'].shape; ntimesteps-=1
+        
+        A_e = sim['_mutual_effs']
+        A=A_e != 0
+        p=np.array([interactors.convpM(sim['v'][t,species_id],nstates,sim['_alpha']) for species_id in range(N)]) # equivalent to p
+        k1=(A[...,np.newaxis] @ sim['v'][t,:,np.newaxis,:])
+        k=(A[...,np.newaxis] @ p[:,np.newaxis,:])
+        e = k * np.swapaxes(k1,0,1)
+    
+        pop_weights = sim['D'][t][:,I] # * sim['_m'] 
+        intensities = (np.outer(pop_weights,pop_weights)) # np.sqrt ??
+        
+        adj = e.sum(2)*intensities
+        
+        mutu.append(adj *  ((A_e>0) & (A_e.T>0)))
+        comp.append(adj *  ((A_e<0) & (A_e.T<0)))
+        pred.append(adj * (((A_e>0) & (A_e.T<0)) | ((A_e<0) & (A_e.T>0))))
+        
+        adjs.append(adj)
+        gammas.append(e.sum(2))
+        
+    if return_gammas:
+        return adjs, mutu, comp, pred, gammas
+    else:
+        return adjs, mutu, comp, pred
+

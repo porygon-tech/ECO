@@ -136,11 +136,11 @@ def task_simulation_set(cola):
         
 
         # MODEL PARAMETERS
-        c=0.4 #np.random.rand()*0.6#0.4 # expected connectance of the allowed links matrix
+        c=0.8 #np.random.rand()*0.6#0.4 # expected connectance of the allowed links matrix
         mutualRange = np.sort(np.random.rand(2)*0.1-0.05) #(-0.02, 0.02) # range of values for the uniform distribution of ecological effects
         a=np.linspace(0., 0.005,nsimulations)[i]#(np.random.rand()*2-1)/10#  #np.random.rand(N)*2-1#np.random.rand()*2-1 # assortative mating coefficients, real value (single value or array of values)
         d=np.random.normal(np.random.rand()*4-2,0.01,N)#np.random.normal(np.linspace(-2,2,nsimulations)[i],0.01,N) #np.linspace(-5,5,nsimulations)[i]  #frequency dependence coefficient
-        # alpha= np.random.rand()/10 # strength of the trait matching mechanism. Positive real value. Lower values = greater interaction promiscuity
+        # alpha= np.random.rand()*0.1 # strength of the trait matching mechanism. Positive real value. Lower values = greater interaction promiscuity
         
         # xi_S=np.random.rand()# level of environmental selection (from 0 to 1).
         # xi_d=1-xi_S
@@ -192,8 +192,11 @@ def split(string, n):
 #%%  SIMULATE
 
 if __name__ == "__main__":
+    
     ntimesteps=80
-    nsimulations = 64
+    nsimulations = 128
+    
+    FullSummary=False
     nprocessors = multiprocessing.cpu_count()
     simulations = np.empty(nsimulations, dtype=object)
     colas = split(np.arange(nsimulations), int(np.ceil(nsimulations/nprocessors)))
@@ -220,7 +223,7 @@ if __name__ == "__main__":
     #timecode = str(time.time())
     timecode = str(time.ctime().replace(' ','_').replace(':',''))
     #timecode = 'test'
-    filename='SIMULATIONS_' + str(timecode) + '_'  + easyname + '.obj'
+    filename='SIMULATIONS_' + easyname + '_' + str(timecode) + '.obj'
     print('\nSAVING SIMULATION SET AS ' + str(obj_path / filename))
     with bz2.BZ2File(obj_path / filename, 'wb') as f:
         pickle5.dump(results, f)
@@ -237,28 +240,30 @@ if __name__ == "__main__":
     file.write('REPORT for simulation ' +str(timecode) + ' ' + '='*23+ '\n')
     file.write('non-fixed values:\n')
     file.write(''.join(["\t"+key+"\n" for key, value in fixed.items() if not value]))
-    for sim in results:
-        N   = sim['v'].shape[1]
-        A_e = sim['_mutual_effs']
-        A=A_e != 0
+    if FullSummary:
+        for sim in results:
+            N   = sim['v'].shape[1]
+            A_e = sim['_mutual_effs']
+            A=A_e != 0
+            
+            file.write("\n" + '-'*32 + "\n")
+            file.write(
+            "\n connectance of " + str(A.sum()/N**2) + 
+            "\n the population was " + ("" if np.array_equal(sim['dist_avgs'][0], sim['_v0']) else "NOT (!!) ") + "initialized with trait averages at their environmental optima." +
+            #("\n the population was initialized with trait averages at their environmental optima." if np.array_equal(sim['dist_avgs'][0], sim['_v0']) else "") +
+            "\n generations: " + str(sim['_ntimesteps']) +
+            #"\n environmental optima" + str(sim['_theta']) +
+            "\n phenotypic space: " + str(sim['_ps']) +
+            "\n strength of the trait matching mechanism: " + str(sim['_alpha']) +
+            "\n average level of environmental selection: " + str(1-np.mean(sim['_m'])) +
+            "\n initial population sizes: " + str(sim['_D0']) +
+            "\n assortative mating coefficients: " + str(sim['_a']) +
+            "\n frequency dependence coefficients: " + str(sim['_d']) +
+            "\n carrying capacity: " + str(sim['_K']) +
+            "\n mutualisms: " + str(sim['n_mutualisms']) +
+            "\n competitions: " + str(sim['n_competitions']) +
+            "\n predations: " + str(sim['n_predations']) + 
+            "\n"
+            )
         
-        file.write("\n" + '-'*32 + "\n")
-        file.write(
-        "\n connectance of " + str(A.sum()/N**2) + 
-        "\n the population was " + ("" if np.array_equal(sim['dist_avgs'][0], sim['_v0']) else "NOT (!!) ") + "initialized with trait averages at their environmental optima." +
-        #("\n the population was initialized with trait averages at their environmental optima." if np.array_equal(sim['dist_avgs'][0], sim['_v0']) else "") +
-        "\n generations: " + str(sim['_ntimesteps']) +
-        #"\n environmental optima" + str(sim['_theta']) +
-        "\n phenotypic space: " + str(sim['_ps']) +
-        "\n strength of the trait matching mechanism: " + str(sim['_alpha']) +
-        "\n average level of environmental selection: " + str(1-np.mean(sim['_m'])) +
-        "\n initial population sizes: " + str(sim['_D0']) +
-        "\n assortative mating coefficients: " + str(sim['_a']) +
-        "\n frequency dependence coefficients: " + str(sim['_d']) +
-        "\n carrying capacity: " + str(sim['_K']) +
-        "\n mutualisms: " + str(sim['n_mutualisms']) +
-        "\n competitions: " + str(sim['n_competitions']) +
-        "\n predations: " + str(sim['n_predations']) + 
-        "\n"
-        )
     file.close()

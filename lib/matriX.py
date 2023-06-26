@@ -432,6 +432,22 @@ def mod(g):
     return(mod)
 
 
+from nestedness_calculator import NestednessCalculator #https://github.com/tsakim/nestedness
+nodf = lambda x: NestednessCalculator(x).nodf(x)
+
+def renormalize(vlist):
+    x=vlist
+    b=np.max(x)
+    a=np.min(x)
+    x=(x-a)/(b-a)
+    return x
+
+def spectralRnorm(a):
+    a_norm = renormalize(a)
+    #L = sparse.csr_matrix(a_norm)
+    #sR = sparse.linalg.eigs(a_norm,k=1,which='LM', return_eigenvectors=False)
+    sR = np.max(np.real(np.linalg.eigvals(a_norm)))/np.sqrt((a>0).sum())
+    return(sR)
 
 
 
@@ -444,16 +460,14 @@ def mod(g):
 
 
 
-
-
-
-
-
-
-
-
-
-
+class pruning:
+    def threshold(G_o,cut):
+        G=G_o.copy()
+        remove = [edge for edge,weight in nx.get_edge_attributes(G,'weight').items() if weight < cut]
+        G.remove_edges_from(remove)
+        #adjacency = nx.adjacency_matrix(G).todense()
+        return G
+        
 
 
 
