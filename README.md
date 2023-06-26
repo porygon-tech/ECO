@@ -1,5 +1,6 @@
 # ECO
 Ecological and evolutionary simulations
+![A](gallery/net_demo3.gif "Rewiring animation")
 
 ## Disclaimer
 The project is still in development, use code at your own risk!
