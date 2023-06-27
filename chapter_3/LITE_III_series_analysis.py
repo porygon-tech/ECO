@@ -40,7 +40,16 @@ import matriX as mx
 # python chapter_3/III_MAIN_multiprocessor.py
 
 
-#%%
+#%% a very important thing 
+
+#plt.switch_backend('Qt5Agg')
+import contextlib
+import matplotlib
+
+def switch_backend(gui):
+    with contextlib.suppress(ValueError):
+        matplotlib.use(gui, force=True)
+    globals()['plt'] = matplotlib.pyplot
 
 
 #%% load dataset
@@ -132,14 +141,17 @@ plt.hist(data, bins=np.linspace(min(data), max(data),40), edgecolor='black', alp
 
 
 #%% show average traits
+switch_backend('module://matplotlib_inline.backend_inline')
 for sim in simulations:
     mx.showlist(sim['dist_avgs'])
 
 #%% show fitnesses
+switch_backend('module://matplotlib_inline.backend_inline')
 for sim in simulations:
     mx.showlist(sim['fits'][:-1])
 
 #%% show population sizes
+switch_backend('module://matplotlib_inline.backend_inline')
 for sim in simulations:
     mx.showlist(sim['D'][:-1])
   
@@ -176,25 +188,6 @@ for simID, sim in enumerate(simulations):
 #%%
 
 
-fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
-scatter1=ax.scatter([sim['_d'].mean() for sim in simulations],
-                    [sim['n_predations'] for sim in simulations], 
-                    final_popsizes/sum(final_popsizes), label='final_popsizes', 
-                    c=[sim['n_mutualisms'] for sim in simulations], cmap='viridis')
-
-# scatter2=ax.scatter([sim['_d'].mean() for sim in simulations],
-#                     [sim['n_predations'] for sim in simulations], 
-#                     final_nonextinct/sum(final_nonextinct), label='n survivors')
-
-
-ax.set_xlabel(r"$d$", fontsize=16)
-ax.set_ylabel("n_predations")
-plt.legend(handles=[scatter1, scatter2])
-plt.colorbar(scatter1)
-plt.show()
-    
-
-
 #%%
 
 
@@ -202,7 +195,7 @@ plt.show()
 
 
 
-
+switch_backend('qt5agg') # or 'qtagg'
 fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
 scatter1=ax.scatter(d,
                     sR,
@@ -213,10 +206,10 @@ ax.set_ylabel(r"y")
 # plt.legend(handles=[scatter1, scatter2])
 plt.colorbar(scatter1)
 plt.show()
-    
 
 
-#%%
+
+#%% correlation time!
 
 # data=nx.adjacency_matrix(mx.pruning.threshold(G,1.5)).todense().flatten()
 # plt.hist(data, bins=np.linspace(min(data), max(data),20), edgecolor='black', alpha=0.5, rwidth=0.8, histtype='step');plt.yscale('log')
@@ -331,31 +324,131 @@ mx.showdata(CORRS[-testvars.shape[0]:,
                   -testvars.shape[0]:],
             symmetry=True, colorbar=True)
 
-#%%
 
 mx.showdata(cs_flat, symmetry=True, colorbar=True)
 mx.showdata(csp_flat,symmetry=True, colorbar=True)
 
 mx.showdata(cs[4], symmetry=True, colorbar=True)
 
-
+#%%
 
 # import matplotlib
 # gui_env = [i for i in matplotlib.rcsetup.interactive_bk] # interactive backends
 # non_gui_backends = matplotlib.rcsetup.non_interactive_bk
 #plt.switch_backend('QtAgg')
-plt.switch_backend('Qt5Agg')
+switch_backend('qt5agg') # or 'qtagg'
 fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
 scatter1=ax.scatter(n_mutu,
-                    sR,
+                    np.array(sR)-np.array(sR_i),
                     cs_flat[ :,ravelsquare((3,2), cs_flat)],
-                    c=nodfs, cmap='viridis')
+                    c=modularities, cmap='turbo')
 ax.set_xlabel(r"x", fontsize=16)
 ax.set_ylabel(r"y")
 # plt.legend(handles=[scatter1, scatter2])
 plt.colorbar(scatter1)
 plt.show()
 
+
+#%%
+
+
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(modularities,
+                    nodfs,
+                    n_mutu,
+                    c=np.array(sR)-np.array(sR_i), cmap='turbo')
+ax.set_xlabel(r"x", fontsize=16)
+ax.set_ylabel(r"y")
+# plt.legend(handles=[scatter1, scatter2])
+ax.view_init(elev=30., azim=0)
+
+plt.colorbar(scatter1)
+plt.show()
+
+
+
+
+
+#%%
+switch_backend('module://matplotlib_inline.backend_inline')
+import matplotlib.animation as animation
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+
+fps=40
+nseconds=8
+
+nframes = fps*nseconds
+# nframes = 30
+azims = np.linspace(0,360,nframes+1)[:-1]
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+
+plt.colorbar(scatter1,ax=ax, label='spectral radius variation')
+
+def frame(t):
+    print(t/nframes)
+    global azims
+    ax.clear()
+    scatter1=ax.scatter(modularities,
+                        nodfs,
+                        n_mutu,
+                        c=np.array(sR)-np.array(sR_i), cmap='turbo')
+    
+    ax.set_xlabel(r"modularity", fontsize=16)
+    ax.set_ylabel(r"NODF score")
+    ax.set_zlabel(r"number of mutualistic interactions")
+    ax.view_init(elev=30., azim=azims[t])
+    ax.set_title('azimuth = {}°'.format(int(round(azims[t]))))
+
+    
+    # plt.show()
+    return ax
+
+
+timecode = str(time.time())
+timecode = '_test'
+ani = animation.FuncAnimation(fig, frame, frames=nframes, interval=1000/fps, blit=False)
+ani.save('../figures/gif/scatter' + timecode +'.gif')
+
+
+
+#%%
+
+
+fps = 40
+nseconds = 8
+
+nframes = fps * nseconds
+azims = np.linspace(0, 360, nframes + 1)[:-1]
+
+fig = plt.figure(figsize=(8, 6))
+ax = fig.add_subplot(111, projection='3d')
+
+def frame(t):
+    global azims, ax
+
+    ax.clear()
+
+    color = np.array(sR) - np.array(sR_i)
+    scatter1 = ax.scatter(modularities, nodfs, n_mutu, c=color, cmap='turbo')
+
+    ax.set_xlabel(r"modularity", fontsize=16)
+    ax.set_ylabel(r"NODF score")
+    ax.set_zlabel(r"number of mutualistic interactions")
+    ax.view_init(elev=30., azim=azims[t])
+    ax.set_title('azim = {}'.format(azims[t]))
+
+    # Add colorbar
+    cax = make_axes_locatable(ax).append_axes('right', '5%', '5%')
+    cbar = plt.colorbar(scatter1, cax=cax)
+    cbar.set_label('Colorbar Label')
+
+    return ax
+
+# Create the animation
+animation = animation.FuncAnimation(fig, frame, frames=nframes, interval=1000/fps, blit=False)
+
+plt.show()
 
 #%%
 
