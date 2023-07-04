@@ -50,7 +50,7 @@ mutualRange = (-0.01, 0.02) # range of values for the uniform distribution of ec
 a=0. # assortative mating coefficients, real value (single value or array of values)
 d=0. # frequency dependence coefficient
 alpha= 0.05 # strength of the trait matching mechanism. Positive real value. Lower values = greater promiscuity
-xi_S=0.4 # level of environmental selection (from 0 to 1).
+xi_S=0.3 # level of environmental selection (from 0 to 1).
 D0=50 # initial population sizes (single value or array of values)
 
 
@@ -136,9 +136,9 @@ def task_simulation_set(cola):
         
 
         # MODEL PARAMETERS
-        c=0.8 #np.random.rand()*0.6#0.4 # expected connectance of the allowed links matrix
+        c=np.random.rand()*0.7+0.3 # expected connectance of the allowed links matrix
         mutualRange = np.sort(np.random.rand(2)*0.1-0.05) #(-0.02, 0.02) # range of values for the uniform distribution of ecological effects
-        a=np.linspace(0., 0.005,nsimulations)[i]#(np.random.rand()*2-1)/10#  #np.random.rand(N)*2-1#np.random.rand()*2-1 # assortative mating coefficients, real value (single value or array of values)
+        #a=np.linspace(0., 0.005,nsimulations)[i]#(np.random.rand()*2-1)/10#  #np.random.rand(N)*2-1#np.random.rand()*2-1 # assortative mating coefficients, real value (single value or array of values)
         d=np.random.normal(np.random.rand()*4-2,0.01,N)#np.random.normal(np.linspace(-2,2,nsimulations)[i],0.01,N) #np.linspace(-5,5,nsimulations)[i]  #frequency dependence coefficient
         # alpha= np.random.rand()*0.1 # strength of the trait matching mechanism. Positive real value. Lower values = greater interaction promiscuity
         
@@ -194,7 +194,7 @@ def split(string, n):
 if __name__ == "__main__":
     
     ntimesteps=80
-    nsimulations = 128
+    nsimulations = 256
     
     FullSummary=False
     nprocessors = multiprocessing.cpu_count()

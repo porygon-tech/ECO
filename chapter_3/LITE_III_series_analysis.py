@@ -23,7 +23,7 @@ import time
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-%matplotlib inline
+# %matplotlib inline
 # from copy import deepcopy
 import networkx as nx
 # import pandas as pd
@@ -40,7 +40,7 @@ import matriX as mx
 # python chapter_3/III_MAIN_multiprocessor.py
 
 
-#%% a very important thing 
+#%% developer tools
 
 #plt.switch_backend('Qt5Agg')
 import contextlib
@@ -51,6 +51,7 @@ def switch_backend(gui):
         matplotlib.use(gui, force=True)
     globals()['plt'] = matplotlib.pyplot
 
+from matriX import showdata as sd
 
 #%% load dataset
 #pattern = r'^file\d+\.txt$'  # Regular expression pattern
@@ -62,7 +63,8 @@ most_recent = popen('basename $(ls ' + str(obj_path)+ '/SIMULATIONS* -t1 | head 
 # print('\n'.join(listdir(obj_path)))
 
 filename = most_recent
-filename = 'SIMULATIONS_Sat_Jun_24_002510_2023_oval_conclusion.obj'
+# filename = 'SIMULATIONS_Sat_Jun_24_002510_2023_oval_conclusion.obj'
+# filename = 'SIMULATIONS_unhappy_ship_Thu_Jun_15_091706_2023.obj'
 
 print("LOADING " + filename)
 with bz2.BZ2File(obj_path / filename, 'rb') as f:
@@ -85,15 +87,23 @@ payoffs = [sim['_mutual_effs'] for sim in simulations] # per capita fitness effe
 
 a = [sim['_a'].mean() for sim in simulations]
 d = [sim['_d'].mean() for sim in simulations]
+
+thres_gamma=1e-5
+c = [(A_e>thres_gamma).sum()/A_e.size for A_e in payoffs]
 alpha = [sim['_alpha'] for sim in simulations]
 
+power_mutu = [i__mutu.sum() / i__n_mutu if i__n_mutu != 0 else 0 for i__mutu, i__n_mutu in zip(mutu, n_mutu)]
+power_pred = [i__pred.sum() / i__n_pred if i__n_pred != 0 else 0 for i__pred, i__n_pred in zip(pred, n_pred)]
+power_comp = [i__comp.sum() / i__n_comp if i__n_comp != 0 else 0 for i__comp, i__n_comp in zip(comp, n_comp)]
 
-# from matriX import showdata as sd
+
+#%%
+# 
 # sd(gammas[0],colorbar =True)
 # sd(adjs[0],colorbar =True)
 
 thres_interac=1.5
-thres_gamma=0.1
+
 
 #spectral radius: final, initial and payoff matrices
 # sR   = list(map(mx.spectralRnorm, [adj   for adj   in adjs  ]))
@@ -131,13 +141,20 @@ n_connected_comps = [nx.number_connected_components(nx.from_numpy_array((adj>thr
 #adjs_inv = [np.where(adj > 1e-5, 1 / adj, adj) for adj in adjs]
 #Gli = [nx.from_numpy_array(adj) for adj in adjs_inv]
 Gl = [nx.from_numpy_array(adj) for adj in adjs]
+Glc= [nx.from_numpy_array(adj*(adj>thres_interac)) for adj in adjs ]
 Gl_payoffs = [nx.from_numpy_array(A_e, create_using=nx.DiGraph) for A_e in payoffs]
 
+modularities = mx.mod( Gl )
+modularities = mx.mod( Gl )
 modularities = mx.mod( Gl )
 
 
 data=gammas[0].flatten()
 plt.hist(data, bins=np.linspace(min(data), max(data),40), edgecolor='black', alpha=0.5, rwidth=0.8, histtype='step');plt.yscale('log')
+
+
+
+
 
 
 #%% show average traits
@@ -212,7 +229,9 @@ plt.show()
 #%% correlation time!
 
 # data=nx.adjacency_matrix(mx.pruning.threshold(G,1.5)).todense().flatten()
-# plt.hist(data, bins=np.linspace(min(data), max(data),20), edgecolor='black', alpha=0.5, rwidth=0.8, histtype='step');plt.yscale('log')
+# data=np.array(adjs).flatten()
+# plt.hist(data, bins=np.linspace(min(data), max(data),30), edgecolor='black', alpha=0.5, rwidth=0.8, histtype='step');plt.yscale('log')
+# np.quantile(data, 0.5)
 
 l_deg    = [dict(G.degree()) for G in Gl]
 l_deg_pr = [dict(mx.pruning.threshold(G,1.5).degree()) for G in Gl]
@@ -293,7 +312,7 @@ csp = [np.tril(np.corrcoef(k_payoff[:,i,:])) for i in range(len(simulations))]
 cs_flat  = np.array(cs ).reshape((len(simulations),np.prod(cs[0].shape)))
 csp_flat = np.array(csp).reshape((len(simulations),np.prod(csp[0].shape)))
 
-
+switch_backend('module://matplotlib_inline.backend_inline')
 mx.showdata(np.corrcoef(cs_flat.T), symmetry=True, colorbar=True)
 mx.showdata(np.corrcoef(csp_flat.T), symmetry=True, colorbar=True)
 mx.showdata(np.corrcoef(testvars), symmetry=True, colorbar=True)
@@ -331,11 +350,10 @@ mx.showdata(csp_flat,symmetry=True, colorbar=True)
 mx.showdata(cs[4], symmetry=True, colorbar=True)
 
 #%%
-
 # import matplotlib
 # gui_env = [i for i in matplotlib.rcsetup.interactive_bk] # interactive backends
 # non_gui_backends = matplotlib.rcsetup.non_interactive_bk
-#plt.switch_backend('QtAgg')
+
 switch_backend('qt5agg') # or 'qtagg'
 fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
 scatter1=ax.scatter(n_mutu,

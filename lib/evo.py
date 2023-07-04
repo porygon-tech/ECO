@@ -801,18 +801,19 @@ def getADJs(simulations, t, return_gammas=False):
         k1=(A[...,np.newaxis] @ sim['v'][t,:,np.newaxis,:])
         k=(A[...,np.newaxis] @ p[:,np.newaxis,:])
         e = k * np.swapaxes(k1,0,1)
+        gamma = e.sum(2)
     
         pop_weights = sim['D'][t][:,I] # * sim['_m'] 
         intensities = (np.outer(pop_weights,pop_weights)) # np.sqrt ??
         
-        adj = e.sum(2)*intensities
+        adj = gamma*intensities
         
-        mutu.append(adj *  ((A_e>0) & (A_e.T>0)))
-        comp.append(adj *  ((A_e<0) & (A_e.T<0)))
-        pred.append(adj * (((A_e>0) & (A_e.T<0)) | ((A_e<0) & (A_e.T>0))))
+        mutu.append(gamma *  ((A_e>0) & (A_e.T>0)))
+        comp.append(gamma *  ((A_e<0) & (A_e.T<0)))
+        pred.append(gamma * (((A_e>0) & (A_e.T<0)) | ((A_e<0) & (A_e.T>0))))
         
         adjs.append(adj)
-        gammas.append(e.sum(2))
+        gammas.append(gamma)
         
     if return_gammas:
         return adjs, mutu, comp, pred, gammas

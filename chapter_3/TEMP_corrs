@@ -1,0 +1,525 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jun 27 15:52:20 2023
+
+@author: ubuntu
+"""
+
+thres_interac=100
+
+gamma   = {}
+gamma_i = {}
+mass    = {}
+mass_c  = {}
+payoff  = {}
+
+Gl_gamma   = [nx.from_numpy_array(M)                         for M in gammas]
+Gl_gamma_i = [nx.from_numpy_array(M)                         for M in gammas_i]
+Gl_mass    = [nx.from_numpy_array(M)                         for M in adjs]
+# Gl_mass_c  = [nx.from_numpy_array(M >thres_interac)          for M in adjs]
+Gl_mass_c  = [mx.pruning.threshold(G,thres_interac) for G in Gl_mass]
+Gl_payoff  = [nx.from_numpy_array(M,create_using=nx.DiGraph) for M in payoffs]
+
+gamma   ['name'] = 'gamma'
+gamma_i ['name'] = 'gamma_i'
+mass    ['name'] = 'mass'
+mass_c  ['name'] = 'mass_c'
+payoff  ['name'] = 'payoff'
+
+gamma['sR']   = np.array(list(map(mx.spectralRnorm, [M for M in gammas])))
+gamma_i['sR'] = np.array(list(map(mx.spectralRnorm, [M for M in gammas_i])))
+payoff['sR']  = np.array(list(map(mx.spectralRnorm, [M for M in payoffs])))
+
+gamma['mod']   = np.array(mx.mod( Gl_gamma ))
+gamma_i['mod'] = np.array(mx.mod( Gl_gamma_i ))
+mass['mod']    = np.array(mx.mod( Gl_mass ))
+# mass_c['mod']  = np.array(mx.mod( Gl_mass_c ))
+# payoff['mod'] = mx.mod( Gl_payoff )
+
+gamma['nodf']   =  list(map(mx.nodf, [mx.rmUnco(       M>thres_gamma)  for M in gammas]))
+gamma_i['nodf'] =  list(map(mx.nodf, [mx.rmUnco(       M>thres_gamma)  for M in gammas_i]))
+# mass_c['nodf']  =  list(map(mx.nodf, [mx.rmUnco(       M>thres_interac)for M in adjs]))
+#payoff['nodf']  =  list(map(mx.nodf, [mx.rmUnco(np.abs(M>thres_payoff))for M in payoff]))
+
+
+gamma['nC']   = [nx.number_connected_components(G) for G in Gl_gamma]
+gamma_i['nC'] = [nx.number_connected_components(G) for G in Gl_gamma_i]
+mass['nC']    = [nx.number_connected_components(G) for G in Gl_mass]
+mass_c['nC']  = [nx.number_connected_components(G) for G in Gl_mass_c]
+
+
+gamma['nodes']   = {}
+gamma_i['nodes'] = {}
+mass['nodes']    = {}
+mass_c['nodes']  = {}
+payoff['nodes']  = {}
+
+# gamma['nodes']['deg']   = [dict(G.degree()) for G in Gl_gamma   ]
+# gamma_i['nodes']['deg'] = [dict(G.degree()) for G in Gl_gamma_i ]
+# mass['nodes']['deg']    = [dict(G.degree()) for G in Gl_mass    ]
+mass_c['nodes']['deg']  = [dict(G.degree()) for G in Gl_mass_c  ]
+payoff['nodes']['deg']  = [dict(G.degree()) for G in Gl_payoff  ]
+
+gamma['nodes']['qdeg']   = [dict(G.degree( weight='weight')) for G in Gl_gamma   ]
+gamma_i['nodes']['qdeg'] = [dict(G.degree( weight='weight')) for G in Gl_gamma_i ]
+mass['nodes']['qdeg']    = [dict(G.degree( weight='weight')) for G in Gl_mass    ]
+mass_c['nodes']['qdeg']  = [dict(G.degree( weight='weight')) for G in Gl_mass_c  ]
+payoff['nodes']['qdeg']  = [dict(G.degree( weight='weight')) for G in Gl_payoff  ]
+
+gamma['nodes']['bc']   = [nx.betweenness_centrality(G,weight='weight') for G in Gl_gamma   ]
+gamma_i['nodes']['bc'] = [nx.betweenness_centrality(G,weight='weight') for G in Gl_gamma_i ]
+mass['nodes']['bc']    = [nx.betweenness_centrality(G,weight='weight') for G in Gl_mass    ]
+mass_c['nodes']['bc']  = [nx.betweenness_centrality(G,weight='weight') for G in Gl_mass_c  ]
+payoff['nodes']['bc']  = [nx.betweenness_centrality(G,weight='weight') for G in Gl_payoff  ]
+
+gamma['nodes']['ec']   = [nx.eigenvector_centrality(G, max_iter=5000,weight='weight') for G in Gl_gamma   ]
+gamma_i['nodes']['ec'] = [nx.eigenvector_centrality(G, max_iter=5000,weight='weight') for G in Gl_gamma_i ]
+# mass['nodes']['ec']    = [nx.eigenvector_centrality(G) for G in Gl_mass    ]
+mass_c['nodes']['ec']  = [nx.eigenvector_centrality(G, max_iter=5000) for G in Gl_mass_c  ]
+payoff['nodes']['ec']  = [nx.eigenvector_centrality(G) for G in Gl_payoff  ]
+
+# payoff['nodes']['indeg']   = [dict(G.in_degree( )) for G in Gl_payoff]
+# payoff['nodes']['outdeg']  = [dict(G.out_degree()) for G in Gl_payoff]
+payoff['nodes']['qindeg']   = [dict(G.in_degree( weight='weight')) for G in Gl_payoff]
+payoff['nodes']['qoutdeg']  = [dict(G.out_degree(weight='weight')) for G in Gl_payoff]
+
+
+
+nodekeys = gamma['nodes']['bc'][0].keys()
+
+gamma['nodes']['fits']       = [ dict(zip(nodekeys, sim['fits'][-2])) for sim in simulations]
+gamma_i['nodes']['fits']     = [ dict(zip(nodekeys, sim['fits'][1 ])) for sim in simulations]
+# mass['nodes']['fits']        = [ dict(zip(nodekeys, sim['fits'][-1])) for sim in simulations]
+# mass_c['nodes']['fits']      = [ dict(zip(nodekeys, sim['fits'][-1])) for sim in simulations]
+
+gamma['nodes']['popsizes']   = [ dict(zip(nodekeys, sim['D'][-2]))    for sim in simulations]
+gamma_i['nodes']['popsizes'] = [ dict(zip(nodekeys, sim['D'][1 ]))    for sim in simulations]
+# mass['nodes']['popsizes']    = [ dict(zip(nodekeys, sim['D'][-1]))    for sim in simulations]
+# mass_c['nodes']['popsizes']  = [ dict(zip(nodekeys, sim['D'][-1]))    for sim in simulations]
+
+payoff['nodes']['lv_mutu']   = [ dict(zip(nodekeys, ((A_e>0) & (A_e.T>0)).sum(0)                          / (A_e!=0).sum(0))) for A_e in payoffs]
+payoff['nodes']['lv_comp']   = [ dict(zip(nodekeys, ((A_e<0) & (A_e.T<0)).sum(0)                          / (A_e!=0).sum(0))) for A_e in payoffs]
+payoff['nodes']['lv_pred']   = [ dict(zip(nodekeys,(((A_e>0) & (A_e.T<0)) | ((A_e<0) & (A_e.T>0))).sum(0) / (A_e!=0).sum(0))) for A_e in payoffs]
+
+matList = [
+gamma   ,
+gamma_i ,
+mass    ,
+mass_c  ,
+payoff  ]
+
+#%%
+
+
+'''
+import pandas as pd
+
+df = np.array([
+list(gamma['nodes'].values())   ,
+list(gamma_i['nodes'].values()) ,
+list(mass['nodes'].values())    ,
+list(mass_c['nodes'].values())  ,
+list(payoff['nodes'].values())  ])
+
+gamma['nodes'].keys()
+list(gamma['nodes'].values())[0]
+
+np.array(gamma['nodes'].values())
+
+
+
+list(map(np.array, gamma['nodes'].values()))
+
+
+len(gamma['nodes']['qdeg'][0])
+
+len(gamma['nodes']['deg'])
+
+cs  = [np.tril(np.corrcoef(k[:,i,:])) for i in range(len(simulations))]
+
+
+#list(gamma['nodes'].keys())
+keys = gamma['nodes']['deg'][0].keys()
+values = [[d[key] for key in keys] for d in gamma['nodes']['deg']]
+'''
+
+#%%
+l=[]
+varnames = []
+for mclass in matList:
+    mname = mclass['name']
+    for key in mclass['nodes'].keys():
+        # print(mname + key)
+        nodenames = mclass['nodes'][key][0].keys()
+        values = [[d[nodename] for nodename in nodenames] for d in mclass['nodes'][key]]
+        varnames.append(mname + '_' + key)
+        l.append(values)
+
+k=np.array(l)
+k.shape
+
+
+cs  = np.array([np.tril(np.corrcoef(k[:,i,:]),-1) for i in range(len(simulations))])
+cs = np.nan_to_num(cs) # !!!!!!!!!!!!!!!!!!!!!!
+# cs  = np.array([       (np.corrcoef(k[:,i,:])) for i in range(len(simulations))])
+cs_flat  = cs.reshape((len(simulations),np.prod(cs[0].shape)))
+mx.showdata(np.corrcoef(cs_flat.T), symmetry=True, colorbar=True)
+
+
+
+sd(cs[0], symmetry=True, colorbar=True)
+sd(cs_flat, symmetry=True, colorbar=True)
+
+
+cornames= np.empty((len(varnames),len(varnames)),dtype='<U64')
+for i, iname in enumerate(varnames):
+    for j, jname in enumerate(varnames):
+        cornames[i,j] = iname + '_X_' + jname
+
+cornames_flat = cornames.flatten()
+
+#%%
+'''
+hivarIndexes = np.where(cs_flat.var(axis=0)>1e-2)
+
+cs_flat_hivar = np.squeeze(cs_flat[:,hivarIndexes])
+cornames_flat_hivar = cornames_flat[hivarIndexes]
+sd(cs_flat,       symmetry=True, colorbar=False)
+sd(cs_flat_hivar, symmetry=True, colorbar=False)
+'''
+#%%
+testvars=[]
+testvarnames = []
+for mclass in matList:
+    print(mclass['name'])
+    for key in mclass.keys():
+        if key != 'name' and key != 'nodes':
+            testvars.append(mclass[key])
+            testvarnames.append(mclass['name'] + '_' + key)
+            print('\t'+mclass['name'] + '_' + key)
+            
+
+testvars = np.array(testvars)
+testvars = np.append(testvars, [
+    a,
+    d,
+    n_mutu,
+    n_pred,
+    n_comp,
+    power_mutu,
+    power_pred,
+    power_comp],
+    axis=0)
+    
+testvarnames += [
+    'assortmat',
+    'freqdep',
+    'n_mutu',
+    'n_pred',
+    'n_comp',
+    'power_mutu',
+    'power_pred',
+    'power_comp']
+
+
+
+#%%
+# switch_backend('qtagg') # or 'qtagg'
+
+'''
+plt.imshow(cs_flat_hivar, cmap='seismic')
+plt.xticks(range(cs_flat_hivar.shape[1]), cornames_flat_hivar)
+plt.xticks(rotation='vertical')
+plt.figure(figsize=(64, 18))
+'''
+
+switch_backend('module://matplotlib_inline.backend_inline')
+
+#%%
+'''
+I = np.newaxis
+plt.scatter(testvars[1],cs_flat[:,:5].T)
+
+
+for i in range(cs_flat.shape[1]):
+    plt.plot(gamma['sR'], cs_flat.T[i], label=f'Variable {i+1}')
+
+
+#%%
+
+np.corrcoef(np.append(testvars, cs_flat.T,axis=0))
+cs_flat.T.shape
+
+#%%
+#CORRS= np.corrcoef(cs_flat.T)
+CORRS = np.corrcoef(np.append(cs_flat.T, testvars, axis=0))
+
+sd(CORRS, symmetry=True, colorbar=True)
+sd(np.corrcoef(cs_flat_hivar.T), symmetry=True, colorbar=True)
+
+
+top = np.max([np.abs(np.nanmax(CORRS)),np.abs(np.nanmin(CORRS))])
+plt.imshow(CORRS, interpolation='none', cmap='seismic',vmax=top,vmin=-top)
+plt.plot((100,0),(500,0))
+
+'''
+
+#%%
+CORRS = np.corrcoef(np.append(cs_flat.T, testvars, axis=0))[cs_flat.T.shape[0]:,:cs_flat.T.shape[0]]
+
+
+sorted_indices = np.argsort(np.abs(CORRS), axis=None)[::-1]
+row_indices, col_indices = np.unravel_index(sorted_indices, CORRS.shape)
+sorted_values = CORRS[row_indices, col_indices]
+
+
+
+endofnan = np.where(np.isnan(sorted_values))[0][-1]+1
+sorted_values_nn  = sorted_values[endofnan:]
+row_indices_nn      = row_indices[endofnan:]
+col_indices_nn      = col_indices[endofnan:]
+
+
+# [testvarnames[i]  for i in row_indices_nn][:4]
+# [cornames_flat[j] for j in col_indices_nn][:4]
+# sorted_values_nn
+
+#%% all
+switch_backend('module://matplotlib_inline.backend_inline')
+head = (00,20)
+
+for i,j in zip(row_indices_nn[head[0]:head[1]], col_indices_nn[head[0]:head[1]]):
+    #testvarnames[i],cornames_flat[j]
+    plt.scatter(testvars[i],cs_flat.T[j])
+    plt.xlabel(testvarnames[i])
+    plt.ylabel(cornames_flat[j])
+    plt.show()
+
+#%% Search x (and y)
+switch_backend('module://matplotlib_inline.backend_inline')
+head = (00,200)
+import re
+forcedvarname = 'assortmat'
+
+targetrows = row_indices_nn[np.where(row_indices_nn == np.where(np.array(testvarnames)==forcedvarname)[0][0])]
+targetcols = col_indices_nn[np.where(row_indices_nn == np.where(np.array(testvarnames)==forcedvarname)[0][0])]
+for i,j in zip(targetrows[head[0]:head[1]], targetcols[head[0]:head[1]]):
+# for i,j in zip(targetrows, targetcols):
+    if bool(re.search('.*', cornames_flat[j])): # '.*' for no filter
+        print(cornames_flat[j])
+        plt.scatter(testvars[i],cs_flat.T[j])
+        plt.xlabel(testvarnames[i])
+        plt.ylabel(cornames_flat[j])
+        plt.show()
+
+# for i,j in zip(row_indices_nn[head[0]:head[1]], col_indices_nn[head[0]:head[1]]):
+#     print(CORRS[i,j])
+
+#       print('\n'.join([tmp for tmp in cornames_flat if bool(re.search('payoff_deg_X_mass_c_ec', tmp))]))
+
+#%% Search only y
+switch_backend('module://matplotlib_inline.backend_inline')
+head = (00,2000)
+import re
+
+
+'payoff_ec_X_mass_c_qdeg'
+'payoff_deg_X_mass_c_ec'
+np.where(cornames_flat == 'payoff_deg_X_mass_c_ec')[0][0]
+
+for i,j in zip(row_indices_nn[head[0]:head[1]], col_indices_nn[head[0]:head[1]]):
+    if bool(re.search('payoff_deg_X_mass_c_ec', cornames_flat[j])): # '.*' for no filter
+        print(cornames_flat[j])
+        plt.scatter(testvars[i],cs_flat.T[j])
+        plt.xlabel(testvarnames[i])
+        plt.ylabel(cornames_flat[j])
+        plt.show()
+        
+
+#%%
+
+switch_backend('qt5agg') # or 'qtagg'
+print('\n'.join(cornames_flat))
+#%%
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(n_mutu,
+                    payoff['sR'],
+                    cs_flat[ :,np.where(cornames_flat=='payoff_qoutdeg_X_payoff_qindeg')[0][0]],
+                    c=gamma['sR'], cmap='turbo')
+ax.set_xlabel(r"x", fontsize=16)
+ax.set_ylabel(r"y")
+# plt.legend(handles=[scatter1, scatter2])
+plt.colorbar(scatter1)
+plt.show()
+
+#%% important plot 1
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(tmp_nodecorrs('payoff_qoutdeg_X_payoff_bc'), # can be gamma_bc instead payoff_bc
+                    tmp_nodecorrs('payoff_qindeg_X_payoff_bc'),
+                    d,
+                    c=power_mutu, cmap='turbo')
+ax.set_xlabel(r"x", fontsize=16)
+ax.set_ylabel(r"y")
+# plt.legend(handles=[scatter1, scatter2])
+plt.colorbar(scatter1)
+plt.show()
+
+#%% important plot 2
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(#tmp_nodecorrs('payoff_qdeg_X_gamma_bc'),
+                     # tmp_nodecorrs('payoff_bc_X_payoff_qdeg'),
+                     # tmp_nodecorrs('payoff_qindeg_X_payoff_bc'),
+                     n_comp,
+                    d,
+                    
+                    # gamma['mod']-gamma_i['mod'],
+                    tmp_nodecorrs('mass_bc_X_mass_qdeg'),
+                    # c=tmp_nodecorrs('payoff_qdeg_X_mass_bc'), cmap='jet')
+                    c=mass['mod']-gamma_i['mod'], cmap='bwr', norm=matplotlib.colors.TwoSlopeNorm(vmin=-.25, vcenter=0, vmax=.25))
+ax.set_xlabel(r"x", fontsize=16)
+ax.set_ylabel(r"y")
+# plt.legend(handles=[scatter1, scatter2])
+plt.colorbar(scatter1)
+plt.show()
+
+#%% important plot 3
+switch_backend('qt5agg') # or 'qtagg'
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(tmp_nodecorrs('payoff_qindeg_X_payoff_bc'),
+                      # tmp_nodecorrs('payoff_bc_X_payoff_qdeg'),
+                     # tmp_nodecorrs('payoff_qindeg_X_payoff_bc'),
+                     
+                    d,
+                    
+                    # mass_c['nC'],
+                    tmp_nodecorrs('mass_qdeg_X_gamma_bc'),
+                    # tmp_nodecorrs('payoff_bc_X_gamma_qdeg'),
+                    # tmp_nodecorrs('gamma_bc_X_gamma_qdeg'),
+                    # tmp_nodecorrs('mass_bc_X_mass_qdeg'),
+                    c=n_comp, cmap='winter_r')
+ax.set_xlabel(r"X", fontsize=16)
+ax.set_ylabel(r"freq. dependence")
+ax.set_zlabel(r"q. degree of bridges")
+# plt.legend(handles=[scatter1, scatter2])
+#plt.colorbar(scatter1)
+plt.colorbar(scatter1,ax=ax, label='number of competitions')
+plt.show()
+
+#%% important plot 4
+switch_backend('qt5agg') # or 'qtagg'
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(
+                    # tmp_nodecorrs('gamma_ec_X_gamma_bc') - tmp_nodecorrs('gamma_i_ec_X_gamma_i_bc'),
+                    # tmp_nodecorrs('payoff_qdeg_X_gamma_ec'),
+                    d,
+                    tmp_nodecorrs('mass_qdeg_X_gamma_bc'),
+                    
+                    # tmp_nodecorrs('gamma_popsizes_X_gamma_bc'),
+                    tmp_nodecorrs('gamma_fits_X_gamma_bc'),
+                    # c=gamma['sR'], cmap='jet')
+                    # c= tmp_nodecorrs('payoff_lv_mutu_X_payoff_deg'), cmap='bwr', norm=matplotlib.colors.TwoSlopeNorm(vmin=-.25, vcenter=0, vmax=.25))
+                    # c= tmp_nodecorrs('payoff_lv_mutu_X_mass_bc'),cmap='bwr', norm=matplotlib.colors.TwoSlopeNorm(vmin=-.25, vcenter=0, vmax=.25))
+                    c=n_comp, cmap='autumn_r')
+ax.set_xlabel(r"x", fontsize=16)
+ax.set_ylabel(r"y")
+# plt.legend(handles=[scatter1, scatter2])
+plt.colorbar(scatter1)
+plt.show()
+#%% important plot 5
+switch_backend('qt5agg') # or 'qtagg'
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(
+                    # tmp_nodecorrs('gamma_ec_X_gamma_bc') - tmp_nodecorrs('gamma_i_ec_X_gamma_i_bc'),
+                    # tmp_nodecorrs('payoff_qdeg_X_gamma_ec'),
+                    a,
+                    # tmp_nodecorrs('mass_qdeg_X_gamma_ec'),
+                    
+                    # tmp_nodecorrs('gamma_popsizes_X_gamma_bc'),
+                    # tmp_nodecorrs('mass_bc_X_gamma_popsizes'),
+                    
+                    tmp_nodecorrs('payoff_ec_X_payoff_qdeg'),
+                    # n_comp,
+                    
+                    
+                    
+                    
+                    tmp_nodecorrs('payoff_deg_X_mass_c_deg'),
+
+                    
+                    # payoff_ec_X_mass_c_ec
+                    # payoff_ec_X_mass_c_deg
+                    # payoff_ec_X_mass_c_qdeg
+                    # payoff_ec_X_payoff_deg
+                    # payoff_deg_X_mass_c_ec
+                    # payoff_deg_X_mass_c_deg
+                    
+                    
+                    # tmp_nodecorrs('payoff_deg_X_mass_c_ec'),
+                    
+                    # c=power_pred, cmap='autumn_r')
+                    # c= tmp_nodecorrs('payoff_lv_mutu_X_payoff_deg'), cmap='bwr', norm=matplotlib.colors.TwoSlopeNorm(vmin=-.25, vcenter=0, vmax=.25))
+                    # c= tmp_nodecorrs('mass_bc_X_mass_qdeg'),cmap='bwr', norm=matplotlib.colors.TwoSlopeNorm(vmin=-.25, vcenter=0, vmax=.25))
+                    # c= tmp_nodecorrs('payoff_ec_X_mass_c_qdeg'),cmap='bwr', norm=matplotlib.colors.TwoSlopeNorm(vmin=-.25, vcenter=0, vmax=.25))
+                    c=n_comp, cmap='autumn_r')
+
+ax.set_xlabel(r"x", fontsize=16)
+ax.set_ylabel(r"y")
+# plt.legend(handles=[scatter1, scatter2])
+plt.colorbar(scatter1)
+plt.show()
+
+#%%
+tmp_nodecorrs('payoff_bc_X_payoff_qdeg')
+mass_c.keys()
+mass_c['mod']
+tmp_nodecorrs('payoff_qoutdeg_X_payoff_qindeg')
+
+#%%
+
+switch_backend('module://matplotlib_inline.backend_inline')
+
+plt.scatter(
+    [list(payoff['nodes']['ec'][i].values())for i in range(len(simulations))],
+    [list(payoff['nodes']['bc'] [i].values())for i in range(len(simulations))],
+    s=0.1
+    )
+plt.show()
+
+
+plt.scatter(
+    [list(payoff['nodes']['qdeg'][i].values())for i in range(len(simulations))],
+    [list(gamma_i['nodes']['ec'] [i].values())for i in range(len(simulations))],
+    s=0.1
+    )
+plt.show()
+
+plt.scatter(
+    [list(mass_c['nodes']['bc'][i].values())for i in range(len(simulations))],
+    [list(payoff['nodes']['bc'] [i].values())for i in range(len(simulations))],
+    s=0.1
+    )
+plt.show()
+
+
+
+plt.scatter(
+    [list(mass['nodes']['qdeg'][i].values())for i in range(len(simulations))],
+    [list(payoff['nodes']['qdeg'] [i].values())for i in range(len(simulations))],
+    s=0.5,c=np.repeat(n_comp,N),cmap='autumn_r'
+    )
+plt.show()
+
+plt.scatter(
+    [list(payoff['nodes']['qdeg'] [i].values())for i in range(len(simulations))],
+    [(list(mass['nodes']['qdeg'][i].values()))for i in range(len(simulations))],
+    c=(np.repeat(a,N))**2,cmap='cool',s=1.5
+    )
+plt.show()
+
+
+
+def tmp_nodecorrs(name):
+    return cs_flat[ :,np.where(cornames_flat==name)[0][0]]
+
+
