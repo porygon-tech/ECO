@@ -13,12 +13,12 @@ This module contains numerical optimization functions, whose output results shou
 '''
 #%%
 def to_square(m):
-	rows, cols = m.shape
-	uL = np.zeros((rows,rows))
-	dR = np.zeros((cols,cols))
-	Um = np.concatenate((uL , m ), axis=1)
-	Dm = np.concatenate((m.T, dR), axis=1)
-	return(np.concatenate((Um,Dm), axis=0))
+    rows, cols = m.shape
+    uL = np.zeros((rows,rows))
+    dR = np.zeros((cols,cols))
+    Um = np.concatenate((uL , m ), axis=1)
+    Dm = np.concatenate((m.T, dR), axis=1)
+    return(np.concatenate((Um,Dm), axis=0))
 
 #%%
 def showdata(mat, color=plt.cm.gnuplot, symmetry=False,colorbar=False):
@@ -450,14 +450,72 @@ def spectralRnorm(a):
     return(sR)
 
 
+def index_mat(rows, cols):
+    return [[(i, j) for j in range(cols)] for i in range(rows)]
 
 
 
+def totext(A):
+    print('\n'.join([' '.join(list(ai_.astype(int).astype(str))) for ai_ in list(A)]))
 
 
 
-
-
+class graphictools:
+    def RGB(R,G,B,same=True):
+        if same:
+            rgblist = (renormalize((R,G,B))*255).astype('int').T
+        else:
+            rgblist = np.array([renormalize(R)*255,renormalize(G)*255,renormalize(B)*255]).astype('int').T
+        colors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in rgblist]
+        return(colors)
+    
+    def hex_color_invert_hue(hex_color):
+        # Remove the '#' symbol from the hex color string
+        hex_color = hex_color.lstrip('#')
+    
+        # Convert hex to RGB
+        rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    
+        # Convert RGB to HSV
+        r, g, b = [x / 255.0 for x in rgb]
+        max_value = max(r, g, b)
+        min_value = min(r, g, b)
+        delta = max_value - min_value
+    
+        if delta == 0:
+            hue = 0
+        elif max_value == r:
+            hue = 60 * (((g - b) / delta) % 6)
+        elif max_value == g:
+            hue = 60 * (((b - r) / delta) + 2)
+        else:
+            hue = 60 * (((r - g) / delta) + 4)
+    
+        # Invert hue
+        hue = (hue + 180) % 360
+    
+        # Convert HSV back to RGB
+        c = max_value - min_value
+        x = c * (1 - abs((hue / 60) % 2 - 1))
+        m = min_value
+        if 0 <= hue < 60:
+            r, g, b = c, x, 0
+        elif 60 <= hue < 120:
+            r, g, b = x, c, 0
+        elif 120 <= hue < 180:
+            r, g, b = 0, c, x
+        elif 180 <= hue < 240:
+            r, g, b = 0, x, c
+        elif 240 <= hue < 300:
+            r, g, b = x, 0, c
+        else:
+            r, g, b = c, 0, x
+    
+        r, g, b = (int((v + m) * 255) for v in (r, g, b))
+    
+        # Convert RGB to hex
+        inverted_hex_color = "#{:02x}{:02x}{:02x}".format(r, g, b)
+        return inverted_hex_color
 
 
 class pruning:
@@ -468,20 +526,95 @@ class pruning:
         #adjacency = nx.adjacency_matrix(G).todense()
         return G
         
+class nullmodels:
+    def nestedRand(N,nswaps):
+        A = np.flip(np.triu(np.ones(N)),1)
+        np.fill_diagonal(A,0)
+        A_tmp = A.copy()
+        i=0
+        while i < nswaps:
+            
+            zero_indices = np.where(A == 0)
+            one_indices  = np.where(A == 1)
+            ri_0=(0,0)
+            while (ri_0[0] == ri_0[1]):
+                random_index = np.random.choice(len(zero_indices[0]))
+                ri_0 = zero_indices[0][random_index], zero_indices[1][random_index]
+            
+            ri_1=(0,0)
+            while (ri_1[0] == ri_1[1]):
+                random_index = np.random.choice(len(one_indices[0]))
+                ri_1 = one_indices[0][random_index], one_indices[1][random_index]
+
+
+            A_tmp[ri_0, ri_0[::-1]] = 1
+            A_tmp[ri_1, ri_1[::-1]] = 0
+            
+            if nx.is_connected(nx.from_numpy_array(A_tmp)):
+                i+=1
+                A = A_tmp.copy()
+        return(A)
+    
+    def clusterchain(N,nclusters=2):
+        N = 25
+        nclusters = 4
+        cuts = np.append(np.append(0,np.sort(np.random.choice(np.arange(2,N-1),nclusters-1,replace=False))),N-1)
+        clustersizes =np.diff(cuts)
+        clusters = [np.ones((cut,cut)) for cut in clustersizes]
+    
+        joint = clusters[0]
+        for i in range(1,nclusters):
+            joint = joingraphs(joint, clusters[i])
+            joint[cuts[i],  cuts[i]-1] = 1
+            joint[cuts[i]-1,cuts[i]  ] = 1
+    
+    
+        np.fill_diagonal(joint,0)
+        return joint
+
+def swaplinks(A, nswaps, connected = False):
+    A_tmp = A.copy()
+    i=0
+    if connected:
+        while i < nswaps:
+            A_tmp = __auxswaplinks(A)
+            if nx.is_connected(nx.from_numpy_array(A_tmp)):
+                i+=1
+                A = A_tmp.copy()
+    else:
+        while i < nswaps:
+            A_tmp = __auxswaplinks(A)
+            i+=1
+            A = A_tmp.copy()
+    return(A)
 
 
 
+def __auxswaplinks(A):
+    A_tmp = A.copy()
+    zero_indices = np.where(A == 0)
+    one_indices  = np.where(A == 1)
+    ri_0=(0,0)
+    while (ri_0[0] == ri_0[1]):
+        random_index = np.random.choice(len(zero_indices[0]))
+        ri_0 = zero_indices[0][random_index], zero_indices[1][random_index]
+    
+    ri_1=(0,0)
+    while (ri_1[0] == ri_1[1]):
+        random_index = np.random.choice(len(one_indices[0]))
+        ri_1 = one_indices[0][random_index], one_indices[1][random_index]
 
+    A_tmp[ri_0, ri_0[::-1]] = 1
+    A_tmp[ri_1, ri_1[::-1]] = 0
+    return A_tmp
 
-
-
-
-
-
-
-
-
-
+def joingraphs(m1,m2):
+	s1 = m1.shape[0]
+	s2 = m2.shape[0]
+	return np.concatenate((
+	np.concatenate((m1 ,               np.zeros((s1,s2)) ), axis=1),
+	np.concatenate((np.zeros((s2,s1)), m2                ), axis=1)), 
+	axis=0)
 
 
 

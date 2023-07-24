@@ -783,7 +783,7 @@ def dist_variances(v,phenospace=None):
 #transformations = transformations()
 
 
-def getADJs(simulations, t, return_gammas=False):
+def getADJs(simulations, t=None, simID=None, return_gammas=False):
     I=np.newaxis
     adjs=[]
     mutu=[]
@@ -791,30 +791,61 @@ def getADJs(simulations, t, return_gammas=False):
     pred=[]
     gammas=[] # effect matrix without mass action
 
-    for sim in simulations:
-        
-        ntimesteps, N, nstates = sim['v'].shape; ntimesteps-=1
-        
-        A_e = sim['_mutual_effs']
-        A=A_e != 0
-        p=np.array([interactors.convpM(sim['v'][t,species_id],nstates,sim['_alpha']) for species_id in range(N)]) # equivalent to p
-        k1=(A[...,np.newaxis] @ sim['v'][t,:,np.newaxis,:])
-        k=(A[...,np.newaxis] @ p[:,np.newaxis,:])
-        e = k * np.swapaxes(k1,0,1)
-        gamma = e.sum(2)
-    
-        pop_weights = sim['D'][t][:,I] # * sim['_m'] 
-        intensities = (np.outer(pop_weights,pop_weights)) # np.sqrt ??
-        
-        adj = gamma*intensities
-        
-        mutu.append(gamma *  ((A_e>0) & (A_e.T>0)))
-        comp.append(gamma *  ((A_e<0) & (A_e.T<0)))
-        pred.append(gamma * (((A_e>0) & (A_e.T<0)) | ((A_e<0) & (A_e.T>0))))
-        
-        adjs.append(adj)
-        gammas.append(gamma)
-        
+    if t is None:
+        if simID is None :
+            raise Exception("t or simID must be provided") 
+        else:
+            sim = simulations[simID]
+            ntimesteps, N, nstates = sim['v'].shape; ntimesteps-=1
+            for t in range(ntimesteps):
+
+                A_e = sim['_mutual_effs']
+                A=A_e != 0
+                p=np.array([interactors.convpM(sim['v'][t,species_id],nstates,sim['_alpha']) for species_id in range(N)]) # equivalent to p
+                k1=(A[...,np.newaxis] @ sim['v'][t,:,np.newaxis,:])
+                k=(A[...,np.newaxis] @ p[:,np.newaxis,:])
+                e = k * np.swapaxes(k1,0,1)
+                gamma = e.sum(2)
+            
+                pop_weights = sim['D'][t][:,I] # * sim['_m'] 
+                intensities = (np.outer(pop_weights,pop_weights)) # np.sqrt ??
+                
+                adj = gamma*intensities
+                
+                mutu.append(gamma *  ((A_e>0) & (A_e.T>0)))
+                comp.append(gamma *  ((A_e<0) & (A_e.T<0)))
+                pred.append(gamma * (((A_e>0) & (A_e.T<0)) | ((A_e<0) & (A_e.T>0))))
+                
+                adjs.append(adj)
+                gammas.append(gamma)
+    else:
+        if simID is not None :
+            raise Exception("either t or simID should be provided (not both)") 
+        else:
+            for sim in simulations:
+                
+                ntimesteps, N, nstates = sim['v'].shape; ntimesteps-=1
+                
+                A_e = sim['_mutual_effs']
+                A=A_e != 0
+                p=np.array([interactors.convpM(sim['v'][t,species_id],nstates,sim['_alpha']) for species_id in range(N)]) # equivalent to p
+                k1=(A[...,np.newaxis] @ sim['v'][t,:,np.newaxis,:])
+                k=(A[...,np.newaxis] @ p[:,np.newaxis,:])
+                e = k * np.swapaxes(k1,0,1)
+                gamma = e.sum(2)
+            
+                pop_weights = sim['D'][t][:,I] # * sim['_m'] 
+                intensities = (np.outer(pop_weights,pop_weights)) # np.sqrt ??
+                
+                adj = gamma*intensities
+                
+                mutu.append(gamma *  ((A_e>0) & (A_e.T>0)))
+                comp.append(gamma *  ((A_e<0) & (A_e.T<0)))
+                pred.append(gamma * (((A_e>0) & (A_e.T<0)) | ((A_e<0) & (A_e.T>0))))
+                
+                adjs.append(adj)
+                gammas.append(gamma)
+            
     if return_gammas:
         return adjs, mutu, comp, pred, gammas
     else:

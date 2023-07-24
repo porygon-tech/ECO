@@ -14,7 +14,7 @@ import bz2
 chdir(environ['HOME'] + '/LAB/ECO') #this line is for Spyder IDE only
 root = Path(".")
 obj_path = root / 'data/obj'
-img_path = root / 'gallery/timeseries'
+img_path = Path(environ['HOME']) / 'LAB/figures'
 dataPath = root / 'data/dataBase'
 
 
@@ -55,7 +55,7 @@ from matriX import showdata as sd
 
 #%% load dataset
 #pattern = r'^file\d+\.txt$'  # Regular expression pattern
-from os import popen
+from os import popen 
 most_recent = popen('basename $(ls ' + str(obj_path)+ '/SIMULATIONS* -t1 | head -n 1 )').read().strip()
 
 # system('ls -l data/obj')
@@ -64,7 +64,7 @@ most_recent = popen('basename $(ls ' + str(obj_path)+ '/SIMULATIONS* -t1 | head 
 
 filename = most_recent
 # filename = 'SIMULATIONS_Sat_Jun_24_002510_2023_oval_conclusion.obj'
-# filename = 'SIMULATIONS_unhappy_ship_Thu_Jun_15_091706_2023.obj'
+# filename = 'SIMULATIONS_worldly_thanks_Tue_Jul_11_112136_2023.obj'
 
 print("LOADING " + filename)
 with bz2.BZ2File(obj_path / filename, 'rb') as f:
@@ -85,8 +85,8 @@ n_comp = [sim['n_competitions'] for sim in simulations]
 n_pred = [sim['n_predations'] for sim in simulations]
 payoffs = [sim['_mutual_effs'] for sim in simulations] # per capita fitness effects
 
-a = [sim['_a'].mean() for sim in simulations]
-d = [sim['_d'].mean() for sim in simulations]
+a = [np.mean(sim['_a']) for sim in simulations]
+d = [np.mean(sim['_d']) for sim in simulations]
 
 thres_gamma=1e-5
 c = [(A_e>thres_gamma).sum()/A_e.size for A_e in payoffs]
@@ -95,6 +95,11 @@ alpha = [sim['_alpha'] for sim in simulations]
 power_mutu = [i__mutu.sum() / i__n_mutu if i__n_mutu != 0 else 0 for i__mutu, i__n_mutu in zip(mutu, n_mutu)]
 power_pred = [i__pred.sum() / i__n_pred if i__n_pred != 0 else 0 for i__pred, i__n_pred in zip(pred, n_pred)]
 power_comp = [i__comp.sum() / i__n_comp if i__n_comp != 0 else 0 for i__comp, i__n_comp in zip(comp, n_comp)]
+
+total_Lv_mutu = np.nan_to_num([i__n_mutu/(i__c*N**2) for i__c, i__n_mutu in zip(c, n_mutu)])
+total_Lv_pred = np.nan_to_num([i__n_pred/(i__c*N**2) for i__c, i__n_pred in zip(c, n_pred)])
+total_Lv_comp = np.nan_to_num([i__n_comp/(i__c*N**2) for i__c, i__n_comp in zip(c, n_comp)])
+
 
 
 #%%
@@ -159,8 +164,11 @@ plt.hist(data, bins=np.linspace(min(data), max(data),40), edgecolor='black', alp
 
 #%% show average traits
 switch_backend('module://matplotlib_inline.backend_inline')
-for sim in simulations:
-    mx.showlist(sim['dist_avgs'])
+for i,sim in enumerate(simulations):
+    # mx.showlist(sim['dist_avgs'])
+    plt.plot(sim['dist_avgs'])
+    plt.title(i)
+    plt.show()
 
 #%% show fitnesses
 switch_backend('module://matplotlib_inline.backend_inline')
@@ -170,7 +178,10 @@ for sim in simulations:
 #%% show population sizes
 switch_backend('module://matplotlib_inline.backend_inline')
 for sim in simulations:
-    mx.showlist(sim['D'][:-1])
+    # mx.showlist(sim['D'][:-1])
+    plt.plot(sim['D'][:-1])
+    plt.title(i)
+    plt.show()
   
 #%% show trait variances
 for sim in simulations:
@@ -191,6 +202,7 @@ print(*["\t"+key for key, value in fixed.items() if not value], sep="\n")
 #%% multimodal search
 from scipy.signal import find_peaks
 for simID, sim in enumerate(simulations):
+    # print(str(simID/len(simulations)))
     for i in range(N):
         #[p[0] for p in list(map(find_peaks,list(sim['v'][:,i])))]
         if np.any([len(p[0])>1 for p in list(map(find_peaks,list(sim['v'][:,i])))]):

@@ -1,0 +1,7 @@
+REPORT for simulation Mon_Jul_10_165341_2023 =======================
+non-fixed values:
+	_mutual_effs
+	_a
+	n_mutualisms
+	n_competitions
+	n_predations
