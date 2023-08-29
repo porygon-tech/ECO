@@ -33,7 +33,7 @@ payoff['sR']  = np.array(list(map(mx.spectralRnorm, [M for M in payoffs])))
 
 gamma['mod']   = np.array(mx.mod( Gl_gamma ))
 gamma_i['mod'] = np.array(mx.mod( Gl_gamma_i ))
-# mass['mod']    = np.array(mx.mod( Gl_mass ))
+mass['mod']    = np.array(mx.mod( Gl_mass ))
 # mass_c['mod']  = np.array(mx.mod( Gl_mass_c ))
 # payoff['mod'] = mx.mod( Gl_payoff )
 
@@ -110,6 +110,12 @@ gamma['nodes']['power_pred']   = [dict(zip(nodekeys,M.mean(0))) for M in pred]
 gamma['nodes']['power_mutu_delta'] = [dict(zip(nodekeys,(M-Mi).mean(0))) for M, Mi in zip(mutu,mutu_i)]
 gamma['nodes']['power_comp_delta'] = [dict(zip(nodekeys,(M-Mi).mean(0))) for M, Mi in zip(comp,comp_i)]
 gamma['nodes']['power_pred_delta'] = [dict(zip(nodekeys,(M-Mi).mean(0))) for M, Mi in zip(pred,pred_i)]
+
+gamma['nodes']['thetavar'] = [dict(zip(nodekeys,sim['dist_avgs'][-1] - sim['_theta'])) for sim in simulations]
+
+mass['nodes']['strength_mutu'] = [ dict(zip(nodekeys, (mass*(eco>0)).sum(0))) for eco, mass in zip(mutu,adjs)]
+mass['nodes']['strength_comp'] = [ dict(zip(nodekeys, (mass*(eco>0)).sum(0))) for eco, mass in zip(comp,adjs)]
+mass['nodes']['strength_pred'] = [ dict(zip(nodekeys, (mass*(eco>0)).sum(0))) for eco, mass in zip(pred,adjs)]
 
 matList = [
 gamma   ,
@@ -555,7 +561,7 @@ plt.show()
 
 switch_backend('qt5agg') # or 'qtagg'
 fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
-scatter1=ax.scatter((np.repeat(n_comp,N)),
+scatter1=ax.scatter((np.repeat(gamma["mod"],N)),
                       [list(gamma['nodes']['bc']  [i].values())for i in range(len(simulations))],
                       [list(gamma['nodes']['qdeg'][i].values())for i in range(len(simulations))],
                     c=(np.repeat(d,N)), cmap='plasma_r',s=7,alpha=0.5)
@@ -570,12 +576,12 @@ plt.show()
 
 #%%
 fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
-scatter1=ax.scatter((np.repeat(n_comp,N)),
+scatter1=ax.scatter((np.repeat(gamma["mod"],N)),
                       (np.repeat(d,N)),
                       [list(gamma['nodes']['qdeg'][i].values())for i in range(len(simulations))],
                     c=[list(gamma['nodes']['bc']  [i].values())for i in range(len(simulations))], cmap='cividis',s=7,alpha=0.8,norm=matplotlib.colors.LogNorm())
                     # c=[list(mass['nodes']['bc']   [i].values())for i in range(len(simulations))], cmap='plasma',s=10)
-ax.set_xlabel(r"n$_{comp}$", fontsize=16)
+ax.set_xlabel(r"mod", fontsize=16)
 ax.set_ylabel(r"fdep")
 ax.set_zlabel(r"qDEG$_{\gamma}$")
 # plt.legend(handles=[scatter1, scatter2])
@@ -599,13 +605,13 @@ Furthermore, species closest to the imposed cap tend to be mutualists, independe
 '''
 
 switch_backend('qt5agg') # or 'qtagg'
-fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+fig = plt.figure(figsize=(12,9)); ax = fig.add_subplot(111, projection='3d')
 scatter1=ax.scatter(
                       [list(mass['nodes']['bc']  [i].values())for i in range(len(simulations))], # try with payoff and gamma
                       [list(mass['nodes']['qdeg'][i].values())for i in range(len(simulations))],
                       [list(gamma['nodes']['fits'][i].values())for i in range(len(simulations))],
                     # c=[list(gamma['nodes']['fits'][i].values())for i in range(len(simulations))], cmap='jet',s=7,alpha=0.8,norm=matplotlib.colors.LogNorm())
-                    c=(np.repeat(d,N)),norm=matplotlib.colors.TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1),cmap='bwr',s=1)
+                    c=(np.repeat(d,N)),norm=matplotlib.colors.TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1),cmap='bwr',s=5)
                     # c=[list(payoff['nodes']['lv_mutu'][i].values())for i in range(len(simulations))], cmap='jet',s=7,alpha=0.8)
                     
 ax.set_xlabel(r"BC$_{\gamma}$", fontsize=16)
@@ -674,7 +680,7 @@ scatter1=ax.scatter(
                       [list(mass_c['nodes']['ec'][i].values())for i in range(len(simulations))],
                       [list(payoff['nodes']['ec'][i].values())for i in range(len(simulations))],
                       [list(gamma['nodes']['power_mutu_delta']  [i].values())for i in range(len(simulations))], # try with payoff and gamma
-                    c=[list(payoff['nodes']['qdeg']  [i].values())for i in range(len(simulations))], norm=matplotlib.colors.TwoSlopeNorm(vmin=-.5, vcenter=0, vmax=.5),cmap='bwr',s=10)
+                    c=[list(payoff['nodes']['qdeg']  [i].values())for i in range(len(simulations))], norm=matplotlib.colors.TwoSlopeNorm(vmin=-.2, vcenter=0, vmax=.2),cmap='bwr',s=10)
                     # c=(np.repeat(c,N)),cmap='viridis',s=10)
                     
                     
@@ -742,10 +748,11 @@ B = np.array([list(gamma['nodes']['power_comp']  [i].values()) for i in range(le
 # G = np.nan_to_num(G_power / G_lv)
 # B = np.nan_to_num(B_power / B_lv)
 
+sat = 3
 rgblist = np.array([
-mx.cNorm(mx.renormalize(R),5)*255,
-mx.cNorm(mx.renormalize(G),5)*255,
-mx.cNorm(mx.renormalize(B),5)*255]).astype('int').T
+mx.cNorm(mx.renormalize(R),sat)*255,
+mx.cNorm(mx.renormalize(G),sat)*255,
+mx.cNorm(mx.renormalize(B),sat)*255]).astype('int').T
 # (1-mx.cNorm(mx.renormalize(R),5))*255,
 # (1-mx.cNorm(mx.renormalize(G),5))*255,
 # (1-mx.cNorm(mx.renormalize(B),5))*255]).astype('int').T
@@ -763,8 +770,8 @@ scatter1=ax.scatter(
                          # [list(gamma['nodes']['popsizes'][i].values())for i in range(len(simulations))],
                          #
                            # [list(payoff['nodes']['lv_comp']  [i].values())for i in range(len(simulations))],
-                            [list(payoff['nodes']['lv_mutu']  [i].values())for i in range(len(simulations))],
-                            # [list(gamma['nodes']['qdeg']  [i].values())for i in range(len(simulations))], #mass_c or payoff
+                            # [list(gamma['nodes']['thetavar'] [i].values())for i in range(len(simulations))],
+                            [list(gamma['nodes']['qdeg']  [i].values())for i in range(len(simulations))], #mass_c or payoff
                          # (np.repeat(gamma['mod'],N)),
                          # (np.repeat(total_Lv_mutu,N)),
                         
@@ -806,6 +813,25 @@ scatter1=ax.scatter(
                     [list(gamma['nodes']['popsizes'][i].values()) for i in range(len(simulations))],
                     # c=list(map(mx.graphictools.hex_color_invert_hue, colors)),s=15)
                     c=colors,s=15,alpha=0.5)
+ax.set_xlabel(r"d", fontsize=16)
+ax.set_ylabel(r"equilibrium population size")
+
+plt.show()
+#%% figure for poster
+switch_backend('module://matplotlib_inline.backend_inline')
+
+fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
+scatter1=ax.scatter(
+                    (np.repeat(d,N)),
+                    # [list(gamma['nodes']['power_mutu_delta'][i].values()) for i in range(len(simulations))],
+                    # (np.repeat(gamma['mod'],N)),
+                    [list(gamma['nodes']['bc'][i].values()) for i in range(len(simulations))],
+                    # c=(np.repeat(gamma['mod'],N)),
+                    # c=(np.repeat(d,N)),
+                    # c=(np.repeat(gamma['nC'],N)),
+                    c=[list(gamma['nodes']['power_mutu_delta'][i].values()) for i in range(len(simulations))],
+                    # c=colors,
+                    cmap="viridis_r",s=15,alpha=0.8)
 ax.set_xlabel(r"d", fontsize=16)
 ax.set_ylabel(r"equilibrium population size")
 
@@ -1080,8 +1106,13 @@ t=-1
 plt.imshow(gammas[t]*payoffs[t],norm=matplotlib.colors.TwoSlopeNorm(vmin=-.02, vcenter=0, vmax=.02),cmap='bwr')
 plt.show()
 #%% ANIMATE COMPLETE 1
+import re
+switch_backend('module://matplotlib_inline.backend_inline')
+import matplotlib.animation as animation
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 smooth=0.85
-simID=9 # 160 167 158 155 146 59 121
+simID=57 # 160 167 158 155 146 59 121
 
 switch_backend('module://matplotlib_inline.backend_inline')
 
@@ -1104,13 +1135,14 @@ def frame(t):
     ax1.clear()
     ax2.clear()
     ax3.clear()
-    colors = np.array(list(zip(
-    mx.cNorm(mx.renormalize(pred[t].mean(0)),5),
-    mx.cNorm(mx.renormalize(mutu[t].mean(0)),5),
-    mx.cNorm(mx.renormalize(comp[t].mean(0)),5)
-    )))
+    # colors = np.array(list(zip(
+    # mx.cNorm(mx.renormalize(pred[t].mean(0)),5),
+    # mx.cNorm(mx.renormalize(mutu[t].mean(0)),5),
+    # mx.cNorm(mx.renormalize(comp[t].mean(0)),5)
+    # )))
+    colors = mx.graphictools.RGB(pred[t].mean(0),comp[t].mean(0),mutu[t].mean(0))
+    hexcolors = mx.graphictools.rgb2hex(colors)
     
-
     ax1.imshow(gammas[t]*payoffs[simID],norm=matplotlib.colors.TwoSlopeNorm(vmin=-.01, vcenter=0, vmax=.01),cmap='bwr')
     
     G=nx.from_numpy_array(gammas[t])
@@ -1127,7 +1159,7 @@ def frame(t):
                      node_size= sim['D'][t])
     
     # ax3.plot(sim['v'][t].T)
-    hexcolors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in (colors*255).astype(int)]
+    # hexcolors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in (colors*255).astype(int)]
     
     for i__N in range(N):
         ax3.plot(x, sim['v'][t,i__N], c= hexcolors[i__N])
@@ -1139,7 +1171,8 @@ pattern = r'SIMULATIONS_(.*?_.*?)_'
 easyname = re.search(pattern, filename).group(1)
 
 gifname = 'full_' + easyname + '_' + str(simID) + '_' + timecode
-ani = animation.FuncAnimation(fig, frame, frames=len(gammas)-1, interval=20, blit=False) # frames=len(adjs)
+# ani = animation.FuncAnimation(fig, frame, frames=len(gammas)-1, interval=20, blit=False) # frames=len(adjs)
+ani = animation.FuncAnimation(fig, frame, frames=5000, interval=20, blit=False) # frames=len(adjs)
 ani.save(img_path / str('gif/' + gifname +'.gif'))
 
 

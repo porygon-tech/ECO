@@ -58,13 +58,13 @@ from matriX import showdata as sd
 from os import popen 
 most_recent = popen('basename $(ls ' + str(obj_path)+ '/SIMULATIONS* -t1 | head -n 1 )').read().strip()
 
-# system('ls -l data/obj')
+# system('ls -c data/obj/SIMULATIONS* ')
 # system('basename -a ls data/obj/SIMULATIONS* ')
 # print('\n'.join(listdir(obj_path)))
 
 filename = most_recent
-# filename = 'SIMULATIONS_Sat_Jun_24_002510_2023_oval_conclusion.obj'
-# filename = 'SIMULATIONS_worldly_thanks_Tue_Jul_11_112136_2023.obj'
+# filename = 'SIMULATIONS_glorious_manager_Tue_Jul__4_170021_2023.obj'
+# filename = 'SIMULATIONS_ragged_soil_Fri_Aug_11_180351_2023.obj'
 
 print("LOADING " + filename)
 with bz2.BZ2File(obj_path / filename, 'rb') as f:
@@ -101,7 +101,6 @@ total_Lv_pred = np.nan_to_num([i__n_pred/(i__c*N**2) for i__c, i__n_pred in zip(
 total_Lv_comp = np.nan_to_num([i__n_comp/(i__c*N**2) for i__c, i__n_comp in zip(c, n_comp)])
 
 
-
 #%%
 # 
 # sd(gammas[0],colorbar =True)
@@ -133,7 +132,8 @@ final_mean_pred = list(map(np.mean, pred))
 
 
 final_popsizes_mean = [sim['D'][-1].mean()for sim in simulations]
-final_popsizes      = [sim['D'][-1].sum()for sim in simulations]
+final_popsizes_total= [sim['D'][-1].sum() for sim in simulations]
+final_popsizes      = [sim['D'][-1]       for sim in simulations]
 final_nonextinct    = [(sim['D'][-1] > 10).sum()for sim in simulations]
 
 
@@ -168,6 +168,7 @@ for i,sim in enumerate(simulations):
     # mx.showlist(sim['dist_avgs'])
     plt.plot(sim['dist_avgs'])
     plt.title(i)
+    plt.ylim(sim['_ps'][0],sim['_ps'][1])
     plt.show()
 
 #%% show fitnesses

@@ -461,14 +461,19 @@ def totext(A):
 
 
 class graphictools:
-    def RGB(R,G,B,same=True):
+    def RGB(R,G,B,same=True,sat = 1, norm=False):
         if same:
-            rgblist = (renormalize((R,G,B))*255).astype('int').T
+            rgblist = (cNorm(renormalize((R,G,B)),sat)*255).astype('int').T
         else:
-            rgblist = np.array([renormalize(R)*255,renormalize(G)*255,renormalize(B)*255]).astype('int').T
-        colors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in rgblist]
-        return(colors)
+            rgblist = np.array([cNorm(renormalize(R),sat)*255,
+                                cNorm(renormalize(G),sat)*255,
+                                cNorm(renormalize(B),sat)*255]).astype('int').T
+        return rgblist
     
+    def rgb2hex(rgblist):
+        colors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in np.array(rgblist)]
+        return(colors)
+        
     def hex_color_invert_hue(hex_color):
         # Remove the '#' symbol from the hex color string
         hex_color = hex_color.lstrip('#')

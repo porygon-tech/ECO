@@ -19,7 +19,7 @@ dataPath = root / 'data/dataBase'
 #%% imports 
 #import time
 import sys
-import numpy as np
+import numpy as np 
 #import matplotlib.pyplot as plt
 #from copy import deepcopy
 #import networkx as nx

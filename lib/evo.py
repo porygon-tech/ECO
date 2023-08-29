@@ -559,7 +559,10 @@ def simulate_explicit(
         K=200,
         complete_output=False,
         find_fixedpoints=False,
-        tol=1e-1
+        tolD=1e-1,
+        tolZ=1e-4,
+        divprint=5,
+        simID=0
         ): 
     """
     Frequency-explicit coevolution
@@ -631,14 +634,22 @@ def simulate_explicit(
     
 
     #tol=1e-1
-    maxgen=4000
+    window=100
+    maxgen=8000
     print('Iterating...')
     # for t in range(1,ntimesteps+1):
     t=1;
+    stabilized = False
     while t < ntimesteps+1:
         if find_fixedpoints:
             if t==ntimesteps:
-                if not np.all(np.abs(np.diff(D[-3:-1],axis=0))<tol) and t < maxgen+1:
+                stabilized = [np.abs(np.diff(D[-window-1:-1],    axis=0).mean(0)) < tolD,
+                              np.abs(np.diff(dist_averages(v,ps)[-window:],axis=0).mean(0)) < tolZ]
+                # stabilized = [sim['D'][-window-1:-1].var(0)     < tolD,
+                #               sim['dist_avgs'][-window:].var(0) < tolZ]
+                if not np.all(stabilized) and t < maxgen+1:
+                # if not np.all(np.abs(np.diff(D[-3:-1],axis=0))<tolD) and t < maxgen+1:
+                
                     #print('{0} fixed'.format((np.abs(np.diff(D[-2:],axis=0))<tol).sum()/N))
                     v=np.append(v,np.zeros((1,N,nstates)),axis=0)
                     D=np.append(D,np.zeros((1,N)),axis=0)
@@ -674,11 +685,14 @@ def simulate_explicit(
             r = w[species_id].sum()
             D[t,species_id] = (1-1/(D[t-1,species_id] * r/K+1))*K
         
-        if t%int((ntimesteps)/5)==0:
-            print(t)    
+        if t%int((ntimesteps)/divprint)==0:
             if find_fixedpoints:
-                if t==ntimesteps:
-                        print(str(round((np.abs(np.diff(v[-2:],axis=0))<tol).sum()/(N*nstates),4)) + " stabilized")
+                print("ID: " + str(simID) + "\tt=" + str(t) + "\t" + str(round(np.sum(stabilized)/np.size(stabilized)*100,4)) + "% stabilized.")
+                # print(str(round(np.sum(stabilized)/np.size(stabilized),4)) + " stabilized")
+            else: 
+                print("ID: " + str(simID) + "\tt=" + str(t))  
+            
+        
         t+=1
         
     if complete_output:
@@ -702,7 +716,8 @@ class simulator(object):
             a,
             d,
             K,
-            find_fixedpoints=False):
+            find_fixedpoints=False,
+            simID=0):
         self.find_fixedpoints = find_fixedpoints
         self._v0=v0
         self._ntimesteps=ntimesteps
@@ -716,13 +731,14 @@ class simulator(object):
         self._a=a
         self._d=d
         self._K=K
+        self._simID=simID
         
         A_e=self._mutual_effs
         self.n_mutualisms   = int(((A_e>0) & (A_e.T>0)).sum()/2)
         self.n_competitions = int(((A_e<0) & (A_e.T<0)).sum()/2)
         self.n_predations   = ((A_e>0) & (A_e.T<0)).sum()
 
-    def run(self,tol=1e-1):
+    def run(self,tolD=1e-1,tolZ=1e-4):
         self.v,self.D,self.l = simulate_explicit(
             v0=self._v0,
             ntimesteps=self._ntimesteps,
@@ -738,7 +754,10 @@ class simulator(object):
             K=self._K,
             complete_output=True,
             find_fixedpoints=self.find_fixedpoints,
-            tol=tol
+            tolD=tolD,
+            tolZ=tolZ,
+            divprint=10,
+            simID=self._simID
         )
         self.fits = (self.v*self.l).sum(2)
         self.dist_avgs = dist_averages(self.v,self._ps)
