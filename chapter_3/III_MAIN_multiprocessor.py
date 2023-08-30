@@ -144,7 +144,7 @@ def task_simulation_set(cola):
         # c=np.random.rand()*0.7+0.3 # expected connectance of the allowed links matrix
         mutualRange = np.sort(np.random.rand(2)*0.02-0.01) #(-0.02, 0.02) # range of values for the uniform distribution of ecological effects
         # a=np.clip(np.random.normal(np.random.rand()*3,0.01,N),0,6)#np.linspace(0., 0.005,nsimulations)[i]#(np.random.rand()*2-1)/10#  #np.random.rand(N)*2-1#np.random.rand()*2-1 # assortative mating coefficients, real value (single value or array of values)
-        d=np.random.normal(np.random.rand()*6-3,0.005,N)#np.random.normal(np.linspace(-2,2,nsimulations)[i],0.01,N) #np.linspace(-5,5,nsimulations)[i]  #frequency dependence coefficient
+        d=np.random.normal(np.random.rand()*6-3,0.001,N)#np.random.normal(np.linspace(-2,2,nsimulations)[i],0.01,N) #np.linspace(-5,5,nsimulations)[i]  #frequency dependence coefficient
         # alpha= np.random.rand()*0.1 # strength of the trait matching mechanism. Positive real value. Lower values = greater interaction promiscuity
         
         # xi_S=np.random.rand()# level of environmental selection (from 0 to 1).
@@ -158,9 +158,9 @@ def task_simulation_set(cola):
         # A_e = A* (np.random.rand(N,N)*np.diff(mutualRange)+mutualRange[0])
         
         # c=0.9
-        # A = nx.adjacency_matrix(nx.fast_gnp_random_graph(N,c)).todense()
+        A = nx.adjacency_matrix(nx.fast_gnp_random_graph(N,c)).todense()
         # g1,g2 = np.array([-0.02,0.02]) # payoffs for symmetric games
-        # A_e = np.random.choice((g1,g2),(N,N))*A
+        A_e = np.random.choice((g1,g2),(N,N))*A
         
         # A_e = np.array([[ 0.  , -0.02, -0.02,  0.01, -0.  ,  0.  ,  0.01],
         #        [-0.02, -0.  , -0.02,  0.  , -0.  ,  0.01,  0.01],

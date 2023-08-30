@@ -39,6 +39,8 @@ for i, sim in enumerate(sort_simulations):
         # plt.xlim(0,4000)
         plt.ylim(0,1000)
         plt.title(str(ixs[i])+': '+str(sim['_d'].mean()))
+        plt.ylabel('population size')
+        plt.xlabel('time (generations)')
         plt.show()
 
 
@@ -70,6 +72,8 @@ for i,sim in enumerate(sort_simulations):
             
         #plt.title(str(i)+': '+str(sim['_d'].mean()))
         plt.title(str(ixs[i])+': '+str(sim['_d'].mean()))
+        plt.ylabel('trait mean value')
+        plt.xlabel('time (generations)')
         plt.show()
 
 
@@ -313,8 +317,8 @@ fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
 scatter1=ax.scatter(
                     (np.repeat(d,N)),
                     
-                    [list(mass['nodes']['bc'][i].values()) for i in range(len(simulations))],
-                    # [list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))],
+                    # [list(mass['nodes']['bc'][i].values()) for i in range(len(simulations))],
+                    [list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))],
                     # [list(gamma['nodes']['qdeg'][i].values()) for i in range(len(simulations))],
                     # (np.repeat(gamma['mod'],N)),
                     
@@ -329,11 +333,12 @@ plt.show()
 #%% figure for poster
 switch_backend('module://matplotlib_inline.backend_inline')
 
-G = (np.repeat(gamma['sR'],N))
-# G = (np.repeat(mass['mod'],N))
-# G = (np.repeat(d,N))
+# R = (np.repeat(gamma['sR'],N))
+R = (np.repeat(mass['mod'],N))
+# R = (np.repeat(d,N))
+G = np.array([list(mass['nodes']['strength_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
 # R = np.array([list(gamma['nodes']['power_pred']  [i].values()) for i in range(len(simulations))]).flatten()
-R = np.array([list(mass['nodes']['strength_pred']  [i].values()) for i in range(len(simulations))]).flatten()
+# R = np.array([list(mass['nodes']['strength_pred']  [i].values()) for i in range(len(simulations))]).flatten()
 # R = np.array([list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
 # B = np.array([list(mass['nodes']['ec']  [i].values()) for i in range(len(simulations))]).flatten()
 # G=np.zeros_like(R)
@@ -348,12 +353,13 @@ colorstr = list(map(mx.graphictools.hex_color_invert_hue, colorstr))
 
 fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
 scatter1=ax.scatter(
-                    (np.repeat(d,N)),
+                    # (np.repeat(d,N)),
                     
                     # [list(gamma['nodes']['popsizes'][i].values()) for i in range(len(simulations))],
                     # [list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))],
-                    [list(mass['nodes']['qdeg'][i].values()) for i in range(len(simulations))],
-                    # (np.repeat(gamma['mod'],N)),
+                    # [list(mass['nodes']['qdeg'][i].values()) for i in range(len(simulations))],
+                    [list(payoff['nodes']['qdeg']  [i].values()) for i in range(len(simulations))],
+                    (np.repeat(gamma['mod'],N)),
                     
                     c=colorstr,
                    # norm=matplotlib.colors.LogNorm(),
@@ -393,6 +399,16 @@ ax.set_ylabel(r"equilibrium population size")
 
 plt.show()
 
+#%%
+
+fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
+ax.scatter(
+        d,
+[np.array(list(mass['nodes']['strength_mutu']  [i].values())).sum() for i in range(len(simulations))],
+# [np.array(list(gamma['nodes']['power_mutu']  [i].values())).mean() for i in range(len(simulations))],
+c=gamma['mod'],cmap="viridis",s=60
+        )
+plt.show()
 #%%
 import matplotlib.pyplot as plt
 import numpy as np
