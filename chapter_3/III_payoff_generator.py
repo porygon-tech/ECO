@@ -273,7 +273,7 @@ G = np.array([list(mass['nodes']['strength_mutu']  [i].values()) for i in range(
 B = np.array([list(mass['nodes']['strength_comp']  [i].values()) for i in range(len(simulations))]).flatten()
 R = np.array([list(mass['nodes']['strength_pred']  [i].values()) for i in range(len(simulations))]).flatten()
 
-colors = mx.graphictools.RGB(R,G,B,same=True,sat=2.9)
+colors = mx.graphictools.RGB(R,G,B,same=True,sat=3.9)
 colors = 255-colors
 colorstr = mx.graphictools.rgb2hex(colors)
 colorstr = list(map(mx.graphictools.hex_color_invert_hue, colorstr))
@@ -283,30 +283,42 @@ scatter1=ax.scatter(
                     (np.repeat(d,N)),
                     # (np.repeat(gamma['mod'],N)),
                     # [list(payoff['nodes']['bc'][i].values()) for i in range(len(simulations))],
-                    [list(payoff['nodes']['qoutdeg'][i].values()) for i in range(len(simulations))],
-                    # [list(mass['nodes']['bc'][i].values()) for i in range(len(simulations))],
+                    # [list(payoff['nodes']['qoutdeg'][i].values()) for i in range(len(simulations))],
+                    [list(mass['nodes']['bc'][i].values()) for i in range(len(simulations))],
+                    # [list(mass_c['nodes']['deg'][i].values()) for i in range(len(simulations))],
+                    
                     # 
                     c=colorstr,
                    # norm=matplotlib.colors.LogNorm(),
                     # cmap="jet",s=15,
                     s=100,
-                    alpha=0.5)
+                    alpha=0.7)
 ax.set_xlabel(r"$\phi$", fontsize=16)
-ax.set_ylabel(r"$G_{outdeg}$", fontsize=16)
+ax.set_ylabel(r"$BC_{M}$", fontsize=16)
 
 plt.show()
 
-#%% figure for poster
+#%%
 switch_backend('module://matplotlib_inline.backend_inline')
-B = (np.repeat(gamma['mod'],N))
-# G = (np.repeat(d,N))
-B = np.array([list(gamma['nodes']['power_mutu_delta']  [i].values()) for i in range(len(simulations))]).flatten()
-# G = np.array([list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
-G = np.array([list(payoff['nodes']['bc']  [i].values()) for i in range(len(simulations))]).flatten()
-# G=np.zeros_like(R)
-# B=G
+B = (np.repeat(mass['mod'],N))
+# R = (np.repeat(gamma['nodf'],N))
 
-colors = mx.graphictools.RGB(R,G,B,same=False,sat=1)
+# R = (np.repeat(d,N))
+R = np.array([list(mass['nodes']['strength_pred']  [i].values()) for i in range(len(simulations))]).flatten()
+G = np.array([list(mass['nodes']['strength_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
+# R = np.array([list(gamma['nodes']['power_pred']  [i].values()) for i in range(len(simulations))]).flatten()
+# G = np.array([list(gamma['nodes']['power_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
+# G = (np.repeat(mass_c['nodf'],N))
+# G = np.array([list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
+# G = np.array([list(gamma['nodes']['qdeg']  [i].values()) for i in range(len(simulations))]).flatten()
+# B=np.ones_like(R)
+# B=R
+# B=R.max()-R
+# G=B
+# G = (np.repeat(gamma['sR'],N))
+
+colors = mx.graphictools.RGB(R,G,B,same=False,sat=1.8)
+# colors[:,2]=64
 colorsInv = 255-colors
 colorstr = mx.graphictools.rgb2hex(colorsInv)
 colorstr = list(map(mx.graphictools.hex_color_invert_hue, colorstr))
@@ -316,31 +328,32 @@ colorstr = list(map(mx.graphictools.hex_color_invert_hue, colorstr))
 fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
 scatter1=ax.scatter(
                     (np.repeat(d,N)),
-                    
-                    # [list(mass['nodes']['bc'][i].values()) for i in range(len(simulations))],
-                    [list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))],
-                    # [list(gamma['nodes']['qdeg'][i].values()) for i in range(len(simulations))],
                     # (np.repeat(gamma['mod'],N)),
+                    # [list(mass_c['nodes']['deg'][i].values()) for i in range(len(simulations))],
+                    # [list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))],
+                    [list(gamma['nodes']['power_mutu']  [i].values()) for i in range(len(simulations))],
+                    # 
                     
                     c=colorstr,
                    # norm=matplotlib.colors.LogNorm(),
                     # cmap="jet",s=15,
-                    alpha=0.8)
-ax.set_xlabel(r"d", fontsize=16)
-ax.set_ylabel(r"equilibrium population size")
+                    s=60,
+                    alpha=0.9)
+ax.set_xlabel(r"$\phi$", fontsize=16)
+ax.set_ylabel(r"node strength$_M$", fontsize=16)
 
 plt.show()
 #%% figure for poster
 switch_backend('module://matplotlib_inline.backend_inline')
 
 # R = (np.repeat(gamma['sR'],N))
-R = (np.repeat(mass['mod'],N))
+# R = (np.repeat(mass['mod'],N))
 # R = (np.repeat(d,N))
 G = np.array([list(mass['nodes']['strength_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
-# R = np.array([list(gamma['nodes']['power_pred']  [i].values()) for i in range(len(simulations))]).flatten()
-# R = np.array([list(mass['nodes']['strength_pred']  [i].values()) for i in range(len(simulations))]).flatten()
+# G = np.array([list(gamma['nodes']['power_pred']  [i].values()) for i in range(len(simulations))]).flatten()
+R = np.array([list(mass['nodes']['strength_pred']  [i].values()) for i in range(len(simulations))]).flatten()
 # R = np.array([list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
-# B = np.array([list(mass['nodes']['ec']  [i].values()) for i in range(len(simulations))]).flatten()
+# R = np.array([list(mass['nodes']['bc']  [i].values()) for i in range(len(simulations))]).flatten()
 # G=np.zeros_like(R)
 B=R
 
@@ -354,12 +367,14 @@ colorstr = list(map(mx.graphictools.hex_color_invert_hue, colorstr))
 fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
 scatter1=ax.scatter(
                     # (np.repeat(d,N)),
-                    
-                    # [list(gamma['nodes']['popsizes'][i].values()) for i in range(len(simulations))],
+                    (np.repeat(gamma['sR'],N)),
+                    # [list(gamma['nodes']['power_pred'][i].values()) for i in range(len(simulations))],
                     # [list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))],
+                    [list(mass['nodes']['bc'][i].values()) for i in range(len(simulations))],
+                    # 1-np.array([list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))]),
                     # [list(mass['nodes']['qdeg'][i].values()) for i in range(len(simulations))],
-                    [list(payoff['nodes']['qdeg']  [i].values()) for i in range(len(simulations))],
-                    (np.repeat(gamma['mod'],N)),
+                    # [list(payoff['nodes']['qdeg']  [i].values()) for i in range(len(simulations))],
+                    # (np.repeat(gamma['mod'],N)),
                     
                     c=colorstr,
                    # norm=matplotlib.colors.LogNorm(),
@@ -371,9 +386,57 @@ ax.set_ylabel(r"node strength$_M$", fontsize=16)
 plt.show()
 # %%
 
-# %%
+
+fig = plt.figure(figsize=(6,4)); ax = fig.add_subplot(111)
+scatter1=ax.scatter(
+                    d,
+                    mass['mod'],
+                    c=np.array([list(mass['nodes']['strength_mutu']  [i].values()) for i in range(len(simulations))]).sum(1),
+                   # norm=matplotlib.colors.LogNorm(),
+                    cmap="viridis",s=50,
+                    alpha=0.8)
+ax.set_xlabel(r"$\phi$", fontsize=16)
+ax.set_ylabel(r"node strength$_M$", fontsize=16)
+
+plt.show()
+
 # %%
 
+
+fig = plt.figure(figsize=(6,4)); ax = fig.add_subplot(111)
+scatter1=ax.scatter(
+                   
+# np.array([list(mass['nodes']['strength_mutu']  [i].values()) for i in range(len(simulations))]).flatten(),
+
+(np.repeat(gamma['mod'],N)),
+                    # c=np.array([list(mass['nodes']['strength_mutu']  [i].values()) for i in range(len(simulations))]),
+                   # norm=matplotlib.colors.LogNorm(),
+                   [list(mass['nodes']['bc'][i].values()) for i in range(len(simulations))],
+                   c=np.array([list(gamma['nodes']['power_pred']  [i].values()) for i in range(len(simulations))]).flatten(),
+                    cmap="viridis",s=50,
+                    alpha=0.8)
+ax.set_xlabel(r"$\phi$", fontsize=16)
+ax.set_ylabel(r"node strength$_M$", fontsize=16)
+# plt.xscale('log')
+# plt.yscale('log')
+plt.show()
+# %%
+
+#%% figure for poster
+switch_backend('module://matplotlib_inline.backend_inline')
+
+fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
+scatter1=ax.scatter(
+                    [list(mass['nodes']['strength_pred']  [i].values()) for i in range(len(simulations))],
+                    [list(mass['nodes']['bc'][i].values()) for i in range(len(simulations))],
+                    c=(np.repeat(d,N)),
+
+                    cmap="viridis",s=50,alpha=0.8)
+ax.set_xlabel(r"viridis", fontsize=16)
+ax.set_ylabel(r"equilibrium population size")
+# plt.xscale('log')
+plt.yscale('log')
+plt.show()
 #%% figure for poster
 switch_backend('module://matplotlib_inline.backend_inline')
 

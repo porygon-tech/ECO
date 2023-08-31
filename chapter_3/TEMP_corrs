@@ -39,7 +39,7 @@ mass['mod']    = np.array(mx.mod( Gl_mass ))
 
 gamma['nodf']   =  list(map(mx.nodf, [mx.rmUnco(       M>thres_gamma)  for M in gammas]))
 gamma_i['nodf'] =  list(map(mx.nodf, [mx.rmUnco(       M>thres_gamma)  for M in gammas_i]))
-# mass_c['nodf']  =  list(map(mx.nodf, [mx.rmUnco(       M>thres_interac)for M in adjs]))
+mass_c['nodf']  =  np.nan_to_num(list(map(mx.nodf, [mx.rmUnco(       M>thres_interac)for M in adjs])))
 #payoff['nodf']  =  list(map(mx.nodf, [mx.rmUnco(np.abs(M>thres_payoff))for M in payoff]))
 [nx.is_connected(G) for G in Gl_gamma]
 
@@ -331,10 +331,10 @@ for i,j in zip(row_indices_nn[head[0]:head[1]], col_indices_nn[head[0]:head[1]])
 if nothing is found, try head head = (00,len(cornames_flat)) 
 '''
 switch_backend('module://matplotlib_inline.backend_inline')
-head = (0,100) 
+head = (0,300) 
 import re
 forcedvarname = 'freqdep'
-cornamepattern = '.*' # '.*' for no filter
+cornamepattern = 'mutu' # '.*' for no filter
 
 targetrows = row_indices_nn[np.where(row_indices_nn == np.where(np.array(testvarnames)==forcedvarname)[0][0])]
 targetcols = col_indices_nn[np.where(row_indices_nn == np.where(np.array(testvarnames)==forcedvarname)[0][0])]
