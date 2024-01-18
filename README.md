@@ -5,6 +5,9 @@ Ecological and evolutionary simulations
 ## Disclaimer
 The project is still in development, use code at your own risk!
 
+## Database
+obj/special_networks contains networks with particular degree distributions that have been evolved to maximize/minimize modularity, nestedness (NODF) or spectral radius.
+
 ## Aim
 This project aims to develop a model for describing eco-evolutionary dynamics that could be based in a microscopic description of the population from the stochastic point of view. It took its first step by modelling disruptive selection, a phenomenon that is not usually covered by current approaches and that could involve (as part of the effects of the shape of trait distribution) a new level of control and complexity in ecological networks.
 
