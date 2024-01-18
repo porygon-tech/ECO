@@ -46,7 +46,7 @@ def rescale(arr, vmin=0,vmax=1):
     return  (arr - amin) / (amax - amin) * (vmax - vmin) +  vmin
 
 def blendmat(mat1,mat2,mat3=None,saturation = 1.1,additive=False):
-    if not mat3:
+    if type(mat3) == type(None):
         mat3=mat2.copy()
     temp_max=np.max((mat1,mat2,mat3))
     temp_min=np.min((mat1,mat2,mat3))
@@ -60,14 +60,14 @@ def blendmat(mat1,mat2,mat3=None,saturation = 1.1,additive=False):
         cmapblu = matplotlib.colors.LinearSegmentedColormap.from_list("", ["black", "blue"])
         
         blended = 1 - (1 - cmapred(R_r)) * (1 - cmapgrn(G_r)) * (1 - cmapblu(B_r))
-        blended = mx.cNorm(blended,saturation)
+        blended = cNorm(blended,saturation)
     else:
         cmapgrn = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", "magenta"]) #seagreen also
         cmapred = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", "cyan"])
         cmapblu = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", "yellow"])
         
         blended = (cmapred(R_r)+cmapgrn(G_r)+cmapblu(B_r))/3
-        blended = mx.cNorm(blended,1/saturation)
+        blended = cNorm(blended,1/saturation)
     
     fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111)
     pos = ax.imshow(blended,interpolation='None')
@@ -266,6 +266,24 @@ def symmetric_connected_adjacency(N, c=0.5,ntries=100):
     return initial_l
 
 
+def triRectangular(M,N):
+    if M>N:
+        sub = np.zeros((M,N))
+        slope = N/M
+        for j in range(M):
+            v=int(1+slope*j)
+            sub[j,:v]=1
+        sub=np.flip(sub,0)
+        
+    else:
+        sub = np.zeros((M,N))
+        slope = M/N
+        for j in range(N):
+            v=int(1+slope*j)
+            sub[:v,j]=1
+        sub=np.flip(sub,1)
+        
+    return(sub)
 
 
 def flat_nDist(B):
@@ -425,6 +443,7 @@ def groupnodes(G):
 def mod(g):
     if type(g)==nx.classes.graph.Graph:
         comms = groupnodes(g)
+        # comms = nx.community.louvain_communities(g, resolution = 1)
         mod = modularity(g, comms)
     elif type(g)==list and np.all(type(G)==nx.classes.graph.Graph for G in g):
         comms = list(map(groupnodes, g))
@@ -459,8 +478,22 @@ def totext(A):
     print('\n'.join([' '.join(list(ai_.astype(int).astype(str))) for ai_ in list(A)]))
 
 
+from scipy.ndimage import zoom
+import contextlib
+import matplotlib
+
+
 
 class graphictools:
+    def inline_backend(inline=True):
+        if inline:
+            gui = 'module://matplotlib_inline.backend_inline'
+        else:
+            gui = 'qt5agg'
+        with contextlib.suppress(ValueError):
+            matplotlib.use(gui, force=True)
+        globals()['plt'] = matplotlib.pyplot
+        
     def RGB(R,G,B,same=True,sat = 1, norm=False):
         if same:
             rgblist = (cNorm(renormalize((R,G,B)),sat)*255).astype('int').T
@@ -522,6 +555,28 @@ class graphictools:
         inverted_hex_color = "#{:02x}{:02x}{:02x}".format(r, g, b)
         return inverted_hex_color
 
+    def resize_image(image, new_shape):
+        """
+        Resize an image represented as an m x n NumPy array to a new shape (O x P).
+    
+        Parameters:
+            image (numpy.ndarray): The input image represented as a 2D NumPy array.
+            new_shape (tuple): A tuple (O, P) specifying the new shape of the image.
+    
+        Returns:
+            numpy.ndarray: The resized image as an O x P NumPy array.
+        """
+        m, n = image.shape
+        O, P = new_shape
+    
+        # Calculate the scaling factors
+        scale_factor_x = O / m
+        scale_factor_y = P / n
+    
+        # Perform the resizing using scipy.ndimage.zoom
+        resized_image = zoom(image, (scale_factor_x, scale_factor_y), order=3)
+    
+        return resized_image
 
 class pruning:
     def threshold(G_o,cut):
@@ -577,6 +632,39 @@ class nullmodels:
         np.fill_diagonal(joint,0)
         return joint
 
+
+class ecomodels:
+    def structured_triple(N=25,N_producers=10,N_consumers=12,g = np.array([-1,0.5]),producer_mutu=True,consumer_comp=False,consumer_nest=False):
+
+        N_apex=N-N_producers-N_consumers
+        g1,g2 = g
+
+        A = np.zeros((N,N))
+        A_e = A.copy()
+        if producer_mutu:
+            A_e[:N_producers,:N_producers]=g2
+            
+        if consumer_nest:
+            sub = triRectangular(N_producers,N_consumers)
+            
+            A_e[N_producers:(N_producers+N_consumers),:N_producers]=sub.T*g2
+            A_e[:N_producers,N_producers:(N_producers+N_consumers)]=sub  *g1
+        else:
+            A_e[N_producers:(N_producers+N_consumers),:N_producers]=g2
+            A_e[:N_producers,N_producers:(N_producers+N_consumers)]=g1
+
+        if consumer_comp:
+            A_e[N_producers:(N_producers+N_consumers),N_producers:(N_producers+N_consumers)]=g1
+            A_e[-N_apex:,-N_apex:]=g1
+
+        A_e[-N_apex:,N_producers:-N_apex]=g2
+        A_e[N_producers:-N_apex,-N_apex:]=g1
+
+        np.fill_diagonal(A_e,0)
+        return(A_e)
+
+    
+
 def swaplinks(A, nswaps, connected = False):
     A_tmp = A.copy()
     i=0
@@ -612,6 +700,9 @@ def __auxswaplinks(A):
     A_tmp[ri_0, ri_0[::-1]] = 1
     A_tmp[ri_1, ri_1[::-1]] = 0
     return A_tmp
+
+def double_edge_swap(M, nswaps=1, ntries=100):
+    return nx.adjacency_matrix(nx.double_edge_swap(nx.from_numpy_array(M), nswaps, ntries)).todense()
 
 def joingraphs(m1,m2):
 	s1 = m1.shape[0]

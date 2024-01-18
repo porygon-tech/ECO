@@ -1,0 +1,9 @@
+REPORT for simulation Tue_Nov_28_080954_2023 =======================
+non-fixed values:
+	_v0
+	_mutual_effs
+	_theta
+	_m
+	_d
+	_simID
+	n_mutualisms

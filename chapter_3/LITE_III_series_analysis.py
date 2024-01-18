@@ -57,13 +57,13 @@ from matriX import showdata as sd
 #pattern = r'^file\d+\.txt$'  # Regular expression pattern
 from os import popen 
 most_recent = popen('basename $(ls ' + str(obj_path)+ '/SIMULATIONS* -t1 | head -n 1 )').read().strip()
-
-# system('ls -c data/obj/SIMULATIONS* ')
-# system('basename -a ls data/obj/SIMULATIONS* ')
-# print('\n'.join(listdir(obj_path)))
-
+'''
+system('ls -c data/obj/SIMULATIONS* ')
+system('basename -a ls data/obj/SIMULATIONS* ')
+print('\n'.join(listdir(obj_path)))
+'''
 filename = most_recent
-# filename = 'SIMULATIONS_glorious_manager_Tue_Jul__4_170021_2023.obj'
+# filename = 'SIMULATIONS_good-natured_middle_Mon_Oct__2_155652_2023.obj'
 # filename = 'SIMULATIONS_ragged_soil_Fri_Aug_11_180351_2023.obj'
 
 print("LOADING " + filename)
@@ -99,6 +99,10 @@ power_comp = [i__comp.sum() / i__n_comp if i__n_comp != 0 else 0 for i__comp, i_
 total_Lv_mutu = np.nan_to_num([i__n_mutu/(i__c*N**2) for i__c, i__n_mutu in zip(c, n_mutu)])
 total_Lv_pred = np.nan_to_num([i__n_pred/(i__c*N**2) for i__c, i__n_pred in zip(c, n_pred)])
 total_Lv_comp = np.nan_to_num([i__n_comp/(i__c*N**2) for i__c, i__n_comp in zip(c, n_comp)])
+
+
+states = np.linspace(ps[0],ps[1], nstates)
+traitvars = np.array([[np.random.choice(states, 50000, p=vlast).var() for vlast in sim['v'][:][-1]] for sim in simulations])
 
 
 #%%
@@ -188,6 +192,7 @@ for sim in simulations:
 for sim in simulations:
     mx.showlist(evo.dist_variances(sim['v']),sim['_ps'])
 
+
 #%%
 
 #%% check which parameters are set to be fixed
@@ -217,7 +222,7 @@ for simID, sim in enumerate(simulations):
 
 #%%
 
-
+ 
 #%%
 
 

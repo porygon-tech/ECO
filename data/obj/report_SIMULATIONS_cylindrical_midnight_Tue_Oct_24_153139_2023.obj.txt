@@ -1,0 +1,5 @@
+REPORT for simulation Tue_Oct_24_153139_2023 =======================
+non-fixed values:
+	_theta
+	_d
+	_simID

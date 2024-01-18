@@ -116,11 +116,12 @@ mx.showlist(D); #print('{0} species went extinct out of {1}.'.format(((D[-1]<2).
 fits = (v*l).sum(2)
 mx.showlist(fits)
 
+mx.showdata(v[:,0])
 
 
 #C0AF852B6365458F1396DE679CC974FF
 #%%
-a=0.001
+a=-1
 nstates=nloci+1
 states = np.linspace(ps[0],ps[1], nstates)
 statesdiff=np.outer(np.ones(nstates),states)-np.outer(states,np.ones(nstates))
@@ -129,4 +130,5 @@ if a<0:
 else:
     assortMat =     evo.interactors.pM(statesdiff,alpha=a**2)
         
-mx.showdata(assortMat,colorbar=True)
+#mx.showdata(assortMat,colorbar=True)
+plt.imshow(assortMat, interpolation='none', cmap='plasma',vmax=1,vmin=0.001); plt.colorbar(); plt.show()

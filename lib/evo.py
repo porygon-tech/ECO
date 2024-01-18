@@ -1,6 +1,7 @@
 import numpy as np 
 import matplotlib.pyplot as plt
 from copy import deepcopy
+import os
 
 I = np.newaxis
 
@@ -634,21 +635,28 @@ def simulate_explicit(
     
 
     #tol=1e-1
-    window=100
-    maxgen=8000
+    window=500
+    maxgen=3500
     print('Iterating...')
     # for t in range(1,ntimesteps+1):
     t=1;
     stabilized = False
     while t < ntimesteps+1:
         if find_fixedpoints:
+            stabilized = np.concatenate((np.diff(D[-window-1:-1],              axis=0)**2 < tolD,
+                                         np.diff(dist_averages(v,ps)[-window:],axis=0)**2 < tolZ))
+            stabpercent = round(np.sum(stabilized)/np.size(stabilized)*100,4)
+            
             if t==ntimesteps:
-                stabilized = [np.abs(np.diff(D[-window-1:-1],    axis=0).mean(0)) < tolD,
-                              np.abs(np.diff(dist_averages(v,ps)[-window:],axis=0).mean(0)) < tolZ]
+                # stabilized = [np.abs(np.diff(D[-window-1:-1],    axis=0).mean(0)) < tolD,
+                #               np.abs(np.diff(dist_averages(v,ps)[-window:],axis=0).mean(0)) < tolZ]
+                
                 # stabilized = [sim['D'][-window-1:-1].var(0)     < tolD,
                 #               sim['dist_avgs'][-window:].var(0) < tolZ]
-                if not np.all(stabilized) and t < maxgen+1:
-                # if not np.all(np.abs(np.diff(D[-3:-1],axis=0))<tolD) and t < maxgen+1:
+                # if not np.all(stabilized) and t < maxgen+1:
+                    
+                if stabpercent < 99 and t < maxgen+1:
+                
                 
                     #print('{0} fixed'.format((np.abs(np.diff(D[-2:],axis=0))<tol).sum()/N))
                     v=np.append(v,np.zeros((1,N,nstates)),axis=0)
@@ -656,6 +664,7 @@ def simulate_explicit(
                     p=np.append(p,np.zeros((1,N,nstates)),axis=0)
                     l=np.append(l,np.zeros((1,N,nstates)),axis=0)
                     ntimesteps+=1
+            
             
         for species_id in range(N):
             p[t-1,species_id]=interactors.convpM(v[t-1,species_id],nstates,alpha)
@@ -668,7 +677,7 @@ def simulate_explicit(
         #l[t-1] = (mutual_effs @ p[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ) #without demography mass interaction
         l[t-1] = transformations.negativeSaturator(l[t-1])
         # l[t-1] = np.outer(np.ones(N),f(states))
-        w = v[t-1]*l[t-1]*np.exp(np.c_[d]*v[t-1])
+        w = v[t-1]*l[t-1]*np.exp(np.c_[d]*v[t-1]) # fitness with density dependence
         
         
         w = ((w @ assortTen)[0] * w) / np.c_[np.where(w.sum(1) == 0, 0.0001, w.sum(1))] # assortative mating effect
@@ -687,8 +696,16 @@ def simulate_explicit(
         
         if t%int((ntimesteps)/divprint)==0:
             if find_fixedpoints:
-                print("ID: " + str(simID) + "\tt=" + str(t) + "\t" + str(round(np.sum(stabilized)/np.size(stabilized)*100,4)) + "% stabilized.")
-                # print(str(round(np.sum(stabilized)/np.size(stabilized),4)) + " stabilized")
+                # print("ID: " + str(simID) + "\tt=" + str(t) + "\t" + str(round(np.sum(stabilized)/np.size(stabilized)*100,4)) + "% stabilized.")
+                
+                if stabpercent > 90:
+                    stab_colorkey = '\033[1;31m'
+                else: 
+                    stab_colorkey = '\033[0m'
+                
+                os.system("echo \"ID: " + str(simID) + "\tt=" + str(t) + "\t" + stab_colorkey + str(stabpercent) + "%\033[0m stabilized.)\"") #should be echo -e in plain bash
+                
+                # ESTA NO print(str(round(np.sum(stabilized)/np.size(stabilized),4)) + " stabilized")
             else: 
                 print("ID: " + str(simID) + "\tt=" + str(t))  
             
@@ -759,7 +776,9 @@ class simulator(object):
             divprint=10,
             simID=self._simID
         )
-        self.fits = (self.v*self.l).sum(2)
+        #self.fits = (self.v*self.l).sum(2)
+        self.fits = (self.v*self.l*np.exp(np.c_[self._d]*self.v)).sum(2)
+        
         self.dist_avgs = dist_averages(self.v,self._ps)
 
 #%%
@@ -788,15 +807,6 @@ def dist_averages(v,phenospace=None):
     # mx.showlist(avgseries[:50])
     return avgseries
 
-
-def dist_variances(v,phenospace=None):
-    _,_,nstates = v.shape
-    if phenospace is None:
-        phenospace=(0,nstates-1)
-    states = np.linspace(phenospace[0],phenospace[1], nstates)
-    varseries = (v*states*nstates).var(2)
-    # mx.showlist(avgseries[:50])
-    return varseries
 
     
 #transformations = transformations()

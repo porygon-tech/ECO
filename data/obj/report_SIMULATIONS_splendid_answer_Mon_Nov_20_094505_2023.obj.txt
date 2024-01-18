@@ -1,0 +1,9 @@
+REPORT for simulation Mon_Nov_20_094505_2023 =======================
+non-fixed values:
+	_mutual_effs
+	_theta
+	_d
+	_simID
+	n_mutualisms
+	n_competitions
+	n_predations

@@ -11,14 +11,15 @@ Created on Wed Apr 12 14:52:29 2023
 #import sys
 #sys.path.insert(0,'/content/ECO/lib')
 
-from os import chdir, listdir
+from os import chdir, listdir, environ, system
 from pathlib import Path
 import pickle5
 import bz2
-chdir('/home/roman/LAB/ECO') #this line is for Spyder IDE only
+chdir(environ['HOME'] + '/LAB/ECO') #this line is for Spyder IDE only
 root = Path(".")
 obj_path = root / 'data/obj'
-img_path = root / 'gallery/timeseries'
+img_path = Path(environ['HOME']) / 'LAB/figures'
+obj_path = root / 'data/obj'
 #%% imports 
 import sys
 sys.path.insert(0, "./lib")
@@ -124,7 +125,7 @@ mat1=c.history.T
 mat2=cf.history.T
 mat3=v.squeeze().T
 
-blendmat(mat1,mat2,mat3,saturation = 3)
+mx.blendmat(mat1,mat2,mat3,saturation = 3)
 
 
 

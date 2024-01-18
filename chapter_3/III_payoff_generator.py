@@ -76,8 +76,81 @@ for i,sim in enumerate(sort_simulations):
         plt.xlabel('time (generations)')
         plt.show()
 
+#%%
+
+mat=simulations[15]['v'][:6000,13]
+serie=simulations[15]['dist_avgs'][:,13]
+# popserie = simulations[15]['D'][:,13]
+plt.plot(serie);plt.show()
+sd(mx.graphictools.resize_image(mat, (356,200)),color='viridis')
+plt.plot(mat)
+plt.show()
+
+# plt.plot(popserie);plt.show()
+thres = 2
+
+#%%
+thres = 0.1e-7
+window = 500
+s=serie[3000:]
 
 
+check = np.diff(s)**2
+checkio = check<thres
+for i in range(window):
+    checkio = np.logical_and(checkio, np.roll(checkio,1))
+
+checkio_tmp = np.concatenate((checkio,checkio))
+np.all(np.concatenate((checkio,checkio_tmp)))
+
+plt.plot(s)
+plt.plot((check<thres)*(s.mean()-s.min())+s.min())
+plt.plot(checkio      *(s.mean()-s.min())+s.min())
+plt.show()
+
+plt.plot(check)
+plt.plot((check<thres)*np.median(np.diff(s)))
+plt.show()
+
+
+s1=serie[1000:3000]
+s2=serie[5000:7000]*0+23
+s1.shape==s2.shape
+plt.plot(np.correlate(s1, s2, mode='full'))
+plt.plot(np.correlate(s2, s2, mode='full'))
+plt.show()
+
+
+#%%
+
+
+# Generate a random array "a" with values between 0 and 1
+a = np.random.rand(100)  # You can adjust the size as needed
+
+# Define a condition to check the previous 5 values
+condition = (a[:-5] < 0.8) & (a[1:-4] < 0.8) & (a[2:-3] < 0.8) & (a[3:-2] < 0.8) & (a[4:-1] < 0.8)
+condition = np.all(a[:-5:-1] < 0.8, axis=0)
+# Create an array "b" with boolean values based on the condition
+b = np.zeros_like(a, dtype=bool)
+b[5:] = condition
+
+
+
+
+#%% visualize dists
+simID=47
+for i in range(N):
+    mat=simulations[simID]['v'][-2000:,i]
+    
+    mat2 = mx.graphictools.resize_image(mat, (356,200))
+    plt.imshow(mat2)
+    plt.title(str(i))
+    plt.show()
+
+
+mat=simulations[15]['v'][:2500,8]
+mat2 = mx.graphictools.resize_image(mat, (356,200))
+sd(mat2,color='jet')
 #%%
 from os import chdir, environ
 chdir(environ['HOME'] + '/LAB/ECO') #this line is for Spyder IDE only
@@ -103,7 +176,7 @@ A = nx.adjacency_matrix(nx.fast_gnp_random_graph(N,c)).todense()
 A = mx.nullmodels.nestedRand(N,10)
 
 # 3. BARBELL
-ballsize = 6
+ballsize = int(N/3)
 A = nx.adjacency_matrix(nx.barbell_graph(ballsize,N - ballsize*2)).todense()
 A = mx.swaplinks(A, 5, connected=True) # link swapping in barbell graphs allows to create semi-random bimodular graphs
 
@@ -111,10 +184,10 @@ A = mx.swaplinks(A, 5, connected=True) # link swapping in barbell graphs allows 
 A = nx.adjacency_matrix(nx.newman_watts_strogatz_graph(N,4,0.1)).todense()
 
 # 5. LATTICES
-A = nx.adjacency_matrix(nx.hexagonal_lattice_graph(2,5)).todense() # periodic=True
+A = nx.adjacency_matrix(nx.hexagonal_lattice_graph(2,5)).todense(); N =A.shape[0] # periodic=True
 
 # 6. RANDOM MODULAR (MIKI)
-N=7
+N=25
 A = mx.nullmodels.clusterchain(N,3)
 A = mx.swaplinks(A, 5, connected=True)
 
@@ -130,7 +203,7 @@ A_e = np.random.choice((g1,g2),(N,N))*A
 sd(A_e,symmetry=True)
 
 # 2. DEGREE-BIASED PAYOFFS
-sums_tmp = np.outer(A.sum(0),np.ones(N))
+sums_tmp = np.outer(A.sum(1),np.ones(N))
 p=(sums_tmp+sums_tmp.T)/(2*N-1)
 bool_array = np.random.rand(N,N)<p
 # <p: more degree more enemies
@@ -140,9 +213,34 @@ A_e[ bool_array] = g1
 A_e[~bool_array] = g2
 A_e*=A
 sd(A_e,symmetry=True)
-
+sd(p)
 mx.totext(A)
 plt.imshow(A_e, norm=matplotlib.colors.TwoSlopeNorm(vmin=-.01, vcenter=0, vmax=.01),cmap='bwr');plt.show()
+
+#%% predefined structure (with roles)
+N=25
+N_producers=10
+N_consumers=13
+#N_apex=N-N_producers-N_consumers
+g = np.array([-1,0.5])
+
+
+A_e = mx.ecomodels.structured_triple(N,N_producers,N_consumers,g=g,
+                                     consumer_comp=False,
+                                     consumer_nest=True)
+
+sd(A_e,symmetry=True)
+mx.totext(A_e!=0)
+
+#%%
+G=nx.from_numpy_array(A)
+pos = nx.layout.kamada_kawai_layout(G)
+cmap = plt.cm.get_cmap("gnuplot")
+node_weights=dict(G.degree())
+node_colors = {node: cmap(weight) for node, weight in node_weights.items()}
+nx.draw(G,pos=pos,node_color=list(node_colors.values()))
+plt.show()
+
 #%%
 #=============================================
 N=7
@@ -198,8 +296,45 @@ np.abs(np.diff(sim['dist_avgs'][-window:],axis=0).mean(0))
  # ======================================================
  # ======================================================
  # ======================================================
- 
- 
+
+
+pr = [(p-p.T)/2 for p in payoffs]
+Mpred=[(p>0)+0 for p in pr]
+Mprey=[(p<0)+0 for p in pr]
+Mmut=[((p+p.T)/2 > 0)+0 for p in payoffs]
+
+R2 = np.array([(M1*1).sum(1) for M1,M2 in zip(Mpred,gammas)])
+G2 = np.array([(M1*1).sum(1) for M1,M2 in zip(Mmut,gammas)])
+B2 = np.array([(M1*1).sum(1) for M1,M2 in zip(Mprey,gammas)])
+
+
+
+for i, Graph in enumerate(Gl_gamma):
+    R = R2[i]
+    G = G2[i]
+    B = B2[i]
+    #colors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in (mx.renormalize((R,G,B))*255).astype('int').T]
+    colors = mx.graphictools.rgb2hex(mx.graphictools.RGB(R,G,B,same=True, sat=2)) # change sat to explore
+    
+    linewidths = mx.renormalize(list(np.array(list(nx.get_edge_attributes(Graph, 'weight').values()))))*2
+    pos=nx.layout.spring_layout(Graph)
+    
+    fig, ax = plt.subplots()
+    nx.draw_networkx(Graph,
+                     pos=pos,
+                     ax=ax,
+                     with_labels=False,
+                     width=linewidths, 
+                     edge_color=linewidths, 
+                     node_color=colors,
+                     edge_cmap=plt.cm.Wistia,
+                     node_size=2* np.sqrt(simulations[i]['D'][-1]))
+
+    ax.axis('off')
+    fig.set_facecolor('#002233')
+    plt.title(d[i],color='white')
+    plt.show()
+
 #%% figure for poster
 switch_backend('module://matplotlib_inline.backend_inline')
 
@@ -215,7 +350,7 @@ scatter1=ax.scatter(
                     # c=[list(gamma['nodes']['bc'][i].values()) for i in range(len(simulations))],
                    # c=colors,
                    # norm=matplotlib.colors.LogNorm(),
-                    cmap="jet",s=15,alpha=0.8)
+                    cmap="viridis",s=15,alpha=0.8)
 ax.set_xlabel(r"d", fontsize=16)
 ax.set_ylabel(r"equilibrium population size")
 
@@ -300,12 +435,27 @@ plt.show()
 
 #%%
 switch_backend('module://matplotlib_inline.backend_inline')
-B = (np.repeat(mass['mod'],N))
+B = (np.repeat(payoff['nodf'],N))
 # R = (np.repeat(gamma['nodf'],N))
 
 # R = (np.repeat(d,N))
-R = np.array([list(mass['nodes']['strength_pred']  [i].values()) for i in range(len(simulations))]).flatten()
-G = np.array([list(mass['nodes']['strength_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
+B = np.array([list(gamma['nodes']['relative_strength_comp']  [i].values()) for i in range(len(simulations))]).flatten()
+G = np.array([list(gamma['nodes']['relative_strength_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
+R = np.array([list(gamma['nodes']['relative_strength_pred']  [i].values()) for i in range(len(simulations))]).flatten()
+
+
+# G = (np.repeat(gamma['nodf'],N))
+# # B = np.array([list(mass_c['nodes']['bc']  [i].values()) for i in range(len(simulations))]).flatten()
+# R = (np.repeat(mass_c['nodf'],N))
+# B=(np.repeat(gamma['sR'],N))
+# B = np.array([list(mass['nodes']['qdeg']  [i].values()) for i in range(len(simulations))]).flatten()
+
+
+# G = np.array([list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
+# R = np.array([list(payoff['nodes']['ec']  [i].values()) for i in range(len(simulations))]).flatten()
+
+# R = np.array([list(mass['nodes']['strength_pred']  [i].values()) for i in range(len(simulations))]).flatten()
+# G = np.array([list(mass['nodes']['strength_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
 # R = np.array([list(gamma['nodes']['power_pred']  [i].values()) for i in range(len(simulations))]).flatten()
 # G = np.array([list(gamma['nodes']['power_mutu']  [i].values()) for i in range(len(simulations))]).flatten()
 # G = (np.repeat(mass_c['nodf'],N))
@@ -314,35 +464,226 @@ G = np.array([list(mass['nodes']['strength_mutu']  [i].values()) for i in range(
 # B=np.ones_like(R)
 # B=R
 # B=R.max()-R
-# G=B
-# G = (np.repeat(gamma['sR'],N))
 
-colors = mx.graphictools.RGB(R,G,B,same=False,sat=1.8)
-# colors[:,2]=64
+# R=G=B
+# R=G
+# G = (np.repeat(gamma['sR'],N))
+#R=G=B
+np.random.seed(5)
+noise =(np.random.rand(len(simulations)*N)-.5)*0.01
+noise2=(np.random.rand(len(simulations)*N)-.5)*0.01
+
+colors = mx.graphictools.RGB(R,G,B,same=False,sat=1.)
+
+colors[:,2]=0
+
+# colors[:,:2]=0
+
 colorsInv = 255-colors
 colorstr = mx.graphictools.rgb2hex(colorsInv)
 colorstr = list(map(mx.graphictools.hex_color_invert_hue, colorstr))
 #
 # colorstr = mx.graphictools.rgb2hex(colors)
 
+
+
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
 fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
 scatter1=ax.scatter(
-                    (np.repeat(d,N)),
-                    # (np.repeat(gamma['mod'],N)),
-                    # [list(mass_c['nodes']['deg'][i].values()) for i in range(len(simulations))],
-                    # [list(payoff['nodes']['lv_mutu']  [i].values()) for i in range(len(simulations))],
-                    [list(gamma['nodes']['power_mutu']  [i].values()) for i in range(len(simulations))],
+                    (np.repeat(d,N)) + noise,
+                    # (np.repeat(gamma['mod'],N)) + noise2,
+                    # (np.repeat(payoff['sR'],N)) + noise2,
+                    # [list(mass_c['nodes']['bc'][i].values()) for i in range(len(simulations))],
+                    # [list(payoff['nodes']['lv_pred']  [i].values()) for i in range(len(simulations))],
+                    # [list(payoff['nodes']['deg']  [i].values()) for i in range(len(simulations))],
+                    # [list(gamma['nodes']['relative_strength_pred']  [i].values()) for i in range(len(simulations))],
+                    # [list(mass['nodes']['qdeg']  [i].values()) for i in range(len(simulations))],
+                    [list(gamma['nodes']['popsizes']  [i].values()) for i in range(len(simulations))],
                     # 
                     
-                    c=colorstr,
+                    # c=colorstr,
+                    
+                    cmap="turbo_r", c= traitvars,
+                    # cmap="rainbow_r", c= [list(gamma['nodes']['edgedist']  [i].values()) for i in range(len(simulations))],
+                    # cmap="coolwarm_r", c= [list(gamma['nodes']['thetavar']  [i].values()) for i in range(len(simulations))], norm=matplotlib.colors.LogNorm(1),
+                    
+                    # c=np.array([list(gamma['nodes']['power_pred']  [i].values()) for i in range(len(simulations))]).flatten(),
+                    # 
                    # norm=matplotlib.colors.LogNorm(),
-                    # cmap="jet",s=15,
-                    s=60,
-                    alpha=0.9)
+                    # cmap="Blues", c= (np.repeat(gamma['mod'],N)),
+                    s=50,
+                    alpha=0.8)
+plt.colorbar(scatter1,ax=ax, label=r"no")
 ax.set_xlabel(r"$\phi$", fontsize=16)
+# plt.yscale('log')
 ax.set_ylabel(r"node strength$_M$", fontsize=16)
-
+timecode = str(time.ctime().replace(' ','_').replace(':','_'))
+# imgname='qdeg_vs_phi_'+timecode+'.pdf'
+# plt.savefig(img_path / imgname)
 plt.show()
+#%% DISTINGUISH PREDATORS FROM PREYS (part 2)
+
+# pr = [(p-p.T)/2 for p in payoffs] watch out, this one does only work with symmetric payoffs
+
+pr = [p*((p*p.T)<0) for p in payoffs]
+
+Mpred=[(p>0)+0 for p in pr]
+Mprey=[(p<0)+0 for p in pr]
+Mmut=[((p+p.T)/2 > 0)+0 for p in payoffs]
+
+# relative gamma spent on each interaction type
+# R = np.array([(M1*M2).sum(1)/M2.sum(1) for M1,M2 in zip(Mpred,gammas)]).flatten()
+# G = np.array([(M1*M2).sum(1)/M2.sum(1) for M1,M2 in zip(Mmut,gammas)]).flatten()
+# B = np.array([(M1*M2).sum(1)/M2.sum(1) for M1,M2 in zip(Mprey,gammas)]).flatten()
+vero_pred = np.array([np.nan_to_num(((M*g).sum(1)/g.sum(1)) / (M.sum(1)/(p!=0).sum(1)),0)for M,g,p in zip(Mpred,gammas,payoffs)]).flatten()
+vero_mutu = np.array([np.nan_to_num(((M*g).sum(1)/g.sum(1)) / (M.sum(1)/(p!=0).sum(1)),0)for M,g,p in zip(Mmut,gammas,payoffs)]).flatten()
+vero_prey = np.array([np.nan_to_num(((M*g).sum(1)/g.sum(1)) / (M.sum(1)/(p!=0).sum(1)),0)for M,g,p in zip(Mprey,gammas,payoffs)]).flatten()
+R = vero_pred
+G = vero_mutu
+B = vero_prey
+
+colors = mx.graphictools.RGB(R,G,B,same=False,sat=2.)
+# colors[:,1]=0
+colorsInv = 255-colors
+colorstr = mx.graphictools.rgb2hex(colorsInv)
+colorstr = list(map(mx.graphictools.hex_color_invert_hue, colorstr))
+
+plt.rcParams["figure.figsize"] = (8,7)
+plt.scatter(
+                    (np.repeat(d,N)) + noise,
+                    # [list(mass_c['nodes']['qdeg']  [i].values()) for i in range(len(simulations))],
+                    [list(gamma['nodes']['fits']  [i].values()) for i in range(len(simulations))],
+                    
+    c=colorstr,
+    s=50
+    )
+plt.ylabel(r"species average fitness $\bar{W}$")
+plt.xlabel(r"frequency-dependent selection $\phi$")
+
+plt.yscale('log')
+# Create a legend with custom labels and dots
+legend_labels = ['predator', 'mutualist', 'prey']
+legend_handles = [plt.Line2D([0], [0], marker='o', color='w', label=label, markersize=10, markerfacecolor=color) for label, color in zip(legend_labels, ['red', 'green', 'blue'])]
+plt.legend(handles=legend_handles, title='Payoff roles', loc='lower left')  # Adjust loc as needed
+timecode = str(time.ctime().replace(' ','_').replace(':','_'))
+imgname='preyfitness'+timecode+'.pdf'
+# plt.savefig(img_path / imgname)
+plt.show()
+plt.rcParams["figure.figsize"] = plt.rcParamsDefault["figure.figsize"]
+
+
+#%%
+
+
+fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
+scatter1=ax.scatter(
+                    [list(gamma['nodes']['edgedist']  [i].values()) for i in range(len(simulations))],
+                    traitvars,
+
+                    # norm=matplotlib.colors.LogNorm(),
+                    c=colorstr,
+                    # cmap="RdYlGn_r", c=(np.repeat(d,N)),
+                    s=50,
+                    alpha=0.8)
+# plt.colorbar(scatter1,ax=ax, label=r"NODF$_{G}$")
+ax.set_xlabel(r"$\phi$", fontsize=16)
+plt.ylim(0,0.6)
+# plt.xscale('log')
+ax.set_ylabel(r"$\sigma^2_z$", fontsize=16)
+timecode = str(time.ctime().replace(' ','_').replace(':','_'))
+# imgname='qdeg_vs_phi_'+timecode+'.pdf'
+# plt.savefig(img_path / imgname)
+plt.show()
+#%%
+
+
+fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
+scatter1=ax.scatter(
+                    (np.repeat(d,N)) + noise,
+                    traitvars,
+
+                    # norm=matplotlib.colors.LogNorm(),
+                    # c=colorstr,
+                    c=np.array([list(gamma['nodes']['ec']  [i].values()) for i in range(len(simulations))]).flatten(),
+                    # c=(np.repeat(gamma['sR'],N)),
+                    norm=matplotlib.colors.LogNorm(0.001),
+                    s=50,
+                    alpha=0.8)
+plt.colorbar(scatter1,ax=ax, label=r"EC$_{\Gamma}$")
+ax.set_xlabel(r"$\phi$", fontsize=16)
+# plt.ylim(0,0.6)
+plt.yscale('log')
+ax.set_ylabel(r"$\sigma^2_z$", fontsize=16)
+timecode = str(time.ctime().replace(' ','_').replace(':','_'))
+# imgname='qdeg_vs_phi_'+timecode+'.pdf'
+# plt.savefig(img_path / imgname)
+plt.show()
+#%%
+
+fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
+scatter1=ax.scatter(
+                    (np.repeat(d,N)) + noise,
+                    [list(gamma['nodes']['fits']  [i].values()) for i in range(len(simulations))],
+                    cmap="turbo_r", c= traitvars,
+                    # cmap="rainbow_r", c= [list(gamma['nodes']['thetavar']  [i].values()) for i in range(len(simulations))],
+                    # norm=matplotlib.colors.LogNorm(1),
+
+                    s=50,
+                    alpha=0.8)
+plt.colorbar(scatter1,ax=ax, label=r"trait variance $\sigma^2_z$")
+plt.yscale('log')
+plt.ylabel(r"species average fitness $\bar{W}$")
+plt.xlabel(r"frequency-dependent selection $\phi$")
+timecode = str(time.ctime().replace(' ','_').replace(':','_'))
+imgname='traitvariance_'+timecode+'.pdf'
+# plt.savefig(img_path / imgname)
+plt.show()
+
+#%%
+fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
+scatter1=ax.scatter(
+                    (np.repeat(d,N)) + noise,
+                    [list(gamma['nodes']['fits']  [i].values()) for i in range(len(simulations))],
+                    # cmap="turbo_r", c= traitvars,
+                    cmap="coolwarm_r", c= [list(gamma['nodes']['thetavar']  [i].values()) for i in range(len(simulations))],
+                    norm=matplotlib.colors.LogNorm(1),
+
+                    s=50,
+                    alpha=1)
+plt.colorbar(scatter1,ax=ax, label=r"distance from environmental optimum $\theta$")
+plt.yscale('log')
+plt.ylabel(r"species average fitness $\bar{W}$")
+plt.xlabel(r"frequency-dependent selection $\phi$")
+timecode = str(time.ctime().replace(' ','_').replace(':','_'))
+imgname='thetadist_'+timecode+'.pdf'
+# plt.savefig(img_path / imgname)
+plt.show()
+
+#%%
+fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
+scatter1=ax.scatter(
+                    (np.repeat(d,N)) + noise,
+                    [list(gamma['nodes']['fits']  [i].values()) for i in range(len(simulations))],
+                    # cmap="turbo_r", c= traitvars,
+                    cmap="rainbow_r", c= [list(gamma['nodes']['edgedist']  [i].values()) for i in range(len(simulations))],
+                    # norm=matplotlib.colors.LogNorm(1),
+
+                    s=50,
+                    alpha=1)
+plt.colorbar(scatter1,ax=ax, label=r"distance from extreme phenotypes")
+plt.yscale('log')
+plt.ylabel(r"species average fitness $\bar{W}$")
+plt.xlabel(r"frequency-dependent selection $\phi$")
+timecode = str(time.ctime().replace(' ','_').replace(':','_'))
+imgname='extremedist_'+timecode+'.pdf'
+# plt.savefig(img_path / imgname)
+plt.show()
+
+
+
+
 #%% figure for poster
 switch_backend('module://matplotlib_inline.backend_inline')
 
@@ -384,6 +725,54 @@ ax.set_xlabel(r"$\phi$", fontsize=16)
 ax.set_ylabel(r"node strength$_M$", fontsize=16)
 
 plt.show()
+
+#%%
+
+'''
+data/obj/SIMULATIONS_any_ground_Wed_Nov_22_160013_2023.obj
+data/obj/SIMULATIONS_stupendous_yard_Wed_Nov_22_155753_2023.obj
+data/obj/SIMULATIONS_impressionable_capital_Wed_Nov_22_155451_2023.obj
+'''
+filename1 = 'SIMULATIONS_any_ground_Wed_Nov_22_160013_2023.obj'
+filename2 = 'SIMULATIONS_ragged_extreme_Wed_Nov_22_164359_2023.obj'
+
+print("LOADING " + filename1)
+with bz2.BZ2File(obj_path / filename1, 'rb') as f:
+	simulations1 = pickle5.load(f)
+
+print("LOADING " + filename2)
+with bz2.BZ2File(obj_path / filename2, 'rb') as f:
+	simulations2 = pickle5.load(f)
+    
+adjs1  , mutu  , comp  , pred  , gammas1   = evo.getADJs(simulations1, t=-1,return_gammas=True)
+adjs2  , mutu  , comp  , pred  , gammas2   = evo.getADJs(simulations2, t=-1,return_gammas=True)#; del(simulations2)
+
+#%%
+
+Gl_gamma1 = [nx.from_numpy_array(M) for M in gammas1]
+Gl_gamma2 = [nx.from_numpy_array(M) for M in gammas2]
+Gl_mass1 = [nx.from_numpy_array(M) for M in adjs1]
+Gl_mass2 = [nx.from_numpy_array(M) for M in adjs2]
+
+gamma1_mod = np.array(mx.mod( Gl_gamma1 ))
+gamma2_mod = np.array(mx.mod( Gl_gamma2 ))
+mass1_mod  = np.array(mx.mod( Gl_mass1 ))
+mass2_mod  = np.array(mx.mod( Gl_mass2 ))
+
+fig = plt.figure(figsize=(9,6)); ax = fig.add_subplot(111)
+scatter1=ax.scatter(
+                    d,
+                    gamma1_mod
+)
+scatter2=ax.scatter(
+                    d,
+                    gamma2_mod
+)
+ax.set_xlabel(r"$\phi$", fontsize=16)
+ax.set_ylabel(r"mod$_M$", fontsize=16)
+
+plt.show()
+
 # %%
 
 
@@ -506,6 +895,8 @@ plt.show()
 
 def quickboxplot(x_data,y_data,num_boxes = 3):
     # Discretize the X axis into 3 boxes  
+    x_data=np.array(x_data).flatten()
+    y_data=np.array(y_data).flatten()
     x_bins = np.linspace(min(x_data), max(x_data), num_boxes + 1)
     x_discretized = np.digitize(x_data, x_bins)
 
