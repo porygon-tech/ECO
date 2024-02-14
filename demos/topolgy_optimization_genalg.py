@@ -8,7 +8,7 @@ Created on Tue Jan  2 18:03:33 2024
 
 
 
-from os import chdir, listdir, environ, system
+from os import chdir, listdir, environ, system, popen
 from pathlib import Path
 import pickle5
 import bz2
@@ -418,13 +418,18 @@ else:
     print("evolution failed")
 '''
 #%% force deg dist 3 # the EFFECTIVE ONE
-n=50
 
+n=50
+#if sum of degrees is odd, result will be approximate to deg sequence
+#--------------------------------------------------------------------------------------
 # degrees = np.random.normal(7,6, n)				;dn = "normal_" + str(n)
 # degrees = np.random.lognormal(2.4 ,0.5, n)		;dn = "lognormal_" + str(n)
 degrees = np.random.randint(1,int(n/2),n)			;dn = "randint_" + str(n)
 # degrees = np.random.negative_binomial(n,0.7, n)	;dn = "negative_binomial_" + str(n)
 # degrees =  np.random.pareto(1.2, n) 				;dn = "pareto_" + str(n)
+#--------------------------------------------------------------------------------------
+
+
 
 dnt = dn + '_'+ str(time.time())
 
@@ -447,6 +452,16 @@ mx.showdata(Mr)
 print(M.sum(0) - Mr.sum(0))
 print(M.sum(0) - degrees)
 print(dnt)
+
+#%%
+if not sum(degrees)%2: 
+    G2 = nx.configuration_model(degrees)
+    M2 = nx.adjacency_matrix(G2).todense()
+    
+    nx.draw(G2,node_size=10); plt.show()
+    mx.showdata(M2)
+    print(M2.sum(0) - degrees)
+
 #%%
 lsp = (0,n,30)
 data = M.sum(0)[::-1]
@@ -591,7 +606,14 @@ system('ls -c data/obj/special_networks/NET*')
 system('basename -a ls data/obj/special_networks/NET* ')
 print('\n'.join(listdir(obj_path)))
 '''
-
+#%%
+filenames_folder = popen('ls -c data/obj/special_networks/NET*').read().split("\n"); filenames_folder=filenames_folder[:-1]
+sp_nets = []
+for i, netname in enumerate(filenames_folder):
+    with bz2.BZ2File(netname, 'rb') as f:
+     	sp_nets.append(pickle5.load(f))
+    print("loaded " + netname + " at " + str(i))
+         
 # #%%
 # filename='oc_tensor_' + str(nloci) + '.obj'
 # with bz2.BZ2File(obj_path / filename, 'rb') as f:

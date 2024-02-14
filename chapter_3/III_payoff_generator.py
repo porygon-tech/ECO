@@ -4,6 +4,7 @@
 Created on Mon Jul 17 10:12:04 2023
 
 @author: ubuntu
+Requires LITE_III_series_analysis and TEMP_corrs to have been ran before in this console
 """
 
 
@@ -310,16 +311,29 @@ B2 = np.array([(M1*1).sum(1) for M1,M2 in zip(Mprey,gammas)])
 
 
 for i, Graph in enumerate(Gl_gamma):
+    G_p = Gl_payoff[i]
+    G_p.remove_edges_from(nx.selfloop_edges(G_p))
+    Graph.remove_edges_from(nx.selfloop_edges(Graph))
     R = R2[i]
     G = G2[i]
     B = B2[i]
     #colors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in (mx.renormalize((R,G,B))*255).astype('int').T]
     colors = mx.graphictools.rgb2hex(mx.graphictools.RGB(R,G,B,same=True, sat=2)) # change sat to explore
-    
     linewidths = mx.renormalize(list(np.array(list(nx.get_edge_attributes(Graph, 'weight').values()))))*2
+    #pos=nx.layout.spring_layout(G_p)
     pos=nx.layout.spring_layout(Graph)
-    
+    degs = np.array(list(payoff['nodes']['deg'][i].values()))
+
     fig, ax = plt.subplots()
+    nx.draw_networkx(G_p,
+                     pos=pos,
+                     ax=ax,
+                     with_labels=False,
+                     width=10, 
+                     edge_color='blue',
+                     node_color='red',
+                     node_size=0)
+    
     nx.draw_networkx(Graph,
                      pos=pos,
                      ax=ax,
@@ -329,10 +343,12 @@ for i, Graph in enumerate(Gl_gamma):
                      node_color=colors,
                      edge_cmap=plt.cm.Wistia,
                      node_size=2* np.sqrt(simulations[i]['D'][-1]))
+    
+
 
     ax.axis('off')
     fig.set_facecolor('#002233')
-    plt.title(d[i],color='white')
+    plt.title(i,color='white')
     plt.show()
 
 #%% figure for poster

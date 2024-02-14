@@ -47,11 +47,11 @@ with bz2.BZ2File(obj_path / filename, 'rb') as f:
 easyname = popen('python ~/LAB/gadgets_cloud/randWord.py').read().strip()
 
 #%% MODEL PARAMETERS
-c=0.25 # expected connectance of the allowed links matrix
+c=np.log(N)/N# expected connectance of the allowed links matrix. Use np.log(N)/N for the connected regime of erdos-renyi graphs (critical point for single component)
 # mutualRange = (-0.01, 0.02) # range of values for the uniform distribution of ecological effects
 a=0. # assortative mating coefficients, real value (single value or array of values)
 d=0. # frequency dependence coefficient
-alpha= 0.1 # strength of the trait matching mechanism. Positive real value. Lower values = greater promiscuity
+alpha= 0.1#0.1 # strength of the trait matching mechanism. Positive real value. Lower values = greater promiscuity
 xi_S=0.25 # level of environmental selection (from 0 to 1).
 # D0=50 # initial population sizes (single value or array of values)
 
@@ -90,7 +90,7 @@ print("generated with: \n{0} mutualisms, \n{1} antagonisms (competitors), and \n
                                                 ((A_e>0) & (A_e.T<0)).sum()))
 '''
 #%% environmental optima generation (theta)
-dev=np.random.rand(N) 
+dev=np.random.rand(N)       # ran
 theta=dev*np.diff(ps)+ps[0] 
 
 #%% initialization of phenotype makeups
@@ -99,7 +99,7 @@ v0=evo.initialize_bin_explicit(N,nloci,np.random.rand(N)); # set to start at ran
 
 #%% generation of vector of levels of selection imposed by other species
 xi_d=1-xi_S
-m=np.clip(np.random.normal(xi_d,0.01,(N,1)),0,1) 
+m=np.clip(np.random.normal(xi_d,0.001,(N,1)),0,1) 
 
 #%% 
 '''
@@ -159,12 +159,13 @@ def task_simulation_set(cola):
         # mutualRange = np.sort(np.random.rand(2)*0.02-0.01) #(-0.02, 0.02) # range of values for the uniform distribution of ecological effects
         # a=np.clip(np.random.normal(np.random.rand()*3,0.01,N),0,6)#np.linspace(0., 0.005,nsimulations)[i]#(np.random.rand()*2-1)/10#  #np.random.rand(N)*2-1#np.random.rand()*2-1 # assortative mating coefficients, real value (single value or array of values)
         # d=np.random.normal(np.random.rand()*4-2,0.0001,N)#np.random.normal(np.linspace(-2,2,nsimulations)[i],0.01,N) #np.linspace(-5,5,nsimulations)[i]  #frequency dependence coefficient
-        d=np.random.normal(np.linspace(-2,2,nsimulations)[i],0.0001,N)
+        #d=np.random.normal(np.linspace(-2,2,nsimulations)[i],0.0001,N)
+        
         # alpha= np.random.rand()*0.1 # strength of the trait matching mechanism. Positive real value. Lower values = greater interaction promiscuity
         
         # xi_S=np.random.rand()# level of environmental selection (from 0 to 1).
         # xi_d=1-xi_S
-        m=np.clip(np.random.normal(xi_d,0.01,(N,1)),0,1) # vector of levels of selection imposed by other species (from 0 to 1)
+        m=np.clip(np.random.normal(xi_d,0.001,(N,1)),0,1) # vector of levels of selection imposed by other species (from 0 to 1)
         
         D0=300 # initial population sizes (single value or array of values)
         
@@ -178,7 +179,9 @@ def task_simulation_set(cola):
             graph = nx.fast_gnp_random_graph(N,c)
         A = nx.adjacency_matrix(graph).todense()
         # g1,g2 = g = np.array([-0.02,0.02]) # payoffs for symmetric games
-        A_e = np.random.choice(g,(N,N))*A
+        #A_e = np.random.choice(g,(N,N))*A #mixed interactions
+        A_e = A/np.c_[A.sum(1)]*0.05
+        np.fill_diagonal(A_e, -0.05) #??? necessary?
         
         # A_e = np.array([[ 0.  , -0.02, -0.02,  0.01, -0.  ,  0.  ,  0.01],
         #        [-0.02, -0.  , -0.02,  0.  , -0.  ,  0.01,  0.01],
@@ -236,7 +239,7 @@ def split(string, n):
 if __name__ == "__main__":
     
     ntimesteps=100
-    nsimulations = 64
+    nsimulations = 32
     
     FullSummary=False
     nprocessors = multiprocessing.cpu_count()

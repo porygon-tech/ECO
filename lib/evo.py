@@ -636,7 +636,7 @@ def simulate_explicit(
 
     #tol=1e-1
     window=500
-    maxgen=3500
+    maxgen=2000
     print('Iterating...')
     # for t in range(1,ntimesteps+1):
     t=1;

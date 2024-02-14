@@ -548,7 +548,14 @@ switch_backend('module://matplotlib_inline.backend_inline')
 plt.scatter(
     [list(payoff['nodes']['ec'][i].values())for i in range(len(simulations))],
     [list(payoff['nodes']['bc'] [i].values())for i in range(len(simulations))],
-    s=0.1
+    c=(np.repeat(payoff['mod'],N)),cmap='viridis',s=10.5
+    )
+plt.show()
+
+plt.scatter(
+    [list(payoff['nodes']['deg'][i].values())for i in range(len(simulations))],
+    [list(gamma['nodes']['popsizes'] [i].values())for i in range(len(simulations))],
+    c=(np.repeat(gamma['sR'],N)),cmap='viridis',s=10.5
     )
 plt.show()
 
@@ -583,6 +590,13 @@ plt.scatter(
     )
 plt.show()
 
+
+plt.scatter(
+   np.repeat(payoff['mod'],N),
+   [list(gamma['nodes']['bc'] [i].values())for i in range(len(simulations))],
+   c=(np.repeat(gamma['mod'],N)),cmap='viridis',s=10.5
+   )
+plt.show()
 
 #%%
 plt.scatter(
@@ -1138,7 +1152,7 @@ for i, G in enumerate(Gl_payoff):
 switch_backend('module://matplotlib_inline.backend_inline')
 
 import matplotlib.animation as animation
-simID=55
+simID=20
 adjs  , mutu  , comp  , pred  , gammas   = evo.getADJs(simulations, simID=simID,return_gammas=True)
 sim = simulations[simID]
 
@@ -1202,11 +1216,12 @@ ani.save(img_path / str('gif/' + gifname +'.gif'))
 fig = plt.figure(figsize=(16,12)); ax = fig.add_subplot(111)
 #div = make_axes_locatable(ax)
 smooth=0.75
-t=1000
+t=-1
 print(t)
 global pos
 ax.clear()
 G=nx.from_numpy_array(adjs[t]) # or gamma
+#pos = nx.layout.kamada_kawai_layout(G) # ???????????? necessary?
 pos_new=nx.layout.fruchterman_reingold_layout(G, weight='weight', pos=pos,threshold=1e-8,iterations=20) # threshold=1e-10,iterations=10
 pos = dict(zip(G.nodes(), list((np.array(list(pos.values()))*smooth + np.array(list(pos_new.values()))*(1-smooth)))))
 
@@ -1310,8 +1325,8 @@ switch_backend('module://matplotlib_inline.backend_inline')
 import matplotlib.animation as animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-smooth=0.85
-simID=57 # 160 167 158 155 146 59 121
+smooth=0.9#0.85
+simID=1 # 160 167 158 155 146 59 121
 
 switch_backend('module://matplotlib_inline.backend_inline')
 
@@ -1321,6 +1336,8 @@ sim = simulations[simID]
 G=nx.from_numpy_array(gammas[0])
 pos=nx.layout.fruchterman_reingold_layout(G, weight='weight',threshold=1e-8,iterations=20) # threshold=1e-10,iterations=10
 
+G_p = Gl_payoff[simID]
+G_p.remove_edges_from(nx.selfloop_edges(G_p))
 
 fig = plt.figure(figsize=(16,16)); 
 ax1 = fig.add_subplot(221)
@@ -1339,23 +1356,40 @@ def frame(t):
     # mx.cNorm(mx.renormalize(mutu[t].mean(0)),5),
     # mx.cNorm(mx.renormalize(comp[t].mean(0)),5)
     # )))
-    colors = mx.graphictools.RGB(pred[t].mean(0),comp[t].mean(0),mutu[t].mean(0))
+    #colors = mx.graphictools.RGB(pred[t].mean(0),comp[t].mean(0),mutu[t].mean(0))
+    Rc=pred[t].mean(0)
+    Gc=mutu[t].mean(0)
+    Bc=comp[t].mean(0)
+    colors = mx.graphictools.RGB(Rc,Gc,Bc,same=True, sat=2) # change sat to explore
+    
     hexcolors = mx.graphictools.rgb2hex(colors)
     
     ax1.imshow(gammas[t]*payoffs[simID],norm=matplotlib.colors.TwoSlopeNorm(vmin=-.01, vcenter=0, vmax=.01),cmap='bwr')
     
     G=nx.from_numpy_array(gammas[t])
-    pos_new=nx.layout.fruchterman_reingold_layout(G, weight='weight', pos=pos,threshold=1e-8,iterations=20) # threshold=1e-10,iterations=10
+    G.remove_edges_from(nx.selfloop_edges(G))
+    #pos_new=nx.layout.fruchterman_reingold_layout(G, weight='weight', pos=pos,threshold=1e-8,iterations=20) # threshold=1e-10,iterations=10
+    pos_new=nx.layout.spring_layout(G, weight='weight', pos=pos,threshold=1e-8,iterations=20) # threshold=1e-10,iterations=10
     pos = dict(zip(G.nodes(), list((np.array(list(pos.values()))*smooth + np.array(list(pos_new.values()))*(1-smooth)))))
 
     linewidths =          mx.renormalize(list(1*np.array(list(nx.get_edge_attributes(G, 'weight').values()))))*2
 
+    nx.draw_networkx(G_p,
+                     pos=pos,
+                     ax=ax2,
+                     with_labels=False,
+                     width=15, 
+                     edge_color='blue',
+                     alpha=0.2,
+                     node_size=0)
+    
     nx.draw_networkx(G,ax=ax2, pos=pos, 
                      width=linewidths, 
                      edge_color=linewidths, 
-                     node_color=colors,
-                     edge_cmap=plt.cm.autumn_r,
-                     node_size= sim['D'][t])
+                     node_color=colors/255,
+                     edge_cmap=plt.cm.Wistia, #autumn_r
+                     node_size= sim['D'][t]*2)  
+    
     
     # ax3.plot(sim['v'][t].T)
     # hexcolors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in (colors*255).astype(int)]
@@ -1371,10 +1405,10 @@ easyname = re.search(pattern, filename).group(1)
 
 gifname = 'full_' + easyname + '_' + str(simID) + '_' + timecode
 # ani = animation.FuncAnimation(fig, frame, frames=len(gammas)-1, interval=20, blit=False) # frames=len(adjs)
-ani = animation.FuncAnimation(fig, frame, frames=5000, interval=20, blit=False) # frames=len(adjs)
+ani = animation.FuncAnimation(fig, frame, frames=np.min((1700, len(gammas)-1)), interval=20, blit=False) # frames=len(adjs)
 ani.save(img_path / str('gif/' + gifname +'.gif'))
 
-
+print("saved as " + str(img_path) + str('/gif/' + gifname +'.gif'))
 
 #%%
 fig = plt.figure(figsize=(16,12)); ax3 = fig.add_subplot(111)
