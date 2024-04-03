@@ -9,7 +9,7 @@ import numpy as np
 def pM (zdiffs, alpha=50):
     return np.exp(-alpha*(zdiffs)**2)
 
-def convpM(values,nstates,alpha):
+def convpM(values,nstates,alpha): # REMOVE NSTATES FROM ARGS???
     c = np.zeros((nstates))
     for i in range(nstates):
         c = c + pM(np.arange(nstates)-i, alpha)*values[i]

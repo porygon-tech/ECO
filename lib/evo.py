@@ -531,6 +531,12 @@ def predict(v0,l,ntimesteps=100,h=None, mut=0., a=0., ps=None):
         print(t)
     return(v)
 
+def holling_II(x, a=1, h=1):
+    # h = saturation limit
+    # a = attack rate
+    # for a=1, derivative at 0 is 1 (effect is never larger than x)
+    # for a=2, f(h/2)=h/2
+    return (a * x) / (1 + a / h * x)
 #%%
 
 
@@ -542,7 +548,6 @@ def initialize_bin_explicit(N,nloci,dev):
     for species_id in range(N):
         v0[species_id] = [bindist(nloci,i,dev[species_id]) for i in range(nstates)]
     return v0
-
 
 def simulate_explicit(
         v0,
@@ -586,7 +591,7 @@ def simulate_explicit(
         
     xi_d=np.mean(m)
     xi_S=1-xi_d # xi_S is the level of environmental selection (from 0 to 1). Overrides parameter m,
-
+    
     
     states = np.linspace(ps[0],ps[1], nstates)
     statesdiff=np.outer(np.ones(nstates),states)-np.outer(states,np.ones(nstates))
@@ -673,7 +678,22 @@ def simulate_explicit(
             #DE = D[t-1][:,I]/D[t-1].sum()*100
             #DE = D[t-1][:,I] * 0.04 # mutualistic benefit of a single interaction with a partner(fixed)
         DE = D[t-1][:,I] 
-        l[t-1] = (mutual_effs @ p[t-1]) * DE * m + (1-m)*interactors.pM(thetadiff,alpha=alpha_environ)
+        
+        
+        
+        #   ======================================== NEWEST AND TESTED METHOD
+        A = ((mutual_effs!=0)+(mutual_effs.T!=0))+0
+        inter = A @ DE # Sum of individuals in neighbor nodes to each species.
+        inter_sat = holling_II(inter, a=.1, h=1) # one individual from species X cannot interact with more than 100 individuals, no matter if they belong to same or different species
+        # this assumption is that the individuals that saturate the interaction environment of species X only come from nodes directly linked with X.'
+        # Other species don't interfere, which can be understood that they do not share the same spaces unless they are connected in the binary network.
+        dec_rates=inter_sat/inter
+        l[t-1] = (np.outer(dec_rates, DE) * mutual_effs) @ p[t-1]
+        #   ========================================
+        
+        # l[t-1] = ((mutual_effs @ p[t-1]) * /(mutual_effs!=0).sum(1)) ** m * (interactors.pM(thetadiff,alpha=alpha_environ)) ** (1-m) # Leandro's suggestion + holling type II response to saturate total species effects
+        #l[t-1] = ((mutual_effs @ p[t-1]) * holling_II(DE,a=.1,h=1)) ** m * (interactors.pM(thetadiff,alpha=alpha_environ)) ** (1-m) # Leandro's suggestion + holling type II response to saturate species effects
+        # l[t-1] = ((mutual_effs @ p[t-1]) * DE) * m + (interactors.pM(thetadiff,alpha=alpha_environ)) * (1-m) # old procedure
         #l[t-1] = (mutual_effs @ p[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ) #without demography mass interaction
         l[t-1] = transformations.negativeSaturator(l[t-1])
         # l[t-1] = np.outer(np.ones(N),f(states))
@@ -685,14 +705,15 @@ def simulate_explicit(
         for species_id in range(N):
             
             if w[species_id].sum() == 0:
-                newgen= w[species_id] @ h @ w[species_id] / 0.0001
+                newgen= w[species_id] @ h @ w[species_id] / 0.0001 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             else:
                 newgen= w[species_id] @ h @ w[species_id] / w[species_id].sum()**2
             
             v[t,species_id] = v[t-1,species_id]*(1-turnover) + newgen*turnover
             #v[t] = v[t] @ mut.T
             r = w[species_id].sum()
-            D[t,species_id] = (1-1/(D[t-1,species_id] * r/K+1))*K
+            #D[t,species_id] = (1-1/(D[t-1,species_id] * r/K+1))*K #old method
+            D[t,species_id] = D[t-1,species_id] * r # NEWEST
         
         if t%int((ntimesteps)/divprint)==0:
             if find_fixedpoints:

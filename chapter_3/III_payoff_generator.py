@@ -8,12 +8,12 @@ Requires LITE_III_series_analysis and TEMP_corrs to have been ran before in this
 """
 
 
-#%% show population sizes
-switch_backend('module://matplotlib_inline.backend_inline')
-
 sort_tmp =  sorted(enumerate(simulations), key=lambda x: x[1]['_d'].mean())
 sort_simulations = [i_[1] for i_ in sort_tmp]
 ixs              = [i_[0] for i_ in sort_tmp]
+#%% show population sizes
+switch_backend('module://matplotlib_inline.backend_inline')
+
 filter_1 = [sim['_d'].mean() > 1 for sim in sort_simulations]
 filter_2 = np.array(power_mutu) >0.1
 # filtered_i = np.where(np.logical_and(filter_1,filter_2))[0]
@@ -21,24 +21,25 @@ filtered_i = np.arange(len(sort_simulations))
 
 for i, sim in enumerate(sort_simulations):
     if i in filtered_i:
-        R = np.array(list(gamma['nodes']['power_pred']  [i].values()))
-        G = np.array(list(gamma['nodes']['power_mutu']  [i].values()))
-        B = np.array(list(gamma['nodes']['power_comp']  [i].values()))
+        # R = np.array(list(gamma['nodes']['power_pred']  [i].values()))
+        # G = np.array(list(gamma['nodes']['power_mutu']  [i].values()))
+        # B = np.array(list(gamma['nodes']['power_comp']  [i].values()))
 
 
-        rgblist = np.array([
-        np.nan_to_num(mx.cNorm(mx.renormalize(R),3)*255),
-        np.nan_to_num(mx.cNorm(mx.renormalize(G),3)*255),
-        np.nan_to_num(mx.cNorm(mx.renormalize(B),3)*255)]).astype('int').T
+        # rgblist = np.array([
+        # np.nan_to_num(mx.cNorm(mx.renormalize(R),3)*255),
+        # np.nan_to_num(mx.cNorm(mx.renormalize(G),3)*255),
+        # np.nan_to_num(mx.cNorm(mx.renormalize(B),3)*255)]).astype('int').T
 
-        colors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in rgblist]
+        # colors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in rgblist]
+        colors = ["#EEDD11"]*N
         x = np.arange(sim['D'][:-1].shape[0])
         for i__N in range(N):
             plt.plot(x, sim['D'][:-1,i__N], c=colors[i__N])
             
             # plt.plot(x, sim['dist_avgs'][:-1,i__N], c=colors[i__N])
         # plt.xlim(0,4000)
-        plt.ylim(0,1000)
+        # plt.ylim(0,simulations[0]['_K'])
         plt.title(str(ixs[i])+': '+str(sim['_d'].mean()))
         plt.ylabel('population size')
         plt.xlabel('time (generations)')
@@ -56,17 +57,17 @@ filtered_i = np.arange(len(sort_simulations))
 
 for i,sim in enumerate(sort_simulations):
     if i in filtered_i:
-        R = np.array(list(gamma['nodes']['power_pred']  [i].values()))
-        G = np.array(list(gamma['nodes']['power_mutu']  [i].values()))
-        B = np.array(list(gamma['nodes']['power_comp']  [i].values()))
+        # R = np.array(list(gamma['nodes']['power_pred']  [i].values()))
+        # G = np.array(list(gamma['nodes']['power_mutu']  [i].values()))
+        # B = np.array(list(gamma['nodes']['power_comp']  [i].values()))
 
+        # rgblist = np.array([
+        # np.nan_to_num(mx.cNorm(mx.renormalize(R),3)*255),
+        # np.nan_to_num(mx.cNorm(mx.renormalize(G),3)*255),
+        # np.nan_to_num(mx.cNorm(mx.renormalize(B),3)*255)]).astype('int').T
 
-        rgblist = np.array([
-        np.nan_to_num(mx.cNorm(mx.renormalize(R),3)*255),
-        np.nan_to_num(mx.cNorm(mx.renormalize(G),3)*255),
-        np.nan_to_num(mx.cNorm(mx.renormalize(B),3)*255)]).astype('int').T
-
-        colors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in rgblist]
+        # colors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in rgblist]
+        colors = ["#EEDD11"]*N
         x = np.arange(sim['D'][:-1].shape[0])
         for i__N in range(N):
             plt.plot(x, sim['dist_avgs'][:-1,i__N], c=colors[i__N])
