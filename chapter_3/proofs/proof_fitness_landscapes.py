@@ -274,11 +274,73 @@ dec_rates=inter_sat/inter
 l = (np.diag(dec_rates.flatten()) @ mutual_effs) @ (np.diag(DE.flatten()) @ p)
 #method 2 - omega (outer product), almost twice as fast (x1.7)
 l = (np.outer(dec_rates, DE) * mutual_effs) @ p
+
+lpos = evo.transformations.negativeSaturator(l,v=20) # l positive
+
+# np.where(np.isclose(l,0,atol=1e-15))
+# np.where(lpos==np.inf)
+
+lpos[np.where(np.isclose(l,0,atol=1e-15))]=evo.transformations.negativeSaturator(1e-15,v=20) # limit at 0 for negativeSaturator with v=10
 sd(l, colorbar=True, symmetry=True)
+sd(lpos,color='Reds', colorbar=True)
+np.any(lpos==np.inf)
+
+mx.showlist(lpos[10,:])
+
+
+#lde = lpos * (1-DE/K)
 
 
 
+w = v*lpos
 
+
+filename='oc_tensor_' + str(nloci) + '.obj'
+with bz2.BZ2File(obj_path / filename, 'rb') as f:
+    h = pickle5.load(f)
+
+
+r = np.c_[w.sum(1)]
+
+r * DE / (1+DE*r/K)
+
+ii = w[3]@h
+tst = w@h
+
+tst.shape
+sd(tst[:,3,:])
+sd(ii)
+
+
+i=20
+iii = w[i]@h@w[i]
+tst = w@h@w.T
+sd(tst[:,:,3])
+sd(tst[:,3,3,I])
+sd(iii[:,I])
+
+sd(tst[:,i,:] - tst[:,:,i], colorbar=True)
+
+np.all(np.isclose(w[i]@h@w[i].T, tst[:,i,i]))
+
+sd(tst[20,:,:])
+
+whw = (w@h@w.T).diagonal(0,1,2).T
+sd(whw)
+
+i=np.random.randint(N)
+print(np.all(np.isclose(w[i]@h@w[i].T, tst[:,i,i])))
+print(np.all(np.isclose(w[i]@h@w[i].T, whw[i])))
+print(np.all(tst[:,i,i]==whw[i]))
+
+v = (w@h@w.T).diagonal(0,1,2).T/r**2
+sd(v)
+
+w2=w/r
+v2 = (w2@h@w2.T).diagonal(0,1,2).T
+sd(v2)
+
+np.all(np.isclose(v, v2))
 
 # %% speed test
 a = time.time()
@@ -287,5 +349,93 @@ for i in range(2000):
     #l = (np.outer(dec_rates, DE) * mutual_effs) @ p
 b = time.time()
 b - a
+# %% 
+
+
+
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.plot(np.arange(nstates),l[1])
+ax.plot(np.arange(nstates), evo.transformations.negativeSaturator(l[1],1))
+ax.plot(np.arange(nstates), evo.transformations.negativeSaturator(l[1],20))
+plt.show()
+
+
+mx.showlist(negativeSaturator(np.linspace(-5,5,10),100))
+
+
+
+
+# %% 
+i=18
+
+W = evo.transformations.negativeSaturator(l[i],20)
+mx.showlist(W)
+
+
+W_bar = (W*v[i]).sum()
+
+w = W/W.sum()
+np.isclose(1.0, w.sum())
+
+w_bar = W_bar/W.sum()
+np.isclose(w_bar, (w * v[i]).sum())
+
+def fdep(v, phi=0):
+    # if phi == 0:
+    #     norm = 1
+    # else:
+    #     norm = phi/(np.exp(p)-1)
+    # return np.exp(phi*v)*norm # this expression has integral = 1 in the interval [0,1]
+    # return np.exp(phi*(v-v.mean())) #this is the "orthodox" form, but actually any value for v.mean gives the same result in the end.
+    # for the sake of speed, we do
+    return np.exp(phi*(v-20))
+    
+
+#%%
+dw = w * fdep(v[i],-10)
+dW = W_bar * dw / (dw * v[i]).sum()
+#dW = W_bar * W * fdep (v[i],-10)/ (W * v[i] * fdep (v[i],-10)).sum() # alt. form
+np.isclose(W_bar, (dW*v[i]).sum()) # absolute mean fitness (growth rate) must stay constant
+
+
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.plot(np.arange(nstates),v[i])
+ax.plot(np.arange(nstates), W)
+ax.plot(np.arange(nstates), dW)
+plt.show()
+#%%
+
+#-------------- FDEP --------------
+def fdep(v, phi=0):
+    #np.exp(phi*v)*phi/(np.exp(p)-1) # this expression has integral = 1 in the interval [0,1]. Has a singularity at phi=0
+    # return np.exp(phi*(v-v.mean())) #this is the "orthodox" form, but actually any value for v.mean gives the same result in the end. Even the expression above is pointless.
+    # Therefore, for the sake of speed, we simply do
+    return np.exp(np.c_[phi] * v)
+    
+W = evo.transformations.negativeSaturator(l,20)
+W_bar = (W*v).sum(1)
+precomp_fdep_W = fdep(v,-10) * W #precomputed reweighting of fdep
+dW = np.outer((W_bar / (precomp_fdep_W * v).sum(1)), np.ones(nstates))* precomp_fdep_W
+
+#----------------------------------
+
+
+d = np.random.rand(N)
+np.exp(np.c_[d]*(v)) 
+
+
+sd(np.c_[(W_bar / (precomp_fdep_W * v).sum(1))] * np.ones_like(v))
+
+np.c_[d] * np.ones_like(v)
+
+# %% speed test
+a = time.time()
+for i in range(50000):
+    np.outer((W_bar / (precomp_fdep_W * v).sum(1)), np.ones(nstates))* precomp_fdep_W
+    # np.c_[(W_bar / (precomp_fdep_W * v).sum(1))] * precomp_fdep_W
+    
+b = time.time()
+b - a
+
 
 

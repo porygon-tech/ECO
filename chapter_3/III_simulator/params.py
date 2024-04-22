@@ -20,14 +20,14 @@ K=100 # carrying capacity
 #%% MODEL PARAMETERS (simulation)
 c=np.log(N)/N# expected connectance of the allowed links matrix. Use np.log(N)/N for the connected regime of erdos-renyi graphs (critical point for single component)
 a=0. # assortative mating coefficients, real value (single value or array of N values)
-d=np.linspace(-2,2,nsimulations) # frequency dependence coefficient
+d=np.linspace(-0,0,nsimulations) # frequency dependence coefficient
 alpha= 0.1 #0.1 # strength of the trait matching mechanism. Positive real value. Lower values = greater promiscuity
 xi_S=.5 # level of environmental selection (from 0 to 1).
 
 A = np.ones((N,N)); np.fill_diagonal(A, 0) # fully connected 
-g1,g2 = g = np.array([-0.5 ,0.05]) # payoffs for symmetric games
+g1,g2 = g = np.array([-.0 ,0.1]) # payoffs for symmetric games
 A_e = A*g2 # purely mutualist, no intraspecific competition
-np.fill_diagonal(A, -g2*(N-1)) 
+np.fill_diagonal(A_e, g1) 
 
 
 ''' SILENCED AS IT WILL CHANGE BETWEEN SIMULATIONS

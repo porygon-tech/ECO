@@ -12,10 +12,10 @@ sort_tmp =  sorted(enumerate(simulations), key=lambda x: x[1]['_d'].mean())
 sort_simulations = [i_[1] for i_ in sort_tmp]
 ixs              = [i_[0] for i_ in sort_tmp]
 #%% show population sizes
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 
 filter_1 = [sim['_d'].mean() > 1 for sim in sort_simulations]
-filter_2 = np.array(power_mutu) >0.1
+#filter_2 = np.array(power_mutu) >0.1
 # filtered_i = np.where(np.logical_and(filter_1,filter_2))[0]
 filtered_i = np.arange(len(sort_simulations))
 
@@ -48,10 +48,10 @@ for i, sim in enumerate(sort_simulations):
 
 
 #%% show average traits
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 
 filter_1 = [sim['_d'].mean() > 1 for sim in sort_simulations]
-filter_2 = np.array(power_mutu) <0.1
+#filter_2 = np.array(power_mutu) <0.1
 # filtered_i = np.where(np.logical_and(filter_1,filter_2))[0]
 filtered_i = np.arange(len(sort_simulations))
 
@@ -67,7 +67,7 @@ for i,sim in enumerate(sort_simulations):
         # np.nan_to_num(mx.cNorm(mx.renormalize(B),3)*255)]).astype('int').T
 
         # colors = ['#%02x%02x%02x' % (r,g,b) for r,g,b in rgblist]
-        colors = ["#EEDD11"]*N
+        colors = ["#DDEE11"]*N
         x = np.arange(sim['D'][:-1].shape[0])
         for i__N in range(N):
             plt.plot(x, sim['dist_avgs'][:-1,i__N], c=colors[i__N])
@@ -77,7 +77,21 @@ for i,sim in enumerate(sort_simulations):
         plt.ylabel('trait mean value')
         plt.xlabel('time (generations)')
         plt.show()
+#%% show fitnesses
+filtered_i = np.arange(len(sort_simulations))
 
+for i,sim in enumerate(sort_simulations):
+    if i in filtered_i:
+        colors = ["#11DDEE"]*N
+        x = np.arange(sim['D'][:-1].shape[0])
+        for i__N in range(N):
+            plt.plot(x, sim['fits'][:-1,i__N], c=colors[i__N])
+            
+        #plt.title(str(i)+': '+str(sim['_d'].mean()))
+        plt.title(str(ixs[i])+': '+str(sim['_d'].mean()))
+        plt.ylabel('average per capita fitness')
+        plt.xlabel('time (generations)')
+        plt.show()
 #%%
 
 mat=simulations[15]['v'][:6000,13]

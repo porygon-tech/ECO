@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
 import os
-
+import warnings
 I = np.newaxis
 
 #https://www.geeksforgeeks.org/decorators-in-python/
@@ -123,11 +123,28 @@ def flat_nDist(B): #copied from matriX
 
 class transformations:
     def negativeSaturator( x,v=1):
-        r = x/ (1-np.exp(-v*x))
-        r[np.where(x==0)] = 1/v
+        #r = x/ (1-np.exp(-v*x)) throws error when x is close to 0, the following steps aim at solving this issue:
+        denom = 1-np.exp(-v*x)
+        nslv=1e-15 # Assumed limit (0+-) before this calculation throws zero division error. Might depend on how many floating points your system can handle
+        rond=3 #rounding positions
+        mask = np.isclose(denom, 0, atol=nslv)
+        
+        patch    = np.round(nslv     / (1-np.exp(-v*nslv)), rond)
+        
+        # if not hasattr(x, "__len__"):
+        #     print("EH")
+        # else:
+        #     print("ta bien................................")
+        r = np.zeros_like(x)
+        r[ mask] = patch
+        r[~mask] = np.round(x[~mask] / denom[~mask],        rond)
+        
         return r
     
+
 #class eco:
+
+
 
 
 
@@ -642,6 +659,8 @@ def simulate_explicit(
     #tol=1e-1
     window=500
     maxgen=2000
+    p_ns = 20
+    #nslv = transformations.negativeSaturator(1e-15,v=p_ns) # limit of negative saturator at 0. 1e-15 is a good threshold
     print('Iterating...')
     # for t in range(1,ntimesteps+1):
     t=1;
@@ -683,37 +702,69 @@ def simulate_explicit(
         
         #   ======================================== NEWEST AND TESTED METHOD
         A = ((mutual_effs!=0)+(mutual_effs.T!=0))+0
+       
+        # ----- saturation of species effects
         inter = A @ DE # Sum of individuals in neighbor nodes to each species.
-        inter_sat = holling_II(inter, a=.1, h=1) # one individual from species X cannot interact with more than 100 individuals, no matter if they belong to same or different species
+        inter_sat = holling_II(inter, a=1, h=100) # one individual from species X cannot interact with more than 100 individuals, no matter if they belong to same or different species
         # this assumption is that the individuals that saturate the interaction environment of species X only come from nodes directly linked with X.'
         # Other species don't interfere, which can be understood that they do not share the same spaces unless they are connected in the binary network.
-        dec_rates=inter_sat/inter
-        l[t-1] = (np.outer(dec_rates, DE) * mutual_effs) @ p[t-1]
-        #   ========================================
         
+        #dec_rates=inter_sat/inter --- this can gives division by zero errors, so I made it more robust with the snippet below
+        mask = inter==0
+        dec_rates = np.zeros_like(inter)
+        dec_rates[ mask] = 0
+        dec_rates[~mask] = inter_sat[~mask]/inter[~mask]
+        
+        l[t-1] = (np.outer(dec_rates, DE) * mutual_effs) @ p[t-1]
+        l[t-1] = transformations.negativeSaturator(l[t-1],v=p_ns)
+        #l[t-1][np.where(np.isclose(l[t-1],0,atol=1e-15))]=nslv # correction for very low values. nslv is the limit at 0 for negativeSaturator with v=10 
+        #l[t-1][np.where(l[t-1]==np.inf)]=nslv # correction for very low values. nslv is the limit at 0 for negativeSaturator with v=10 
+        
+        w = v[t-1]*l[t-1]*np.exp(np.c_[d]*v[t-1]) # fitness with frequency dependence
+        
+        #w = ((w @ assortTen)[0] * w) / np.c_[np.where(w.sum(1) == 0, 0.0001, w.sum(1))] # assortative mating effect
+        
+        #l[t-1] *= (1-DE/K) #negative density-dependent selection
+        # ========================================
+        # OLD METHODS
         # l[t-1] = ((mutual_effs @ p[t-1]) * /(mutual_effs!=0).sum(1)) ** m * (interactors.pM(thetadiff,alpha=alpha_environ)) ** (1-m) # Leandro's suggestion + holling type II response to saturate total species effects
         #l[t-1] = ((mutual_effs @ p[t-1]) * holling_II(DE,a=.1,h=1)) ** m * (interactors.pM(thetadiff,alpha=alpha_environ)) ** (1-m) # Leandro's suggestion + holling type II response to saturate species effects
         # l[t-1] = ((mutual_effs @ p[t-1]) * DE) * m + (interactors.pM(thetadiff,alpha=alpha_environ)) * (1-m) # old procedure
         #l[t-1] = (mutual_effs @ p[t-1]) * m + (1-m)*pM(thetadiff,alpha=alpha_environ) #without demography mass interaction
-        l[t-1] = transformations.negativeSaturator(l[t-1])
         # l[t-1] = np.outer(np.ones(N),f(states))
-        w = v[t-1]*l[t-1]*np.exp(np.c_[d]*v[t-1]) # fitness with density dependence
+        #w = v[t-1]*l[t-1]*np.exp(np.c_[d]*v[t-1]) # fitness with frequency dependence        
         
         
-        w = ((w @ assortTen)[0] * w) / np.c_[np.where(w.sum(1) == 0, 0.0001, w.sum(1))] # assortative mating effect
         
-        for species_id in range(N):
+        # for species_id in range(N):
             
-            if w[species_id].sum() == 0:
-                newgen= w[species_id] @ h @ w[species_id] / 0.0001 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            else:
-                newgen= w[species_id] @ h @ w[species_id] / w[species_id].sum()**2
+        #     if w[species_id].sum() == 0:
+        #         newgen= w[species_id] @ h @ w[species_id] / 0.0001 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #     else:
+        #         newgen= w[species_id] @ h @ w[species_id] / w[species_id].sum()**2
             
-            v[t,species_id] = v[t-1,species_id]*(1-turnover) + newgen*turnover
-            #v[t] = v[t] @ mut.T
-            r = w[species_id].sum()
-            #D[t,species_id] = (1-1/(D[t-1,species_id] * r/K+1))*K #old method
-            D[t,species_id] = D[t-1,species_id] * r # NEWEST
+        #     v[t,species_id] = v[t-1,species_id]*(1-turnover) + newgen*turnover
+        #     #v[t] = v[t] @ mut.T
+        #     r = w[species_id].sum()
+        #     D[t,species_id] = (1-1/(D[t-1,species_id] * r/K+1))*K #old method
+        #     # D[t,species_id] = D[t-1,species_id] * r * holling_II(D[t,species_id],h=K/r) # NEWEST
+        
+        # upper part is too slow, here is the vectorized version
+        #v[t,:] = (w @ h @ w.T).diagonal(0,1,2).T/r**2
+        r = np.c_[w.sum(1)]; np.nan_to_num(r)
+        w2=w/r; np.nan_to_num(w2)
+        v[t,:] = (w2@h@w2.T).diagonal(0,1,2).T # finally I got this vectorized after days of tensorial hustling
+        
+        with warnings.catch_warnings(record=True) as wrnngs:
+            DE[np.where(DE<2)] = 0 # with less than 2 individuals, no sex is possible. Without sex, persistence is not possible
+            #D[t,:] =          ((1-1/(DE * r/K+1))*K).flatten()  # old version
+            D[t,:] =          (DE*r / (DE * r/K+1)).flatten()  # my pretty version of the logistic growth with a type II density-regulating functional response
+            # D[t,:] = np.round(((1-1/(DE * r/K+1))*K).flatten()) # with popsize rounding
+            if len(wrnngs) > 0:
+                print(l[t-1])
+
+        # D[t,:] = (r * DE / (1+DE*r/K)).flatten()
+        
         
         if t%int((ntimesteps)/divprint)==0:
             if find_fixedpoints:

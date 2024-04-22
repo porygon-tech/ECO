@@ -35,10 +35,10 @@ import evo
 import matriX as mx
 
 #%% run model
-# system('python chapter_3/III_MAIN_multiprocessor.py')
-# !python chapter_3/III_MAIN_multiprocessor.py
-# python chapter_3/III_MAIN_multiprocessor.py
-
+# DEPRECATED system('python chapter_3/III_MAIN_multiprocessor.py')
+# DEPRECATED !python chapter_3/III_MAIN_multiprocessor.py
+# DEPRECATED python chapter_3/III_MAIN_multiprocessor.py
+# python III_simulator/III_multiprocessor_deploy.py paramsc
 
 #%% developer tools
 
@@ -46,12 +46,13 @@ import matriX as mx
 import contextlib
 import matplotlib
 
-def switch_backend(gui):
-    with contextlib.suppress(ValueError):
-        matplotlib.use(gui, force=True)
-    globals()['plt'] = matplotlib.pyplot
+# def switch_backend(gui):
+#     with contextlib.suppress(ValueError):
+#         matplotlib.use(gui, force=True)
+#     globals()['plt'] = matplotlib.pyplot
 
 from matriX import showdata as sd
+mx.graphictools.inline_backend(True)
 
 #%% load dataset
 #pattern = r'^file\d+\.txt$'  # Regular expression pattern
@@ -74,6 +75,15 @@ with bz2.BZ2File(obj_path / filename, 'rb') as f:
 _, N, nstates = simulations[0]['v'].shape;
 ps = simulations[0]['_ps']
 
+#%% ONE-LINERS FOR CLEANING TRASH
+'''
+python III_simulator/III_multiprocessor_deploy.py paramsc
+find ~/LAB/ECO/data/obj/SIMULATIONS* -maxdepth 1 -type f -ctime -1 -exec rm {} \;
+find ~/LAB/ECO/data/obj/SIMULATIONS* -type f -ctime -1
+
+find ~/LAB/ECO/data/obj/ -type f -ctime -2 # list all files edited in the last two days
+find ~/LAB/ECO/data/obj/SIMULATIONS* -maxdepth 1 -type f -ctime -3 -exec rm {} \;
+'''
 
 #%% get interesting things
 
