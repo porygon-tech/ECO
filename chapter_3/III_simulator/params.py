@@ -20,7 +20,7 @@ K=100 # carrying capacity
 #%% MODEL PARAMETERS (simulation)
 c=np.log(N)/N# expected connectance of the allowed links matrix. Use np.log(N)/N for the connected regime of erdos-renyi graphs (critical point for single component)
 a=0. # assortative mating coefficients, real value (single value or array of N values)
-d=np.linspace(-0,0,nsimulations) # frequency dependence coefficient
+d=np.linspace(-2,2,nsimulations) # frequency dependence coefficient
 alpha= 0.1 #0.1 # strength of the trait matching mechanism. Positive real value. Lower values = greater promiscuity
 xi_S=.5 # level of environmental selection (from 0 to 1).
 
@@ -46,6 +46,7 @@ m=np.clip(np.random.normal(xi_d,0.00001,(N,1)),0,1) # vector of levels of select
 
 # initial population sizes (array of N values or single value (same for all species))
 D0=50
+surround=100
 
 #//// CHANGING VALUES //////////////////////////////
 dev=[]

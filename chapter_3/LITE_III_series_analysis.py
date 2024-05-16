@@ -75,13 +75,14 @@ with bz2.BZ2File(obj_path / filename, 'rb') as f:
 _, N, nstates = simulations[0]['v'].shape;
 ps = simulations[0]['_ps']
 
-#%% ONE-LINERS FOR CLEANING TRASH
+#%% ONE-LINERS FOR CLEANING TRASH IN TERMINAL
 '''
 python III_simulator/III_multiprocessor_deploy.py paramsc
 find ~/LAB/ECO/data/obj/SIMULATIONS* -maxdepth 1 -type f -ctime -1 -exec rm {} \;
 find ~/LAB/ECO/data/obj/SIMULATIONS* -type f -ctime -1
 
 find ~/LAB/ECO/data/obj/ -type f -ctime -2 # list all files edited in the last two days
+find ~/LAB/ECO/data/obj/SIMULATIONS* -maxdepth 1 -type f -ctime -2 -exec rm {} \; #deletes them
 find ~/LAB/ECO/data/obj/SIMULATIONS* -maxdepth 1 -type f -ctime -3 -exec rm {} \;
 '''
 

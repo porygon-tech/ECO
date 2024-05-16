@@ -66,19 +66,23 @@ def task_simulation_set(cola):
         #global ps
         #global K
         
+        #------------------------------------------------------------------
+        #================ thread-specific params (may change with simID). These can be passed as lists of size=nsimulations:
+        
         #chkl = lambda a: (len(a) == params.nsimulations && len(a[0] == params.N) if hasattr(a, '__len__') else False) 
         # gives true if it is a list of length <nsimulations> and its first (or any) element is of length N ;false otherwise
         chkl = lambda a: (len(a) == params.nsimulations if hasattr(a, '__len__') else False) 
         # gives true if it is a list of length <nsimulations>;false otherwise
 
-        i_D0     = params.D0    [i] if chkl(params.D0    ) else params.D0     
-        i_theta  = params.theta [i] if chkl(params.theta ) else params.theta  
-        i_m      = params.m     [i] if chkl(params.m     ) else params.m      
-        i_alpha  = params.alpha [i] if chkl(params.alpha ) else params.alpha  
-        i_v0     = params.v0    [i] if chkl(params.v0    ) else params.v0     
-        i_A_e    = params.A_e   [i] if chkl(params.A_e   ) else params.A_e    
-        i_a      = params.a     [i] if chkl(params.a     ) else params.a      
-        i_d      = params.d     [i] if chkl(params.d     ) else params.d      
+        i_D0       = params.D0       [i] if chkl(params.D0       ) else params.D0     
+        i_surround = params.surround [i] if chkl(params.surround ) else params.surround
+        i_theta    = params.theta    [i] if chkl(params.theta    ) else params.theta  
+        i_m        = params.m        [i] if chkl(params.m        ) else params.m      
+        i_alpha    = params.alpha    [i] if chkl(params.alpha    ) else params.alpha  
+        i_v0       = params.v0       [i] if chkl(params.v0       ) else params.v0     
+        i_A_e      = params.A_e      [i] if chkl(params.A_e      ) else params.A_e    
+        i_a        = params.a        [i] if chkl(params.a        ) else params.a      
+        i_d        = params.d        [i] if chkl(params.d        ) else params.d      
 
        #///////////////////////////////////////////////////////////////////////////////
         
@@ -87,13 +91,15 @@ def task_simulation_set(cola):
         os.system("echo \"\"")
         simulation = evo.simulator(
             simID=i,
+            #---------- =- below: flobal-specific params
             find_fixedpoints=False,
             ntimesteps  = params.ntimesteps,
             h           = h,
             ps          = params.ps,
             K           = params.K,
-            #---------- =-
+            #---------- =- below: thread-specific params (may change with simID)
             D0          = i_D0,
+            surround    = i_surround,
             theta       = i_theta,
             m           = i_m,
             alpha       = i_alpha,

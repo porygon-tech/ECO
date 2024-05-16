@@ -125,7 +125,7 @@ class transformations:
     def negativeSaturator( x,v=1):
         #r = x/ (1-np.exp(-v*x)) throws error when x is close to 0, the following steps aim at solving this issue:
         denom = 1-np.exp(-v*x)
-        nslv=1e-15 # Assumed limit (0+-) before this calculation throws zero division error. Might depend on how many floating points your system can handle
+        nslv=1e-15 # Assumed limit (0+-) before this calculation throws zero division error. Might change depending on how many floating points your system can handle
         rond=3 #rounding positions
         mask = np.isclose(denom, 0, atol=nslv)
         
@@ -577,6 +577,7 @@ def simulate_explicit(
         #xi_S=None, # level of environmental selection (from 0 to 1). Overrides parameter m,
         m=None, # vector of levels of selection imposed by other species (from 0 to 1).
         D0=50,
+        surround = 100, # max number of interactors that can surround an individual (effect saturated with a holling type II response)
         a=0.,
         d=0., # frequency dependence coefficient
         K=200,
@@ -586,6 +587,7 @@ def simulate_explicit(
         tolZ=1e-4,
         divprint=5,
         simID=0
+
         ): 
     """
     Frequency-explicit coevolution
@@ -705,7 +707,7 @@ def simulate_explicit(
        
         # ----- saturation of species effects
         inter = A @ DE # Sum of individuals in neighbor nodes to each species.
-        inter_sat = holling_II(inter, a=1, h=100) # one individual from species X cannot interact with more than 100 individuals, no matter if they belong to same or different species
+        inter_sat = holling_II(inter, a=1, h=surround) # one individual from species X cannot interact with more than 100 individuals, no matter if they belong to same or different species
         # this assumption is that the individuals that saturate the interaction environment of species X only come from nodes directly linked with X.'
         # Other species don't interfere, which can be understood that they do not share the same spaces unless they are connected in the binary network.
         
@@ -720,12 +722,19 @@ def simulate_explicit(
         #l[t-1][np.where(np.isclose(l[t-1],0,atol=1e-15))]=nslv # correction for very low values. nslv is the limit at 0 for negativeSaturator with v=10 
         #l[t-1][np.where(l[t-1]==np.inf)]=nslv # correction for very low values. nslv is the limit at 0 for negativeSaturator with v=10 
         
-        w = v[t-1]*l[t-1]*np.exp(np.c_[d]*v[t-1]) # fitness with frequency dependence
+        #    --------- frequency dependence ---------
+        #w = v[t-1]*l[t-1]*np.exp(np.c_[d] * v[t-1]) # fitness with frequency dependence (old)
+        f =                np.exp(np.c_[d] * v[t-1])
+        Wv =  l[t-1] * v[t-1] # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! check dimensions
+        Wbar = Wv.sum(1); np.nan_to_num(Wbar); Wbar = np.c_[Wbar]
+        dl = np.outer(Wbar.T / (Wv*f).sum(1) , np.ones(nstates)) * l[t-1] * f
+        Wv = dl      * v[t-1]
+        #    ---------o-------------------o---------
         
         #w = ((w @ assortTen)[0] * w) / np.c_[np.where(w.sum(1) == 0, 0.0001, w.sum(1))] # assortative mating effect
-        
         #l[t-1] *= (1-DE/K) #negative density-dependent selection
         # ========================================
+        
         # OLD METHODS
         # l[t-1] = ((mutual_effs @ p[t-1]) * /(mutual_effs!=0).sum(1)) ** m * (interactors.pM(thetadiff,alpha=alpha_environ)) ** (1-m) # Leandro's suggestion + holling type II response to saturate total species effects
         #l[t-1] = ((mutual_effs @ p[t-1]) * holling_II(DE,a=.1,h=1)) ** m * (interactors.pM(thetadiff,alpha=alpha_environ)) ** (1-m) # Leandro's suggestion + holling type II response to saturate species effects
@@ -734,7 +743,7 @@ def simulate_explicit(
         # l[t-1] = np.outer(np.ones(N),f(states))
         #w = v[t-1]*l[t-1]*np.exp(np.c_[d]*v[t-1]) # fitness with frequency dependence        
         
-        
+
         
         # for species_id in range(N):
             
@@ -751,9 +760,19 @@ def simulate_explicit(
         
         # upper part is too slow, here is the vectorized version
         #v[t,:] = (w @ h @ w.T).diagonal(0,1,2).T/r**2
-        r = np.c_[w.sum(1)]; np.nan_to_num(r)
-        w2=w/r; np.nan_to_num(w2)
-        v[t,:] = (w2@h@w2.T).diagonal(0,1,2).T # finally I got this vectorized after days of tensorial hustling
+        r=Wbar
+        # w2=Wv/r; np.nan_to_num(w2)
+        # v[t,:] = (w2@h@w2.T).diagonal(0,1,2).T # finally I got this vectorized after days of tensorial hustling
+
+        
+        dlr = dl / r ; np.nan_to_num(dlr)
+        vv =  dlr * v[t-1] # reproductive potential
+        sex=True
+        if sex:
+            v[t,:] = (vv@h@vv.T).diagonal(0,1,2).T
+        else:
+            v[t,:] = vv # NO SEX :(
+        
         
         with warnings.catch_warnings(record=True) as wrnngs:
             DE[np.where(DE<2)] = 0 # with less than 2 individuals, no sex is possible. Without sex, persistence is not possible
@@ -802,6 +821,7 @@ class simulator(object):
             alpha,
             m,
             D0,
+            surround,
             a,
             d,
             K,
@@ -817,6 +837,7 @@ class simulator(object):
         self._alpha=alpha
         self._m=m
         self._D0=D0
+        self._surround=surround
         self._a=a
         self._d=d
         self._K=K
@@ -838,6 +859,7 @@ class simulator(object):
             alpha=self._alpha,
             m=self._m,
             D0=self._D0,
+            surround=self._surround,
             a=self._a,
             d=self._d,
             K=self._K,

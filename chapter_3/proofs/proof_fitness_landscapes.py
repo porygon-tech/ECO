@@ -18,7 +18,7 @@ dataPath = root / 'data/dataBase'
 import time
 import sys
 import numpy as np
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
 import networkx as nx
 #%% OWN LIBS
 sys.path.insert(0, "./lib")
@@ -414,25 +414,47 @@ def fdep(v, phi=0):
     
 W = evo.transformations.negativeSaturator(l,20)
 W_bar = (W*v).sum(1)
-precomp_fdep_W = fdep(v,-10) * W #precomputed reweighting of fdep
-dW = np.outer((W_bar / (precomp_fdep_W * v).sum(1)), np.ones(nstates))* precomp_fdep_W
+Wf = fdep(v,-10) * W #precomputed reweighting of fdep
+dW = np.outer((W_bar / (Wf * v).sum(1)), np.ones(nstates)) * Wf
 
 #----------------------------------
+#alt.form, faster?
+W = evo.transformations.negativeSaturator(l,20)
+f = fdep(v,-10)
+Wv = W*v
+np.outer(np.c_[Wv.sum(1)].T / (Wv*f).sum(1) , np.ones(nstates)) * W * f
+np.c_[Wv.sum(1)]
+
+
+
+
 
 
 d = np.random.rand(N)
 np.exp(np.c_[d]*(v)) 
 
 
-sd(np.c_[(W_bar / (precomp_fdep_W * v).sum(1))] * np.ones_like(v))
+sd(np.c_[(W_bar / (Wf * v).sum(1))] * np.ones_like(v))
 
 np.c_[d] * np.ones_like(v)
 
 # %% speed test
 a = time.time()
 for i in range(50000):
-    np.outer((W_bar / (precomp_fdep_W * v).sum(1)), np.ones(nstates))* precomp_fdep_W
+    #np.outer((W_bar / (precomp_fdep_W * v).sum(1)), np.ones(nstates))* precomp_fdep_W
     # np.c_[(W_bar / (precomp_fdep_W * v).sum(1))] * precomp_fdep_W
+    
+    W = evo.transformations.negativeSaturator(l,20)
+    f = fdep(v,-10)
+    Wv = W*v
+    np.outer(Wv.sum(1) / (Wv*f).sum(1) , np.ones(nstates)) * W * f
+    
+    # W = evo.transformations.negativeSaturator(l,20)
+    # W_bar = (W*v).sum(1)
+    # precomp_fdep_W = fdep(v,-10) * W #precomputed reweighting of fdep
+    # dW = np.outer((W_bar / (precomp_fdep_W * v).sum(1)), np.ones(nstates))* precomp_fdep_W
+    
+    
     
 b = time.time()
 b - a
