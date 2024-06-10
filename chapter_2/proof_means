@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun  3 13:27:08 2024
+
+@author: ubuntu
+"""
+
+
+#%% imports 
+import sys
+sys.path.insert(0, "./lib")
+import evo
+import matriX as mx
+import matplotlib.pyplot as plt
+import numpy as np
+import networkx as nx
+from  matriX import showdata as sd
+from scipy.special import hyp2f1
+from scipy.optimize import curve_fit
+mx.graphictools.inline_backend(True)
+#mx.graphictools.inline_backend(False)
+
+from scipy.special import comb  
+def bindist(n,k,p=0.5):
+    return comb(n,k)*p**k*(1-p)**(n-k)
+
+'''
+Here we prove with simulations that the expression for the change in the mean is correct, both under sexual and asexual reproduction
+'''
+#%%
+n=120
+p=0.2
+
+nstates = n+1
+x = np.arange(nstates)
+y = list(map(bindist, np.repeat(n,nstates), x, np.repeat(p,nstates)))
+
+plt.step(x,y);plt.show()
+#%%
+n=50
+nstates = n+1
+x = np.arange(nstates)
+y = list(map(bindist, np.repeat(n,nstates), x, np.repeat(p,nstates)))
+plt.step(np.linspace(0,1,nstates),y)
+
+n=100
+nstates = n+1
+x = np.arange(nstates)
+y = list(map(bindist, np.repeat(n,nstates), x, np.repeat(p,nstates)))
+plt.step(np.linspace(0,1,nstates),y)
+
+n=200
+nstates = n+1
+x = np.arange(nstates)
+y = list(map(bindist, np.repeat(n,nstates), x, np.repeat(p,nstates)))
+plt.step(np.linspace(0,1,nstates),y)
+
+n=1000
+nstates = n+1
+x = np.arange(nstates)
+y = list(map(bindist, np.repeat(n,nstates), x, np.repeat(p,nstates)))
+plt.step(np.linspace(0,1,nstates),y)
+
+plt.show()
+
+#%% proof for linear w(z)
+n=120
+p=0.2
+
+nstates = n+1
+x = np.arange(nstates)
+y = list(map(bindist, np.repeat(n,nstates), x, np.repeat(p,nstates)))
+z=np.linspace(0,1,nstates)
+print(sum(y*z), p)
+
+def w(z): #fitness landscape
+    return z
+
+Wv = y*w(z)
+rho = Wv / sum(Wv)
+y1 = rho+0.
+
+plt.step(z,y)
+plt.step(z,y1)
+
+sum(y1*z)-sum(y*z) # delta mean
+plt.show()
+predicted = (1 + (n-1)*p)/n # expression for predicting the next mean
+
+print(np.isclose(sum(y1*z), predicted))
+
+# is it still a binomial?
+
+plt.step(z,y)
+plt.step(z,y1)
+y1t = list(map(bindist, np.repeat(n,nstates), x, np.repeat(predicted,nstates)))
+plt.step(z,y1t)
+plt.show()
+
+#%% proof for power 3 gradient
+n=120
+p=0.2
+
+nstates = n+1
+x = np.arange(nstates)
+y = list(map(bindist, np.repeat(n,nstates), x, np.repeat(p,nstates)))
+z=np.linspace(0,1,nstates)
+print(sum(y*z), p)
+
+def w(z): #fitness landscape
+    return -16*(1 - 2*z)**2 * (-1 + z) * z
+
+Wv = y*w(z)
+rho = Wv / sum(Wv)
+y1 = rho+0.
+
+plt.step(z,y)
+plt.step(z,y1)
+
+sum(y1*z)-sum(y*z) # delta mean
+plt.show()
+predicted = (1 + (n-1)*p)/n # expression for predicting the next mean
+
+print(np.isclose(sum(y1*z), predicted))
+#%%
+n=120
+p=0.492
+ngenerations = 100
+
+nstates = n+1   
+x = np.arange(nstates)
+z=np.linspace(0,1,nstates)
+v = np.zeros((ngenerations, nstates))
+v[0]=list(map(bindist, np.repeat(n,nstates), x, np.repeat(p,nstates))) # binomial distribution
+#v[0]=1/nstates # uniform distribution
+r= np.zeros(ngenerations)
+for t in range(ngenerations-1):
+    Wv = v[t]*w(z)
+    r[t] = sum(Wv)
+    rho = Wv / r[t]
+    v[t+1] = rho
+
+mx.showdata(v)
+mx.showlist(r[:-1])

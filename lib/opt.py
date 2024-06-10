@@ -37,3 +37,4 @@ def evolve(indiv, policy, mutation, ngens=10, podium=3, popsize=100, keep_dad=Tr
             population = list(np.array(population)[list(np.random.choice(winners_ids, size=popsize))])
     return list(np.array(population)[list(winners_ids)])
     
+ 

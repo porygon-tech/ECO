@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri May 17 13:16:23 2024
+
+@author: ubuntu
+"""
+from os import chdir, listdir, environ, system, popen
+from pathlib import Path
+import pickle5
+import bz2
+chdir(environ['HOME'] + '/LAB/ECO') #this line is for Spyder IDE only
+root = Path(".")
+obj_path = root / 'data/obj'
+img_path = Path(environ['HOME']) / 'LAB/figures'
+dataPath = root / 'data/dataBase'
+
+
+#%% imports 
+import time
+import sys
+import numpy as np
+import matplotlib.pyplot as plt
+# %matplotlib inline
+# from copy import deepcopy
+import networkx as nx
+# import pandas as pd
+r = np.random.rand
+
+#%% OWN LIBS
+sys.path.insert(0, "./lib")
+import opt
+import matriX as mx
+mx.graphictools.inline_backend(False)
+mx.graphictools.inline_backend(True)
+#%% Net load
+filenames_folder = popen('ls -c data/obj/special_networks/NET*').read().split("\n"); filenames_folder=filenames_folder[:-1]
+netname = "data/obj/special_networks/NET_lognormal_50_1705422065.1833186_modular_Tue_Jan_16_162725_2024.obj"
+with bz2.BZ2File(netname, 'rb') as f:
+ 	A = pickle5.load(f)
+print("loaded " + netname)
+
+#%%
+G = nx.from_numpy_array(A)
+nx.draw(G)
+mx.mod(G)
+
+
+
+#%%
