@@ -501,7 +501,7 @@ except NameError as e:
 '''
 import interactors
 
-def predict(v0,l,ntimesteps=100,h=None, mut=0., a=0., ps=None):
+def predict(v0,l,ntimesteps=100,h=None, mut=0., a=0., d=0, sex=False,ps=None):
     """
     Parameters
     ----------
@@ -514,7 +514,13 @@ def predict(v0,l,ntimesteps=100,h=None, mut=0., a=0., ps=None):
     mut : float or 2nd order ndarray, optional
         mutation matrix or mutation rate. If a matrix is not provided, it tries to generate one with the mutation rate. 
         The default is 0..
-    ntimesteps : TYPE, optional
+    a : float, optional
+        assortative mating coefficient. The default is 0..
+    d : float, optional
+        frequency dependent selection coefficient. The default is 0..
+    sex : bool, optional
+        If False, param a has no effect. The default is False.
+    ntimesteps : int, optional
         n of generations simulated. The default is 100.
 
     Returns
@@ -523,6 +529,7 @@ def predict(v0,l,ntimesteps=100,h=None, mut=0., a=0., ps=None):
 
     """
     v0 = np.c_[list(v0)]
+    l=np.c_[l]
     nstates=len(v0)
     if type(mut) == float:
         mut= generate_mut_matrix(nstates,mu=mut)
@@ -535,17 +542,34 @@ def predict(v0,l,ntimesteps=100,h=None, mut=0., a=0., ps=None):
     assortMat = interactors.pM(statesdiff,alpha=abs(a))
     if a<0:
         assortMat = 1 - assortMat
-        
+
+    
     v = np.zeros((ntimesteps+1, nstates,1))
     v[0] = np.squeeze(v0)[:,np.newaxis]
+    #------------------------------ 
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    aT = np.repeat(assortMat[I,...],nstates,axis=0)
+    ha = h*aT # not the same as h@aT1
     print('Iterating...')
     for t in range(1,ntimesteps+1):
-    #for t in range(1,10):
-        w = v[t-1]*l
-        w = ((w.T @ assortMat).T * w)/w.sum()
-        v[t] = ((w.T @ h @ w) / w.sum()**2)[:,0]
-        v[t] = mut @ v[t]
-        print(t)
+        f = np.exp(d * v[t-1])
+        Wvf = f*v[t-1]*l
+        rho = Wvf/Wvf.sum()
+        if sex:
+            #v1 = (rho.T@h@rho)[:,0]
+            v1 = (rho.T@ha@rho)[:,0]; v1/=v1.sum() # same as (Wvf.T@h@Wvf)[:,0]/Wvf.sum()**2
+            v[t,:]=v1 
+        else:
+            v[t,:] = rho # NO SEX :(
+    #------------------------------
+    # print('Iterating...')
+    # for t in range(1,ntimesteps+1):
+    # #for t in range(1,10):
+    #     w = v[t-1]*l
+    #     w = ((w.T @ assortMat).T * w)/w.sum()
+    #     v[t] = ((w.T @ h @ w) / w.sum()**2)[:,0]
+    #     v[t] = mut @ v[t]
+    #     print(t)
     return(v)
 
 def holling_II(x, a=1, h=1):
@@ -555,6 +579,13 @@ def holling_II(x, a=1, h=1):
     # for a=2, f(h/2)=h/2
     return (a * x) / (1 + a / h * x)
 #%%
+def fdep(v, phi=0):
+    # if phi == 0:
+    #     norm = 1
+    # else:
+    #     norm = phi/(np.exp(p)-1)
+    # return np.exp(phi*v)*norm # this expression has integral = 1 in the interval [0,1]
+    return np.exp(phi*(v-v.mean()))
 
 
 def initialize_bin_explicit(N,nloci,dev):
@@ -626,17 +657,20 @@ def simulate_explicit(
                 assortMat = 1 - assortMat
             assortTen[i] = assortMat
             '''
+            assortMat = interactors.pM(statesdiff,alpha=abs(a[i]))
             if a[i]<0:  
-                assortMat = 1 - interactors.pM(statesdiff,alpha=1/a[i]**2)
-            else:
-                assortMat =     interactors.pM(statesdiff,alpha=a[i]**2)
+                assortMat = 1 - assortMat
             
             assortTen[i] = assortMat
+        hal = np.array([h*np.repeat(aM[I],nstates,axis=0) for aM in assortTen])
+        
     else:
         assortMat = interactors.pM(statesdiff,alpha=abs(a))
         if a<0:
             assortMat = 1 - assortMat
-        assortTen = np.repeat(assortMat[I,...],N,axis=0)
+        #assortTen = np.repeat(assortMat[I,...],N,axis=0)
+        aT = np.repeat(assortMat[I,...],nstates,axis=0)
+        ha = h*aT
     #---------------------------------------------
     v = np.zeros((ntimesteps+1, N, nstates))
     v[0] = v0
@@ -724,11 +758,30 @@ def simulate_explicit(
         
         #    --------- frequency dependence ---------
         #w = v[t-1]*l[t-1]*np.exp(np.c_[d] * v[t-1]) # fitness with frequency dependence (old)
-        f =                np.exp(np.c_[d] * v[t-1])
+        #f =               np.exp(np.c_[d] * v[t-1])
+        f = fdep(v[t-1], phi = np.c_[d])
         Wv =  l[t-1] * v[t-1] # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! check dimensions
         Wbar = Wv.sum(1); np.nan_to_num(Wbar); Wbar = np.c_[Wbar]
-        dl = np.outer(Wbar.T / (Wv*f).sum(1) , np.ones(nstates)) * l[t-1] * f
-        Wv = dl      * v[t-1]
+
+        # --- old-recent way 1
+        # dl = np.outer(Wbar.T / (Wv*f).sum(1) , np.ones(nstates)) * l[t-1] * f
+        # Wv = dl      * v[t-1]
+        # Wvf = f*Wv
+        # rho = Wvf/np.c_[Wvf.sum(1)] # reproductive potential
+        # --
+        
+        # --old-recent way 2
+        w = np.outer(1/l[t-1].sum(1) , np.ones(nstates))*l[t-1]
+        # wf =w*f
+        # phiw = wf/wf.sum()
+        # phiw_v=phiw*v[t-1]
+        # rho = np.outer(1/phiw_v.sum(1) , np.ones(nstates))*l[t-1]
+        # --
+        
+        wfv =w*f*v[t-1]
+        rho = np.outer(1/wfv.sum(1) , np.ones(nstates))*wfv
+        # --
+        
         #    ---------o-------------------o---------
         
         #w = ((w @ assortTen)[0] * w) / np.c_[np.where(w.sum(1) == 0, 0.0001, w.sum(1))] # assortative mating effect
@@ -763,15 +816,35 @@ def simulate_explicit(
         r=Wbar
         # w2=Wv/r; np.nan_to_num(w2)
         # v[t,:] = (w2@h@w2.T).diagonal(0,1,2).T # finally I got this vectorized after days of tensorial hustling
+        
+        #================================================
+        #'''
+        # dlr = dl / r ; np.nan_to_num(dlr)
+        # vv =  dlr * v[t-1] # reproductive potential
+        # sex=True
+        # if sex:
+        #     v[t,:] = (vv@h@vv.T).diagonal(0,1,2).T # finally I got this vectorized after days of tensorial hustling
+        # else:
+        #     v[t,:] = vv # NO SEX :(
+        #'''
+        #^^^^^^^^^^^^^^^^^^^^^
+        #Wvf = f*Wbar
+        
 
         
-        dlr = dl / r ; np.nan_to_num(dlr)
-        vv =  dlr * v[t-1] # reproductive potential
         sex=True
         if sex:
-            v[t,:] = (vv@h@vv.T).diagonal(0,1,2).T
+            #v1 = (rho.T@ha@rho)[:,0] # individual
+            if not hasattr(a, "__len__"): 
+                v1 = (rho@ha@rho.T).diagonal(0,1,2).T; v1=v1/np.c_[v1.sum(1)]# same as (Wvf.T@h@Wvf)[:,0]/Wvf.sum()**2
+                #v1 = (vv@h@vv.T).diagonal(0,1,2).T  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            else:
+                v1 = (rho@hal@rho.T).diagonal(0,2,3).diagonal(0,0,2).T; v1=v1/np.c_[v1.sum(1)]
+            v[t,:]=v1 
         else:
-            v[t,:] = vv # NO SEX :(
+            v[t,:] = rho # NO SEX :(
+        
+
         
         
         with warnings.catch_warnings(record=True) as wrnngs:
@@ -870,8 +943,7 @@ class simulator(object):
             divprint=10,
             simID=self._simID
         )
-        #self.fits = (self.v*self.l).sum(2)
-        self.fits = (self.v*self.l*np.exp(np.c_[self._d]*self.v)).sum(2)
+        self.fits = (self.v*self.l).sum(2)
         
         self.dist_avgs = dist_averages(self.v,self._ps)
 

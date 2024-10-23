@@ -58,7 +58,9 @@ sd (v)
 p = np.array([evo.interactors.convpM(v[species_id], nstates, alpha) for species_id in range(N)])
 sd(p)
 
-p.sum(1)#!/usr/bin/env python3
+p.sum(1)
+#%%
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Wed Mar 20 12:56:01 2024
@@ -388,8 +390,22 @@ def fdep(v, phi=0):
     # return np.exp(phi*v)*norm # this expression has integral = 1 in the interval [0,1]
     # return np.exp(phi*(v-v.mean())) #this is the "orthodox" form, but actually any value for v.mean gives the same result in the end.
     # for the sake of speed, we do
-    return np.exp(phi*(v-20))
+    # return np.exp(phi*(v-20))
+    return np.exp(phi*(v-v.mean()))
     
+#%%
+w.sum()
+
+wf = w*fdep(v[i], 10)
+phiw = wf/wf.sum()
+
+phiw.sum()
+
+
+fig = plt.figure(); ax = fig.add_subplot(111)
+ax.plot(np.arange(nstates),w)
+ax.plot(np.arange(nstates), phiw)
+plt.show()
 
 #%%
 dw = w * fdep(v[i],-10)

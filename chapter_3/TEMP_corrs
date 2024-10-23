@@ -8,6 +8,8 @@ Requires LITE_III_series analysis to have been ran before in this console
 """
 
 thres_interac=100
+effs = [g*p for g,p in zip(gammas,payoffs)]
+gammas_binrewired = [g> 0.5 for g in gammas]
 
 gamma   = {}
 gamma_i = {}
@@ -17,13 +19,13 @@ payoff  = {}
 eff  = {}
 
 Gl_gamma   = [nx.from_numpy_array(M)                         for M in gammas]
+Gl_gamma_bin= [nx.from_numpy_array(M)                         for M in gammas_binrewired]
 Gl_gamma_i = [nx.from_numpy_array(M)                         for M in gammas_i]
 Gl_mass    = [nx.from_numpy_array(M)                         for M in adjs]
 # Gl_mass_c  = [nx.from_numpy_array(M >thres_interac)          for M in adjs]
 Gl_mass_c  = [mx.pruning.threshold(G,thres_interac) for G in Gl_mass]
 Gl_payoff  = [nx.from_numpy_array(M,create_using=nx.DiGraph) for M in payoffs]
 
-effs = [g*p for g,p in zip(gammas,payoffs)]
 
 gamma   ['name'] = 'gamma'
 gamma_i ['name'] = 'gamma_i'
@@ -59,10 +61,12 @@ except AssertionError:
     print("err") 
 [nx.is_connected(G) for G in Gl_gamma]
 
-gamma['nC']   = [nx.number_connected_components(G) for G in Gl_gamma]
+gamma['nC']   = [nx.number_connected_components(G) for G in Gl_gamma_bin]
 gamma_i['nC'] = [nx.number_connected_components(G) for G in Gl_gamma_i]
 mass['nC']    = [nx.number_connected_components(G) for G in Gl_mass]
-mass_c['nC']  = [nx.number_connected_components(G) for G in Gl_mass_c]
+tmp = Gl_mass_c.copy()
+[G.remove_nodes_from(list(nx.isolates(G))) for G in tmp]
+mass_c['nC']  = [nx.number_connected_components(G) for G in tmp]
 
 
 gamma['nodes']   = {}
@@ -189,6 +193,7 @@ l=[]
 varnames = []
 for mclass in matList:
     mname = mclass['name']
+    print(mname)
     for key in mclass['nodes'].keys():
         # print(mname + key)
         nodenames = mclass['nodes'][key][0].keys()
@@ -206,7 +211,7 @@ cs = np.nan_to_num(cs) # !!!
 cs_flat  = cs.reshape((len(simulations),np.prod(cs[0].shape)))
 
 
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 
 mx.showdata(np.corrcoef(cs_flat.T), symmetry=True, colorbar=True)
 
@@ -288,8 +293,7 @@ plt.xticks(range(cs_flat_hivar.shape[1]), cornames_flat_hivar)
 plt.xticks(rotation='vertical')
 plt.figure(figsize=(64, 18))
 '''
-
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 
 #%%
 '''
@@ -341,7 +345,7 @@ col_indices_nn      = col_indices[endofnan:]
 # sorted_values_nn
 
 #%% all
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 head = (00,20)
 
 for i,j in zip(row_indices_nn[head[0]:head[1]], col_indices_nn[head[0]:head[1]]):
@@ -355,11 +359,11 @@ for i,j in zip(row_indices_nn[head[0]:head[1]], col_indices_nn[head[0]:head[1]])
 '''
 if nothing is found, try head head = (00,len(cornames_flat)) 
 '''
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 head = (0,300) 
 import re
-forcedvarname = 'freqdep'
-cornamepattern = 'mutu' # '.*' for no filter
+forcedvarname = 'assortmat'
+cornamepattern = 'gamma' # '.*' for no filter
 
 targetrows = row_indices_nn[np.where(row_indices_nn == np.where(np.array(testvarnames)==forcedvarname)[0][0])]
 targetcols = col_indices_nn[np.where(row_indices_nn == np.where(np.array(testvarnames)==forcedvarname)[0][0])]
@@ -378,7 +382,7 @@ for i,j in zip(targetrows[head[0]:head[1]], targetcols[head[0]:head[1]]):
 #       print('\n'.join([tmp for tmp in cornames_flat if bool(re.search('payoff_deg_X_mass_c_ec', tmp))]))
 
 #%% Search only y
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 head = (00,100)
 import re
 
@@ -399,7 +403,8 @@ for i,j in zip(row_indices_nn[head[0]:head[1]], col_indices_nn[head[0]:head[1]])
 
 #%%
 
-switch_backend('qt5agg') # or 'qtagg'
+mx.graphictools.inline_backend(True)
+mx.graphictools.inline_backend(False)
 print('\n'.join(cornames_flat))
 #%%
 fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
@@ -412,6 +417,66 @@ ax.set_ylabel(r"y")
 # plt.legend(handles=[scatter1, scatter2])
 plt.colorbar(scatter1)
 plt.show()
+
+#%% hacer un pca de esto
+mx.graphictools.inline_backend(False)
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(a,
+                    d,
+                    gamma['mod'],
+                    # mass_c['nC'],
+                    c=gamma['sR'],
+                    cmap='winter_r',s=30)
+ax.set_xlabel(r"$a$", fontsize=16)
+ax.set_ylabel(r"$\phi$") 
+ax.set_zlabel(r"num components") 
+# plt.legend(handles=[scatter1, scatter2])
+plt.colorbar(scatter1)
+plt.show()
+#%%
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(gamma['sR'],
+                    d,
+                    gamma['nC'],
+                    c=a,
+                    cmap='winter_r',s=30)
+ax.set_xlabel(r"x", fontsize=16)
+ax.set_ylabel(r"y") 
+# plt.legend(handles=[scatter1, scatter2])
+plt.colorbar(scatter1)
+plt.show()
+
+#%%
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(np.repeat(d,N),
+                    [list(gamma['nodes']['ec'][i].values())for i in range(len(simulations))],
+                    np.repeat(gamma['sR'],N),
+                    # c=gamma['sR']
+                    c=np.repeat(a,N), 
+                    cmap='winter_r',s=30)
+ax.set_xlabel(r"x", fontsize=16)
+ax.set_ylabel(r"y") 
+# plt.legend(handles=[scatter1, scatter2])
+plt.colorbar(scatter1)
+plt.show()
+
+
+
+#%%
+fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
+scatter1=ax.scatter(np.repeat(d,N),
+                    np.repeat(a,N),
+                    [list(gamma['nodes']['thetavar'][i].values())for i in range(len(simulations))],
+                    
+                    # c=gamma['sR']
+                    c=np.repeat(gamma['sR'],N), 
+                    cmap='inferno',s=30)
+ax.set_xlabel(r"x", fontsize=16)
+ax.set_ylabel(r"y") 
+# plt.legend(handles=[scatter1, scatter2])
+plt.colorbar(scatter1)
+plt.show()
+
 
 
 #%% important plot 1
@@ -427,6 +492,7 @@ plt.colorbar(scatter1)
 plt.show()
 
 #%% important plot 2
+mx.graphictools.inline_backend(False)
 fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
 scatter1=ax.scatter(#tmp_nodecorrs('payoff_qdeg_X_gamma_bc'),
                      # tmp_nodecorrs('payoff_bc_X_payoff_qdeg'),
@@ -445,7 +511,7 @@ plt.colorbar(scatter1)
 plt.show()
 
 #%% important plot 3
-switch_backend('qt5agg') # or 'qtagg'
+mx.graphictools.inline_backend(False)
 fig = plt.figure(figsize=(8,6)); ax = fig.add_subplot(111, projection='3d')
 scatter1=ax.scatter(tmp_nodecorrs('payoff_qindeg_X_payoff_bc'),
                       # tmp_nodecorrs('payoff_bc_X_payoff_qdeg'),
@@ -541,10 +607,10 @@ mass_c.keys()
 mass_c['mod']
 tmp_nodecorrs('payoff_qoutdeg_X_payoff_qindeg')
 
+
 #%%
 
-switch_backend('module://matplotlib_inline.backend_inline')
-
+mx.graphictools.inline_backend(True)
 plt.scatter(
     [list(payoff['nodes']['ec'][i].values())for i in range(len(simulations))],
     [list(payoff['nodes']['bc'] [i].values())for i in range(len(simulations))],
@@ -1148,11 +1214,11 @@ for i, G in enumerate(Gl_payoff):
 
 
 #%% 
+mx.graphictools.inline_backend(True)
 
-switch_backend('module://matplotlib_inline.backend_inline')
 
 import matplotlib.animation as animation
-simID=20
+simID=14
 adjs  , mutu  , comp  , pred  , gammas   = evo.getADJs(simulations, simID=simID,return_gammas=True)
 sim = simulations[simID]
 
@@ -1254,7 +1320,7 @@ ax.set_title('t = {}'.format(t))
 plt.show()
 
 #%%
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 import matplotlib.animation as animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -1321,14 +1387,14 @@ plt.imshow(gammas[t]*payoffs[t],norm=matplotlib.colors.TwoSlopeNorm(vmin=-.02, v
 plt.show()
 #%% ANIMATE COMPLETE 1
 import re
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 import matplotlib.animation as animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 smooth=0.9#0.85
 simID=1 # 160 167 158 155 146 59 121
 
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 
 
 adjs  , mutu  , comp  , pred  , gammas   = evo.getADJs(simulations, simID=simID,return_gammas=True)

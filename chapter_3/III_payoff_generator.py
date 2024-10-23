@@ -73,7 +73,7 @@ for i,sim in enumerate(sort_simulations):
             plt.plot(x, sim['dist_avgs'][:-1,i__N], c=colors[i__N])
             
         #plt.title(str(i)+': '+str(sim['_d'].mean()))
-        plt.title(str(ixs[i])+': '+str(sim['_d'].mean()))
+        plt.title(str(ixs[i])+': '+str(sim['_d'].mean())+' a: '+str(sim['_a'].mean()))
         plt.ylabel('trait mean value')
         plt.xlabel('time (generations)')
         plt.show()
@@ -93,14 +93,16 @@ for i,sim in enumerate(sort_simulations):
         plt.xlabel('time (generations)')
         plt.show()
 #%%
-
-mat=simulations[15]['v'][:6000,13]
-serie=simulations[15]['dist_avgs'][:,13]
+i=np.random.randint(N)
+i2=1
+mat=simulations[i]['v'][:6000,i2]
+serie=simulations[i]['dist_avgs'][:,i2]
 # popserie = simulations[15]['D'][:,13]
-plt.plot(serie);plt.show()
+#plt.plot(serie);plt.show()
 sd(mx.graphictools.resize_image(mat, (356,200)),color='viridis')
-plt.plot(mat)
-plt.show()
+sd(mat)
+
+#plt.plot(mat.T); plt.show()
 
 # plt.plot(popserie);plt.show()
 thres = 2

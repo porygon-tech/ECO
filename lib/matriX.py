@@ -725,4 +725,40 @@ def joingraphs(m1,m2):
 
 
 
+def showF3D(f,type='surf', rangeX=(-1,1),rangeY=(-1,1),res=20,zlim=None,cmap='jet'):
+    resX=res
+    resY=res
+    xr = np.linspace(rangeX[0],rangeX[1],resX)
+    yr = np.linspace(rangeY[0],rangeY[1],resY)
+    gx,gy = np.meshgrid(xr,yr)
+    x, y = gx.flatten(), gy.flatten()
+    z = list(map(f, x,y))
+    if type == 'surf':
+        fig = plt.figure(); ax = fig.add_subplot(projection='3d')
+        if zlim:
+            ax.axes.set_zlim3d(bottom=zlim[0], top=zlim[1]) 
+        surf = ax.plot_trisurf(x,y,z, cmap=cmap, linewidth=0,antialiased = True)
+        fig.colorbar(surf)
+        plt.show()
+    elif type == 'scatter':
+        fig = plt.figure(); ax = fig.add_subplot(projection='3d')
+        if zlim:
+            ax.axes.set_zlim3d(bottom=zlim[0], top=zlim[1]) 
+        scat = ax.scatter3D(x,y,z, c=z, cmap=cmap)
+        fig.colorbar(scat)
+        plt.show()
+    elif type == 'map':
+        # showdata(np.array(z).reshape((resX,resY)), color='jet')
+        if zlim:
+            plt.imshow(np.array(z).reshape((resX,resY)).astype('float32'), interpolation='none',origin='upper', cmap=cmap,vmin=zlim[0], vmax=zlim[1])
+        else:
+            plt.imshow(np.array(z).reshape((resX,resY)).astype('float32'), interpolation='none',origin='upper', cmap=cmap)
+        plt.colorbar(label=r'$z$')
+
+        tk = np.arange(0,res,int(res/6))
+        plt.xticks(ticks=tk, labels=np.round(xr,3)[tk], rotation=45)
+        plt.yticks(ticks=tk+1, labels=np.round(yr,1)[tk+1], rotation=45)
+        plt.xlabel(r"$x$")
+        plt.ylabel(r"$y$")
+        plt.show()
 

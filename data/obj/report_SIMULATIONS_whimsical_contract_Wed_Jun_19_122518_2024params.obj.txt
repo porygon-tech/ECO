@@ -1,0 +1,7 @@
+REPORT for simulation Wed_Jun_19_122518_2024 =======================
+non-fixed values:
+	_v0
+	_theta
+	_a
+	_d
+	_simID

@@ -224,6 +224,7 @@ for simID, sim in enumerate(simulations):
         #[p[0] for p in list(map(find_peaks,list(sim['v'][:,i])))]
         if np.any([len(p[0])>1 for p in list(map(find_peaks,list(sim['v'][:,i])))]):
             print('found multimodal distribution for species {0} in simulation {1}'.format(i, simID))
+            #mx.showdata(simulations[simID]['v'][:200,i])
 
 # mx.showdata(simulations[57]['v'][:200,11])
 # mx.showdata(simulations[107]['v'][1000:1050,6])
@@ -417,7 +418,7 @@ plt.show()
 
 
 #%%
-switch_backend('module://matplotlib_inline.backend_inline')
+mx.graphictools.inline_backend(True)
 import matplotlib.animation as animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -550,14 +551,20 @@ payoffs_eig_c])
 
 
 
+
+
+
+
+
+
 #%% select single simulation
 survival_percentage = 0.9
 simulations_sustainable = [sim for sim in simulations if (sim['D'][-1]>1).sum()/sim['D'].shape[1] > survival_percentage]
 sim = np.random.choice(simulations_sustainable); mx.showlist(sim['dist_avgs']); mx.showlist(sim['D'])
-
+sim = simulations[14]
 
 #%%# get adjacency timeseries ----------
-
+I = np.newaxis
 ntimesteps, N, nstates = sim['v'].shape; ntimesteps-=1
 
 A_e = sim['_mutual_effs']
@@ -678,8 +685,12 @@ for t in range (ntimesteps):
     ax.plot(powersdist[t,0],color=colorgrid[t])
 
 
-#%%
+#%% 
+mx.graphictools.inline_backend(True)
+while True:
+    pass
 
+    
 import matplotlib.animation as animation
 
 rsc = mx.rescale(sim['fits'])
