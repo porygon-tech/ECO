@@ -380,7 +380,7 @@ class population(object):
             
             return(offspring)
 
-    def MAF(self):
+    def mafProfile(self):
         #explores alternative matrices with same column and row sums
         freqs = np.sum(self.mtx,axis=0)/self.m
         return 0.5-np.abs(freqs-0.5)
