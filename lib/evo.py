@@ -380,7 +380,11 @@ class population(object):
             
             return(offspring)
 
-    
+    def MAF(self):
+        #explores alternative matrices with same column and row sums
+        freqs = np.sum(self.mtx,axis=0)/self.m
+        return 0.5-np.abs(freqs-0.5)
+
     def mutate(self, rate=0.001):
         mutations = np.random.choice((0,1),(self.nindivs,self.nloci), p=(1-rate, rate))
         self.mtx = np.logical_xor(mutations, self.mtx)
